@@ -1,0 +1,103 @@
+#lang racket/base
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; provide
+
+(require racket/contract)
+(provide
+ (contract-out
+  (struct cr-module
+    ([target complete-path?]
+     [raw syntax?]
+     [syntax syntax?]
+     [contracts (or/c contracts? #f)]
+     [typed? boolean?]
+     [imports (listof symbol?)]
+     [positions (or/c (hash/c (cons/c integer? integer?) symbol?) #f)]
+     [deps (or/c unweighted-graph? #f)]))
+
+  (struct contracts
+    ([provide bundle?]
+     [require bundle?]
+     [libs (listof module-path?)]
+     [predicates (hash/c any/c syntax?)]))
+
+  (struct bundle
+    ([definitions definitions/c]
+     [exports exports/c]
+     [structs structs/c]))
+
+  (struct struct-data
+    ([parent (or/c symbol? #f)]
+     [fields (listof symbol?)]
+     [contracts (listof syntax?)]))
+
+  [definitions/c contract?]
+  [exports/c contract?]
+  [structs/c contract?])
+
+ contract-sc
+ (struct-lenses-out cr-module)
+ (struct-lenses-out contracts)
+ (struct-lenses-out bundle)
+ (struct-lenses-out struct-data))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; require
+
+(require graph
+         lens
+         unstable/lens)
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; data definitions
+
+;; An CR-Module is a struct where
+;;   target is a path to the modul,
+;;   raw is the syntax of the original module,
+;;   syntax is the syntax of the elaborated module,
+;;   contracts contains all information needed for elaboration,
+;;   typed? indicates if the module was originally typed,
+;;   imports is a list of dependencies,
+;;   positions is maps a line-column pair to the binding it's contained in,
+;;   deps is an graph of contract dependencies.
+(struct/lens
+ cr-module
+ (target raw syntax contracts typed? imports positions deps)
+  #:transparent)
+
+;; Contracts is a struct where
+;;   provide is a contains information for contracts on exports,
+;;   require is a contains information for contracts on untyped imports,
+;;   libs is a list of libraries imported with require/typed,
+;;   predicates maps predicates, as an s-expression, to their definition
+;;     (these predicates come from make-predicate or define-predicate).
+(struct/lens contracts (provide require libs predicates) #:transparent)
+
+;; A Bundle is a struct where
+;;   definitions maps an identifier representing a contract to its definition,
+;;   exports is maps an export to its contract or #f to be uncontracted,
+;;   structs is maps struct names to their information.
+(struct/lens bundle (definitions exports structs) #:transparent)
+
+;; A Struct-Data is a struct where
+;;   parent is the parent struct name or #f if there is none,
+;;   fields is the list of fields,
+;;   contracts is a list of field contracts.
+(struct/lens struct-data (parent fields contracts) #:transparent)
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; etc
+
+;; The scope for introduced contracts.
+(define contract-sc (make-syntax-introducer))
+
+;; Contract → Contract
+;; Constructs a contract for immutable hashes from symbols to the contract.
+(define (hash-symbol/c ctc)
+  (hash/c symbol? ctc #:immutable #t))
+
+;; Contracts
+(define definitions/c (hash-symbol/c syntax?))
+(define exports/c (hash-symbol/c (or/c syntax? #f)))
+(define structs/c (hash-symbol/c struct-data?))
