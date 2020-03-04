@@ -224,7 +224,6 @@
 
 (module+ test
   (require (only-in rackunit/chk chk)
-           racket/math
            racket/runtime-path
            rackunit
            "test-util.rkt")
@@ -272,6 +271,12 @@
     (chk
      (syntax->datum (lifted->l #'lifted/1)) 'l1
      #:f #:t (lifted->l #'blah)))
+
+  (test-case "strip-context*"
+    (check (negate bound-identifier=?) (strip-context* #'x) #'x)
+    (check bound-identifier=?
+           (strip-context* (syntax-property #'x 'protect-scope #t))
+           #'x))
 
   (test-case "contains-id?"
     (chk
