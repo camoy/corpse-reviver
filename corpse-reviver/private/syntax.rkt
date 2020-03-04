@@ -6,19 +6,20 @@
 (require racket/contract)
 (provide
  (contract-out
-  [normalize-srcloc (-> syntax? path? syntax?)]
+  [normalize-srcloc (-> syntax? path-string? syntax?)]
 
   [syntax-property-values (-> syntax? any/c list?)]
   [scv-ignore (-> syntax? syntax?)]
 
-  [syntax-fetch (-> path? syntax?)]
+  [syntax-fetch (-> path-string? syntax?)]
   [syntax-deps (-> (or/c syntax? pair?) (set/c module-path?))]
-  [typed? (-> complete-path? boolean?)]
+  [typed? (-> path-string? boolean?)]
 
   [strip-context* (-> syntax? syntax?)]
   [lifted->l (-> syntax? (or/c syntax? #f))]
   [contains-id? (-> syntax? identifier? boolean?)]
   [chase-codomain (-> definitions/c syntax? syntax?)])
+
  syntax-properties
  clause)
 
@@ -46,7 +47,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; source locations
 
-;; Syntax Complete-Path → Syntax
+;; Syntax Path-String → Syntax
 ;; Normalize source location information in the syntax, preserving lexical
 ;; information.
 (define (normalize-srcloc stx target)
@@ -67,7 +68,7 @@
              (go (cdr e) (cdr ref)))]
       [else e])))
 
-;; Syntax Complete-Path → Syntax
+;; Syntax Path-String → Syntax
 ;; Normalize syntax, but with a lose of lexical information.
 (define (normalize-srcloc* stx target)
   (define s (pretty-format (syntax->datum stx)))
@@ -111,7 +112,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; module syntax
 
-;; Complete-Path → Syntax
+;; Path-String → Syntax
 ;; Retrieves syntax object from a path.
 (define (syntax-fetch target)
   (define port (open-input-file target))
@@ -146,7 +147,7 @@
               (simplify-path #f))
       mp))
 
-;; Complete-Path → Boolean
+;; Path-String → Boolean
 ;; Return whether target is a Typed Racket module.
 (define (typed? target)
   (unless (file-exists? target)
@@ -246,7 +247,7 @@
 
   (test-case "syntax-fetch"
     (define stx
-      (syntax-fetch (build-path TEST-DIR "untyped.rkt")))
+      (syntax-fetch untyped))
     (chk (syntax->datum stx)
          '(module untyped racket/base
             (#%module-begin "hello world"))))
@@ -263,9 +264,9 @@
 
   (test-case "typed?"
     (chk
-     #:f #:t (typed? (build-path TEST-DIR "untyped.rkt"))
-     #:t (typed? (build-path TEST-DIR "typed.rkt"))
-     #:t (typed? (build-path TEST-DIR "also-typed.rkt"))))
+     #:f #:t (typed? untyped)
+     #:t (typed? typed)
+     #:t (typed? also-typed)))
 
   (test-case "lifted->l"
     (chk

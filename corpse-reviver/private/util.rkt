@@ -10,12 +10,12 @@
   [hash-remove* (-> hash? list? hash?)]
   [on (-> (-> any/c any/c) (-> any/c any/c boolean?) (-> any/c any/c boolean?))]
   [satisfies (-> predicate/c any/c (or/c any/c #f))]
-  [path->symbol (-> path? symbol?)]
-  [symbol->path (-> symbol? path?)]
+  [path->symbol (-> path-string? symbol?)]
+  [symbol->path (-> symbol? path-string?)]
   [proper-list? predicate/c]
   [flatten-cons (-> any/c set?)]
   [symbol->number (-> symbol? (or/c rational? #f))]
-  [<: (-> symbol? symbol? boolean?)]
+  [⊑/id (-> symbol? symbol? boolean?)]
   [make-struct-names (-> symbol? (listof symbol?) (listof symbol?))]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -39,8 +39,7 @@
 ;; Topologically sort a list of nodes by a directed acyclic graph. If no nodes
 ;; are provided, all elements of the graph will be sorted.
 (define (-topological-sort dag [nodes #f])
-  (define nodes*
-    (or nodes (set-union (hash-keys dag) (hash-values dag))))
+  (define nodes* (or nodes (hash-keys dag)))
   (define sorted
     (topological-sort
      nodes*
@@ -64,14 +63,14 @@
 (define (satisfies predicate? x)
   (and (predicate? x) x))
 
-;; Path → Symbol
+;; Path-String → Symbol
 ;; Converts a path to a symbol.
 (define path->symbol
   (λ~>> simple-form-path
         path->string
         string->symbol))
 
-;; Symbol → Path
+;; Symbol → Path-String
 ;; Converts a symbol to a path.
 (define symbol->path
   (λ~>> symbol->string
@@ -103,7 +102,7 @@
 
 ;; Symbol Symbol → Boolean
 ;; Order on contract definition identifiers.
-(define <: (symbol->number . on . <))
+(define ⊑/id (symbol->number . on . <))
 
 ;; [Listof String]
 ;; Regular expressions for ordering contract definitions. We need to sort the
@@ -181,14 +180,14 @@
      #:t (symbol->number 'l17)
      #:f #:t (symbol->number 'blah)))
 
-  (test-case "<:"
+  (test-case "⊑/id"
     (chk
-     #:t (<: 'g5 'g55)
-     #:t (<: 'g55 'l7)
-     #:f #:t (<: 'generated-contract5 'l7)
-     #:t (<: 'l7 'generated-contract5)
-     #:f #:t (<: 'generated-contract7 'generated-contract5)
-     #:t (<: 'generated-contract1 'generated-contract13)))
+     #:t (⊑/id 'g5 'g55)
+     #:t (⊑/id 'g55 'l7)
+     #:f #:t (⊑/id 'generated-contract5 'l7)
+     #:t (⊑/id 'l7 'generated-contract5)
+     #:f #:t (⊑/id 'generated-contract7 'generated-contract5)
+     #:t (⊑/id 'generated-contract1 'generated-contract13)))
 
   (test-case "1/n"
     (chk

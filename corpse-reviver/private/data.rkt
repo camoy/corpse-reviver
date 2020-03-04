@@ -6,7 +6,7 @@
 (require racket/contract)
 (provide
  (contract-out
-  (struct cr-module
+  (struct mod
     ([target complete-path?]
      [raw syntax?]
      [syntax syntax?]
@@ -37,7 +37,7 @@
   [structs/c contract?])
 
  contract-sc
- (struct-lenses-out cr-module)
+ (struct-lenses-out mod)
  (struct-lenses-out contracts)
  (struct-lenses-out bundle)
  (struct-lenses-out struct-data))
@@ -52,7 +52,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; data definitions
 
-;; An CR-Module is a struct where
+;; An Mod is a struct where
 ;;   target is a path to the modul,
 ;;   raw is the syntax of the original module,
 ;;   syntax is the syntax of the elaborated module,
@@ -62,9 +62,9 @@
 ;;   positions is maps a line-column pair to the binding it's contained in,
 ;;   deps is an graph of contract dependencies.
 (struct/lens
- cr-module
+ mod
  (target raw syntax contracts typed? imports positions deps)
-  #:transparent)
+ #:transparent)
 
 ;; Contracts is a struct where
 ;;   provide is a contains information for contracts on exports,
