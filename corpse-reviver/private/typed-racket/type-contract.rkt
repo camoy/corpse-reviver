@@ -710,12 +710,7 @@
                                               nm (recursive-sc-use nm*)))))
            (recursive-sc (list nm*) (list (struct/sc nm (ormap values mut?) fields))
                          (recursive-sc-use nm*))]
-          [else (define par*
-                  (match par
-                    [(Struct: nm _ _ _ _ _) nm]
-                    [_ #f]))
-                (flat/sc (syntax-property* 'struct (vector nm par* acc-ids pred?)
-                         #`(flat-named-contract '#,(syntax-e pred?) (lambda (x) (#,pred? x)))))])]
+          [else (flat/sc #`(flat-named-contract '#,(syntax-e pred?) (lambda (x) (#,pred? x))))])]
        [(StructType: s)
         (if (from-untyped? typed-side)
             (fail #:reason (~a "cannot import structure types from"

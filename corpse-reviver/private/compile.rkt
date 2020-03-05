@@ -105,6 +105,7 @@
         (typed-racket/private/type-contract . "type-contract.rkt")
         (typed-racket/static-contracts/combinators/function . "function.rkt")
         (typed-racket/static-contracts/instantiate . "instantiate.rkt")
+        (typed-racket/typecheck/provide-handling . "provide-handling.rkt")
         (typed-racket/utils/require-contract . "require-contract.rkt")))
 
 ;; [Hash Path Path]
@@ -177,10 +178,11 @@
 ;; tests
 
 (module+ test
-  (provide (all-defined-out))
-
-  (require (only-in rackunit/chk chk)
+  (require (for-syntax racket/base
+                       racket/syntax)
+           (only-in rackunit/chk chk)
            rackunit
+           syntax/parse/define
            "syntax.rkt"
            "test-util.rkt")
 
@@ -191,6 +193,24 @@
 
   (define (make-mod target [stx #'_])
     (mod target #'_ stx #f #f (imports target) #f #f))
+
+  (define-simple-macro (define-expand-provide ?x:id ...)
+    #:with [?y ...] (map (λ (x) (format-id x "~a-expand" x)) (attribute ?x))
+    (begin
+      (begin
+        (provide ?y)
+        (define ?y (expand/dir ?x (syntax-fetch ?x))))
+      ...))
+
+  (define-expand-provide
+    ty-ty-client
+    ty-ty-server
+    ty-ut-client
+    ty-ut-server
+    ut-ty-client
+    ut-ty-server
+    ut-ut-client
+    ut-ut-server)
 
   (test-case "compile-modules"
     (after

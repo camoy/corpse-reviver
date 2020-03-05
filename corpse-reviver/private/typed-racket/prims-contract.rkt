@@ -506,6 +506,7 @@
                      (define (maybe-add-quote-syntax stx)
                        (if (and stx (syntax-e stx)) #`(quote-syntax #,stx) stx))
 
+         (syntax-property* 'require-struct (vector #'nm #'parent #'pred (syntax-e #'(sel ...)) (syntax-e #'(mut ...)))
                      (quasisyntax/loc stx
                        (begin
                          (require (only-in lib type-des (nm orig-struct-info)))
@@ -579,7 +580,7 @@
 
                          #,@(if (attribute unsafe.unsafe?)
                                 #'((require/typed #:internal sel (All (tvar ...) (self-type -> ty)) lib unsafe-kw) ...)
-                                #'((require/typed lib [sel (All (tvar ...) (self-type -> ty))]) ...)))))]))
+                                #'((require/typed lib [sel (All (tvar ...) (self-type -> ty))]) ...))))))]))
 
   (values (rts #t) (rts #f))))
 
