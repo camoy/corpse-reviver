@@ -210,7 +210,9 @@
     ut-ty-client
     ut-ty-server
     ut-ut-client
-    ut-ut-server)
+    ut-ut-server
+    sieve-main
+    streams)
 
   (test-case "compile-modules"
     (after

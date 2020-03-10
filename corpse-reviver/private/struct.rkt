@@ -25,7 +25,8 @@
 ;; functions
 
 ;; Symbol → (Syntax Definitions Exports → Structs)
-;; Construct a structure containing information about provided structs.
+;; Construct a structure containing information about provided or required
+;; structs.
 (define ((structs key) stx defns exports)
   (define props (syntax-property-values stx key))
   (define-values (local-fields names)

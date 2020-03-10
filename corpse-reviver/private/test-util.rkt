@@ -43,4 +43,7 @@
   ut-ty-client "ut-ty/client.rkt"
   ut-ty-server "ut-ty/server.rkt"
   ut-ut-client "ut-ut/client.rkt"
-  ut-ut-server "ut-ut/server.rkt")
+  ut-ut-server "ut-ut/server.rkt"
+
+  sieve-main "sieve/main.rkt"
+  streams "sieve/streams.rkt")
