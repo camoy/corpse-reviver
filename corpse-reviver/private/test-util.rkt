@@ -35,6 +35,7 @@
   hello-world "hello-world.rkt"
   typed "typed.rkt"
   untyped "untyped.rkt"
+  predicate "predicate/server.rkt"
 
   ty-ty-client "ty-ty/client.rkt"
   ty-ty-server "ty-ty/server.rkt"

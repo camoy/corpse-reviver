@@ -6,8 +6,7 @@
 (require racket/contract)
 (provide
  (contract-out
-  [provide-structs (-> syntax? definitions/c exports/c structs/c)]
-  [require-structs (-> syntax? definitions/c exports/c structs/c)]))
+  [structs (-> symbol? syntax? definitions/c exports/c structs/c)]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; require
@@ -17,6 +16,7 @@
          mischief/for
          racket/list
          racket/match
+         racket/syntax
          "data.rkt"
          "syntax.rkt"
          "util.rkt")
@@ -24,20 +24,14 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; functions
 
-;; Symbol → (Syntax Definitions Exports → Structs)
+;; Symbol Syntax Definitions Exports → Structs
 ;; Construct a structure containing information about provided or required
 ;; structs.
-(define ((structs key) stx defns exports)
-  (define props (syntax-property-values stx key))
+(define (structs key stx defns exports)
+  (define props (syntax-property-values stx (format-symbol "~a-struct" key)))
   (define-values (local-fields names)
     (struct-local-fields props defns exports))
   (struct-all-fields local-fields names))
-
-;; Syntax Definitions Exports → Structs
-(define provide-structs (structs 'provide-struct))
-
-;; Syntax Definitions Exports → Structs
-(define require-structs (structs 'require-struct))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; util
@@ -122,14 +116,12 @@
      (syntax-property-values ty-ty-server-expand 'provide-struct)
      defns exports))
 
-  (test-case "provide-structs"
+  (test-case "structs"
     (chk
-     (provide-structs ty-ty-server-expand defns exports)
-     expected-structs))
+     (structs 'provide ty-ty-server-expand defns exports)
+     expected-structs
 
-  (test-case "require-structs"
-    (chk
-     (require-structs ty-ut-client-expand defns exports)
+     (structs 'require ty-ut-client-expand defns exports)
      expected-structs))
 
   (test-case "struct-local-fields"

@@ -203,6 +203,7 @@
       ...))
 
   (define-expand-provide
+    predicate
     ty-ty-client
     ty-ty-server
     ty-ut-client

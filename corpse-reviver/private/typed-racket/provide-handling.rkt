@@ -122,7 +122,7 @@
 
     (with-syntax* ([id internal-id]
                    [export-id new-id]
-                   [void* (syntax-property* 'provide-struct (vector new-id super pred accs muts) #'(void))]
+                   [void* (syntax-property* 'provide-struct (vector new-id super pred (reverse accs) muts) #'(void))]
                    [protected-id (freshen-id #'id)])
       (values
         #`(begin
