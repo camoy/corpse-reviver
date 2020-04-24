@@ -15,8 +15,7 @@
     "lang-file"
     "lens"
     "mischief"
-    "threading"
-    ))
+    "threading"))
 
 (define build-deps
   '("scribble-lib"

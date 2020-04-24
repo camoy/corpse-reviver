@@ -8,8 +8,8 @@
  (contract-out
   [rename -topological-sort topological-sort (->* (hash?) (list?) list?)]
   [hash-remove* (-> hash? list? hash?)]
-  [on (-> (-> any/c any/c) (-> any/c any/c boolean?) (-> any/c any/c boolean?))]
-  [satisfies (-> predicate/c any/c (or/c any/c #f))]
+  [on (parametric->/c [A B] (-> (-> A B) (-> B B boolean?) (-> A A boolean?)))]
+  [satisfies (parametric->/c [A] (-> (-> A boolean?) A (or/c A #f)))]
   [path->symbol (-> path-string? symbol?)]
   [symbol->path (-> symbol? path-string?)]
   [proper-list? predicate/c]
