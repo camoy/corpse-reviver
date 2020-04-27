@@ -16,17 +16,24 @@
 
 (define-runtime-path TEST-DIR ".")
 
+(begin-for-syntax
+  (define (syntax-suffix fmt ids)
+    (for/list ([x (in-syntax ids)])
+      (format-id #f fmt x))))
+
 (define-simple-macro (provide-test-expansions)
   #:with [[?x . ?y] ...] (hash->list TEST-PATHS)
-  #:with [?z ...]
-  (for/list ([x (in-syntax #'(?x ...))])
-    (format-id #f "~a-expand" x))
+  #:with [?x-stx ...] (syntax-suffix "~a-stx" #'(?x ...))
+  #:with [?x-expand ...] (syntax-suffix "~a-expand" #'(?x ...))
   (begin
     (provide ?x ...)
     (define ?x (simple-form-path (build-path TEST-DIR '?y))) ...
 
-    (provide ?z ...)
-    (define ?z (expand/dir ?x (syntax-fetch ?x))) ...))
+    (provide ?x-stx ...)
+    (define ?x-stx (syntax-fetch ?x)) ...
+
+    (provide ?x-expand ...)
+    (define ?x-expand (expand/dir ?x ?x-stx)) ...))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 

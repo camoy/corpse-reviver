@@ -12,7 +12,7 @@
   [scv-ignore (-> syntax? syntax?)]
 
   [syntax-fetch (-> path-string? syntax?)]
-  [syntax-deps (-> (or/c syntax? pair?) (set/c module-path?))]
+  [syntax-deps (-> (or/c syntax? pair?) (listof module-path?))]
   [typed? (-> path-string? boolean?)]
 
   [strip-context* (-> syntax? syntax?)]
@@ -121,22 +121,23 @@
     (thunk
      (read-syntax (object-name port) port))))
 
-;; Syntax → [Set Module-Path]
+;; Syntax → [Listof Module-Path]
 ;; Returns the list of modules that this piece of syntax depends on. We need
 ;; to explicitly require such modules in our elaborated syntax.
 (define (syntax-deps stx)
-  (let go ([e stx])
-    (cond
-      [(identifier? e)
-       (or (and~> e
-                  identifier-binding
-                  third
-                  module-path-index->module-path
-                  set)
-           (set))]
-      [(syntax? e) (go (syntax-e e))]
-      [(pair? e) (set-union (go (car e)) (go (cdr e)))]
-      [else (set)])))
+  (set->list
+   (let go ([e stx])
+     (cond
+       [(identifier? e)
+        (or (and~> e
+                   identifier-binding
+                   third
+                   module-path-index->module-path
+                   set)
+            (set))]
+       [(syntax? e) (go (syntax-e e))]
+       [(pair? e) (set-union (go (car e)) (go (cdr e)))]
+       [else (set)]))))
 
 ;; Module-Path-Index → Module-Path
 ;; Converts module path index to a relative module path.
@@ -260,7 +261,7 @@
             (require racket/math)
             pi))))
     (chk
-     #:t (set-member? deps '(lib "racket/math.rkt"))))
+     #:t (member '(lib "racket/math.rkt") deps)))
 
   (test-case "typed?"
     (chk
