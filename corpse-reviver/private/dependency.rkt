@@ -55,7 +55,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (module+ test
-  (require rackunit/chk)
+  (require chk)
 
   (define correct-line (add1 (syntax-line #'_)))
   (define stx (syntax-property #'(-> g0 g1)

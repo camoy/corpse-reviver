@@ -107,12 +107,12 @@
 ;; tests
 
 (module+ test
-  (require (only-in rackunit/chk chk)
-           (submod "compile.rkt" test)
+  (require chk
            racket/function
            racket/hash
            rackunit
-           "util.rkt")
+           "util.rkt"
+           "../test/expand.rkt")
 
   ;; [Hash Any Syntax] → [Hash Any SExpr]
   ;; Converts every value with syntax->datum.
@@ -190,7 +190,7 @@
           (g17 . (lambda (x) (stream? x)))
           (g18 . (-> g17))
           (g19 . struct-type?)
-          (g20 . (λ (_) #f))
+          (g20 . (λ (x) #f))
           (g21 . any/c)
           (g22 . (quote #t))
           (g23 . (quote #f))
@@ -243,7 +243,7 @@
           (stream-rest . l37)
           (stream-take . l45)
           (stream-unfold . l41)
-          (stream? . (or/c (λ (_) #f) (-> any/c boolean?)))))
+          (stream? . (or/c (λ (x) #f) (-> any/c boolean?)))))
 
   (match-define (bundle prov-defns prov-exports prov-structs)
     (make-bundle streams-expand 'provide))
@@ -271,7 +271,7 @@
     (chk (hash-keys streams-exports) (hash-keys prov-exports)))
 
   (test-case "make-predicates"
-    (define predicate-hash (make-predicates predicate-expand))
+    (define predicate-hash (make-predicates predicate-server-expand))
     (chk
      #:t (hash-has-key? predicate-hash '(define-predicate is-number*? Integer))
      #:t (hash-has-key? predicate-hash '(make-predicate Number))))

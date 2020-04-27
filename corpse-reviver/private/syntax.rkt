@@ -224,10 +224,10 @@
 ;; tests
 
 (module+ test
-  (require (only-in rackunit/chk chk)
+  (require chk
            racket/runtime-path
            rackunit
-           "test-util.rkt")
+           "../test/path.rkt")
 
   (test-case "normalize-srcloc"
     (define stx (normalize-srcloc (datum->syntax #f '(1 2 3)) ""))
@@ -264,14 +264,14 @@
 
   (test-case "typed?"
     (chk
-     #:f #:t (typed? untyped)
+     #:! #:t (typed? untyped)
      #:t (typed? typed)
      #:t (typed? also-typed)))
 
   (test-case "lifted->l"
     (chk
      (syntax->datum (lifted->l #'lifted/1)) 'l1
-     #:f #:t (lifted->l #'blah)))
+     #:! #:t (lifted->l #'blah)))
 
   (test-case "strip-context*"
     (check (negate bound-identifier=?) (strip-context* #'x) #'x)
@@ -283,7 +283,7 @@
     (chk
      #:t (contains-id? #'(+ 3 (add1 7)) #'add1)
      #:t (contains-id? #'(+ 3 (add1 x y)) #'x)
-     #:f #:t (contains-id? #'(+ 3 (add1 7)) #'foo)))
+     #:! #:t (contains-id? #'(+ 3 (add1 7)) #'foo)))
 
   (test-case "chase-codomain"
     (check free-identifier=?

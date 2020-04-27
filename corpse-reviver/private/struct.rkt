@@ -12,7 +12,6 @@
 ;; require
 
 (require fancy-app
-         lens
          mischief/for
          racket/list
          racket/match
@@ -71,10 +70,10 @@
                     (struct-data-contracts parent-data)))
           (values null null)))
     (define data*
-      (lens-transform/list
-       data
-       struct-data-fields-lens (append parent-fields _)
-       struct-data-contracts-lens (append parent-contracts _)))
+      (struct-copy
+       struct-data data
+       [fields (append parent-fields (struct-data-fields data))]
+       [contracts (append parent-contracts (struct-data-contracts data))]))
     (hash-set result name data*)))
 
 ;; Symbol Syntax → Symbol
@@ -92,9 +91,9 @@
 ;; tests
 
 (module+ test
-  (require (only-in rackunit/chk chk)
-           (submod "compile.rkt" test)
-           rackunit)
+  (require chk
+           rackunit
+           "../test/expand.rkt")
 
   (define-values (i? r?)
     (values #'integer? #'real?))
@@ -126,13 +125,13 @@
 
   (test-case "struct-local-fields"
     (chk
-     (values local-fields
-             (hash 'child
-                   (struct-data 'parent '(c) (list i?))
-                   'parent
-                   (struct-data #f '(p) (list r?)))
-             names
-             '(parent child))))
+     local-fields
+     (hash 'child
+           (struct-data 'parent '(c) (list i?))
+           'parent
+           (struct-data #f '(p) (list r?)))
+     names
+     '(parent child)))
 
   (test-case "struct-all-fields"
     (chk
@@ -142,5 +141,5 @@
   (test-case "field-name"
     (chk
      (field-name 'stream #'stream-first) 'first
-     #:f #:t (field-name 'stream #'foo-first)))
+     #:! #:t (field-name 'stream #'foo-first)))
   )

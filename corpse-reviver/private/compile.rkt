@@ -131,11 +131,11 @@
       (values (path->symbol (mod-target mod))
               (mod-imports mod))))
   (define targets (topological-sort dep-graph))
-  (sort mods (⊑/dep targets)))
+  (sort mods (</dep targets)))
 
 ;; [Listof Symbol] → (Mod Mod → Boolean)
 ;; Comparator for modules based on dependency determined by the targets list.
-(define (⊑/dep targets)
+(define (</dep targets)
   (define rank-of
     (λ~>> mod-target path->symbol (index-of targets)))
   (rank-of . on . <))
@@ -180,11 +180,11 @@
 (module+ test
   (require (for-syntax racket/base
                        racket/syntax)
-           (only-in rackunit/chk chk)
+           chk
            rackunit
            syntax/parse/define
            "syntax.rkt"
-           "test-util.rkt")
+           "../test/path.rkt")
 
   (define goodbye-stx
     #'(module hello-world racket/base
@@ -193,27 +193,6 @@
 
   (define (make-mod target [stx #'_])
     (mod target #'_ stx #f #f (imports target) #f #f))
-
-  (define-simple-macro (define-expand-provide ?x:id ...)
-    #:with [?y ...] (map (λ (x) (format-id x "~a-expand" x)) (attribute ?x))
-    (begin
-      (begin
-        (provide ?y)
-        (define ?y (expand/dir ?x (syntax-fetch ?x))))
-      ...))
-
-  (define-expand-provide
-    predicate
-    ty-ty-client
-    ty-ty-server
-    ty-ut-client
-    ty-ut-server
-    ut-ty-client
-    ut-ty-server
-    ut-ut-client
-    ut-ut-server
-    sieve-main
-    streams)
 
   (test-case "compile-modules"
     (after
@@ -271,10 +250,5 @@
       #:exists 'replace
       (thunk (displayln "")))
     (delete-bytecode hello-world)
-    (chk #:f #:t (file-exists? zo)))
-
-  (test-case "get-bytecode-file"
-    (chk
-     (simple-form-path (get-bytecode-file untyped))
-     (simple-form-path (build-path TEST-DIR "compiled" "untyped_rkt.zo"))))
+    (chk #:! #:t (file-exists? zo)))
   )

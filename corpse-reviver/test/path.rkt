@@ -6,36 +6,36 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(require (for-syntax racket/base
-                     racket/syntax
-                     threading)
+(require (for-syntax racket/base)
          syntax/parse/define
          racket/path
          racket/runtime-path)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(define-runtime-path CWD ".")
-(define TEST-DIR (build-path CWD ".." "test"))
+(define-runtime-path TEST-DIR ".")
 
-(define-simple-macro (define-test-files (~seq ?x:id ?y:string) ...)
+(define-simple-macro (provide-test-paths (~seq ?x:id ?y:string) ...)
   (begin
-    (begin
-      (provide ?x)
-      (define ?x (simple-form-path (build-path TEST-DIR ?y))))
-    ...))
+    (provide TEST-PATHS)
+    (define TEST-PATHS (hash (~@ '?x ?y) ...))
+
+    (provide ?x ...)
+    (define ?x (simple-form-path (build-path TEST-DIR ?y))) ...))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(define-test-files
-  also-typed "also-typed.rkt"
-  a "a.rkt"
-  b "b.rkt"
-  c "c.rkt"
-  hello-world "hello-world.rkt"
-  typed "typed.rkt"
-  untyped "untyped.rkt"
-  predicate "predicate/server.rkt"
+(provide-test-paths
+  also-typed "etc/also-typed.rkt"
+  a "etc/a.rkt"
+  b "etc/b.rkt"
+  c "etc/c.rkt"
+  hello-world "etc/hello-world.rkt"
+  typed "etc/typed.rkt"
+  untyped "etc/untyped.rkt"
+
+  predicate-main "predicate/main.rkt"
+  predicate-server "predicate/server.rkt"
 
   ty-ty-client "ty-ty/client.rkt"
   ty-ty-server "ty-ty/server.rkt"

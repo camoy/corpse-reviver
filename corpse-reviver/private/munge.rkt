@@ -171,7 +171,7 @@
 ;; tests
 
 (module+ test
-  (require (only-in rackunit/chk chk)
+  (require chk
            rackunit
            "compile.rkt")
 
@@ -222,21 +222,21 @@
     (chk
      #:t (syntax-property (adjust-scopes #'blah) 'protect-scope)
      #:t (syntax-property (adjust-scopes lam-stx) 'protect-scope)
-     #:f #:t (syntax-property (adjust-scopes x-stx) 'protect-scope)
-     #:f #:t (syntax-property (adjust-scopes any/c-stx) 'protect-scope)))
+     #:! #:t (syntax-property (adjust-scopes x-stx) 'protect-scope)
+     #:! #:t (syntax-property (adjust-scopes any/c-stx) 'protect-scope)))
 
   (test-case "locally-defined-id?"
     (chk
      #:t (locally-defined-id? #'g5)
      #:t (locally-defined-id? #'generated-contract5)
      #:t (locally-defined-id? #'l17)
-     #:f #:t (locally-defined-id? #'blah)))
+     #:! #:t (locally-defined-id? #'blah)))
 
   (test-case "expanded-or-contract-id?"
     (chk
      #:t (expanded-or-contract-id? any/c-stx)
      #:t (expanded-or-contract-id? x-stx)
-     #:f #:t (expanded-or-contract-id? lam-stx)))
+     #:! #:t (expanded-or-contract-id? lam-stx)))
 
   (test-case "module-path-index-root"
     (define mpi (and~> any/c-stx identifier-binding third))

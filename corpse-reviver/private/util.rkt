@@ -15,7 +15,7 @@
   [proper-list? predicate/c]
   [flatten-cons (-> any/c set?)]
   [symbol->number (-> symbol? (or/c rational? #f))]
-  [⊑/id (-> symbol? symbol? boolean?)]
+  [</id (-> symbol? symbol? boolean?)]
   [make-struct-names (-> symbol? (listof symbol?) (listof symbol?))]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -102,7 +102,7 @@
 
 ;; Symbol Symbol → Boolean
 ;; Order on contract definition identifiers.
-(define ⊑/id (symbol->number . on . <))
+(define </id (symbol->number . on . <))
 
 ;; [Listof String]
 ;; Regular expressions for ordering contract definitions. We need to sort the
@@ -131,7 +131,7 @@
 ;; tests
 
 (module+ test
-  (require (only-in rackunit/chk chk)
+  (require chk
            rackunit)
 
   (test-case "topological sort"
@@ -153,7 +153,7 @@
 
   (test-case "satisfies"
     (chk
-     #:f #:t (satisfies even? 1)
+     #:! #:t (satisfies even? 1)
      (satisfies even? 2) 2))
 
   (test-case "symbol->path, path->symbol"
@@ -163,7 +163,7 @@
 
   (test-case "proper-list?"
     (chk
-     #:f #:t (proper-list? '())
+     #:! #:t (proper-list? '())
      #:t (proper-list? '(a))))
 
   (test-case "flatten-cons"
@@ -178,16 +178,16 @@
      #:t (symbol->number 'g5)
      #:t (symbol->number 'generated-contract5)
      #:t (symbol->number 'l17)
-     #:f #:t (symbol->number 'blah)))
+     #:! #:t (symbol->number 'blah)))
 
-  (test-case "⊑/id"
+  (test-case "</id"
     (chk
-     #:t (⊑/id 'g5 'g55)
-     #:t (⊑/id 'g55 'l7)
-     #:f #:t (⊑/id 'generated-contract5 'l7)
-     #:t (⊑/id 'l7 'generated-contract5)
-     #:f #:t (⊑/id 'generated-contract7 'generated-contract5)
-     #:t (⊑/id 'generated-contract1 'generated-contract13)))
+     #:t (</id 'g5 'g55)
+     #:t (</id 'g55 'l7)
+     #:! #:t (</id 'generated-contract5 'l7)
+     #:t (</id 'l7 'generated-contract5)
+     #:! #:t (</id 'generated-contract7 'generated-contract5)
+     #:t (</id 'generated-contract1 'generated-contract13)))
 
   (test-case "1/n"
     (chk
