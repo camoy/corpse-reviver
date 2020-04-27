@@ -53,13 +53,13 @@
 ;; data definitions
 
 ;; An Mod is a struct where
-;;   target is a path to the modul,
+;;   target is a path to the module,
 ;;   raw is the syntax of the original module,
 ;;   syntax is the syntax of the elaborated module,
 ;;   contracts contains all information needed for elaboration,
 ;;   typed? indicates if the module was originally typed,
 ;;   imports is a list of dependencies,
-;;   positions is maps a line-column pair to the binding it's contained in,
+;;   positions maps a line-column pair to the binding it's contained in,
 ;;   deps is an graph of contract dependencies.
 (struct/lens
  mod
@@ -67,8 +67,8 @@
  #:transparent)
 
 ;; Contracts is a struct where
-;;   provide is a contains information for contracts on exports,
-;;   require is a contains information for contracts on untyped imports,
+;;   provide contains information for contracts on exports,
+;;   require contains information for contracts on untyped imports,
 ;;   libs is a list of libraries imported with require/typed,
 ;;   predicates maps predicates, as an s-expression, to their definition
 ;;     (these predicates come from make-predicate or define-predicate).
@@ -76,13 +76,13 @@
 
 ;; A Bundle is a struct where
 ;;   definitions maps an identifier representing a contract to its definition,
-;;   exports is maps an export to its contract or #f to be uncontracted,
-;;   structs is maps struct names to their information.
+;;   exports maps an export to its contract or #f to be uncontracted,
+;;   structs maps struct names to their information.
 (struct/lens bundle (definitions exports structs) #:transparent)
 
 ;; A Struct-Data is a struct where
 ;;   parent is the parent struct name or #f if there is none,
-;;   fields is the list of fields,
+;;   fields is a list of fields,
 ;;   contracts is a list of field contracts.
 (struct/lens struct-data (parent fields contracts) #:transparent)
 

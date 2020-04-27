@@ -93,8 +93,8 @@
          (go #'(case-> c ...))]
 
         ;; Replace contracts we cannot verify (SCV)
-        [struct-predicate-procedure? #'(λ (_) #f)]
-        [struct-predicate-procedure?/c #'(λ (_) #f)]
+        [struct-predicate-procedure? #'(λ (x) #f)]
+        [struct-predicate-procedure?/c #'(λ (x) #f)]
         [(struct-type/c _) #'struct-type?]
 
         ;; Unwrap some contract forms (SCV)
@@ -211,8 +211,8 @@
      '(case-> (-> integer? real?)
               (-> integer? string? real?)
               (-> integer? string? any/c real?))
-     (munge-e #'struct-predicate-procedure?) '(λ (_) #f)
-     (munge-e #'struct-predicate-procedure?/c) '(λ (_) #f)
+     (munge-e #'struct-predicate-procedure?) '(λ (x) #f)
+     (munge-e #'struct-predicate-procedure?/c) '(λ (x) #f)
      (munge-e #'(struct-type/c _)) 'struct-type?
      (munge-e #'(flat-named-contract blah integer?)) 'integer?
      (munge-e #'(flat-contract-predicate integer?)) 'integer?
