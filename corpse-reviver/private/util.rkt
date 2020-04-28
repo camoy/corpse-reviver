@@ -46,7 +46,7 @@
      (dict->procedure #:failure (const empty) dag)))
   (filter (member _ nodes*) sorted))
 
-;; [Hash K V] [List K] → [Hash K V]
+;; [Hash K V] [Listof K] → [Hash K V]
 ;; Removes every key in keys from the hash.
 (define (hash-remove* this keys)
   (for/fold ([this this])

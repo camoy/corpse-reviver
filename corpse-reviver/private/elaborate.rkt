@@ -6,6 +6,7 @@
 (require racket/contract)
 (provide
  (contract-out
+  [make-mod (-> path-string? mod?)]
   [elaborate (-> syntax? contracts? boolean? syntax?)]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -17,11 +18,47 @@
          racket/match
          racket/set
          syntax/parse
+         "compile.rkt"
          "data.rkt"
+         "dependency.rkt"
+         "extract.rkt"
          "prepare.rkt"
          "struct.rkt"
          "syntax.rkt"
          "util.rkt")
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; mod
+
+;; Path-String → Mod
+;; Returns a module from a file and syntax.
+(define (make-mod target)
+  (define raw-stx (syntax-fetch target))
+  (if (typed? target)
+      (typed->mod target raw-stx)
+      (untyped->mod target raw-stx)))
+
+;; Path-String Syntax → Mod
+;; Returns module for a typed file from raw syntax.
+(define (typed->mod target raw-stx)
+  (define expanded-stx (expand/dir target raw-stx))
+  (define contracts (make-contracts expanded-stx))
+  (define elaborated-stx
+    (normalize-srcloc (elaborate contracts raw-stx #t) target))
+  (compile+write/dir target expanded-stx)
+  (mod
+   target raw-stx
+   elaborated-stx contracts
+   #t (imports target)
+   (contract-positions elaborated-stx)
+   (contract-dependency elaborated-stx)))
+
+;; Path-String Syntax → Module
+;; Returns module for an untyped file from raw syntax. This does nothing since
+;; untyped code needs no elaboration.
+(define (untyped->mod target raw-stx)
+  (compile+write/dir target raw-stx)
+  (mod target raw-stx raw-stx #f #f (imports target) #f #f))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; elaborate
@@ -116,14 +153,14 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; provide inject helpers
 
-;; [Hash Symbol Syntax] → [List-of Syntax]
+;; [Hash Symbol Syntax] → [Listof Syntax]
 ;; Returns the list of contract definitions.
 (define (provide-defns defn-hash)
   (for/list ([name (in-list (sort (hash-keys defn-hash) </id))])
     (define defn (hash-ref defn-hash name))
     #`(define #,name #,defn)))
 
-;; Bundle Boolean → [List-of Syntax]
+;; Bundle Boolean → [Listof Syntax]
 ;; Returns the list of contract-out items.
 (define (provide-exports bundle safe?)
   (append (single-outs bundle safe?)
@@ -154,7 +191,7 @@
                               name))
         #`(struct-out #,name))))
 
-;; Bundle → [List-of Syntax]
+;; Bundle → [Listof Syntax]
 ;; Determines the list of modules that are needed for the definitions of the
 ;; bundle.
 (define (bundle-deps bundle)
