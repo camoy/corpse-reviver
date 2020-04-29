@@ -8,20 +8,17 @@
                      "path.rkt"
                      "util.rkt")
          syntax/parse/define
-         "../private/syntax.rkt"
-         "../private/compile.rkt")
+         "../private/elaborate.rkt")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(define-simple-macro (provide-test-expansions)
+(define-simple-macro (provide-test-mods)
   #:with [[?x . ?y] ...] (hash->list TEST-PATHS)
-  #:with [?x-stx ...] (syntax-suffix "~a-stx" #'(?x ...))
-  #:with [?x-expand ...] (syntax-suffix "~a-expand" #'(?x ...))
+  #:with [?x-mod ...] (syntax-suffix "~a-mod" #'(?x ...))
   (begin
-    (provide ?x-stx ... ?x-expand ...)
-    (define ?x-stx (syntax-fetch '?y)) ...
-    (define ?x-expand (expand/dir '?y ?x-stx)) ...))
+    (provide ?x-mod ...)
+    (define ?x-mod (make-mod '?y)) ...))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(provide-test-expansions)
+(provide-test-mods)

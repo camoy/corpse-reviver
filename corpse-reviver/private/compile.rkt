@@ -198,7 +198,7 @@
     (after
      (compile-modules (list (make-mod hello-world goodbye-stx)))
      (chk
-      (dynamic-require hello-world 'str)
+      (dynamic-require (string->path hello-world) 'str)
       "goodbye world")
      (delete-bytecode hello-world)))
 
@@ -206,7 +206,7 @@
     (after
      (compile+write/dir hello-world goodbye-stx)
      (chk
-      (dynamic-require hello-world 'str)
+      (dynamic-require (string->path hello-world) 'str)
       "goodbye world")
      (delete-bytecode hello-world)))
 

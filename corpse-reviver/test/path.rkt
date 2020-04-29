@@ -9,19 +9,15 @@
 (require (for-syntax racket/base)
          syntax/parse/define
          racket/path
-         racket/runtime-path)
+         "util.rkt")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(define-runtime-path TEST-DIR ".")
-
 (define-simple-macro (provide-test-paths (~seq ?x:id ?y:string) ...)
   (begin
-    (provide TEST-PATHS)
-    (define TEST-PATHS (hash (~@ '?x ?y) ...))
-
-    (provide ?x ...)
-    (define ?x (simple-form-path (build-path TEST-DIR ?y))) ...))
+    (provide TEST-PATHS ?x ...)
+    (define ?x (path->string (simple-form-path (build-path TEST-DIR ?y)))) ...
+    (define TEST-PATHS (hash (~@ '?x ?x) ...))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 

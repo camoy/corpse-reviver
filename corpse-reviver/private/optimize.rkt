@@ -18,7 +18,7 @@
          racket/hash
          racket/list
          racket/match
-       racket/math
+         racket/math
          racket/struct
          soft-contract/main
          syntax/parse
@@ -40,8 +40,7 @@
 (define (optimize mods)
   (define/for/lists (targets stxs)
     ([mod (in-list mods)])
-    (values (path->string (mod-target mod))
-            (mod-syntax mod)))
+    (values (mod-target mod) (mod-syntax mod)))
   (define -blms
     (with-patched-typed-racket
       (verify-modules targets stxs)))
@@ -61,9 +60,9 @@
 ;; imports.
 (define (optimize-mod m unsafe-hash)
   (define stx*
-    (syntax-parse (mod-syntax m)
+    (syntax-parse (mod-raw m)
       [(module ?name ?lang (?mb ?body ...))
-       #:with ?lang* (untyped-lang #'?lang)
+       #:with ?lang* (optimize-lang #'?lang)
        (strip-context
         #`(module ?name ?lang*
             (register-unsafe-hash! #,unsafe-hash)
@@ -71,11 +70,13 @@
   (struct-copy mod m [syntax stx*]))
 
 ;; Syntax → Syntax
-;; Returns the name of the untyped SCV-CR language for the new module.
-(define (untyped-lang lang)
+;; Returns the name of the SCV-CR language for the new module.
+(define (optimize-lang lang)
   (match (syntax-e lang)
     ['racket/base #'corpse-reviver/private/lang/untyped/base]
     ['racket #'corpse-reviver/private/lang/untyped/full]
+    ['typed/racket/base #'corpse-reviver/private/lang/typed/base]
+    ['typed/racket #'corpse-reviver/private/lang/typed/full]
     [else (error 'untyped-lang "unknown language ~a" lang)]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -87,7 +88,7 @@
 (define (unsafe mod mods blms)
   (define (server-module blm)
     (define path (blame-server blm))
-    (findf (equal? (path->string (mod-target _)) path) mods))
+    (findf (equal? (mod-target _) path) mods))
   (define unsafe
     (for/list ([blm (in-list blms)]
                #:when (server-module blm))
@@ -98,7 +99,7 @@
   (define default-hash
     (for/hash ([mod (in-list mods)]
                #:when (mod-typed? mod))
-      (values (path->string (mod-target mod)) null)))
+      (values (mod-target mod) null)))
   (apply hash-union #:combine append default-hash unsafe))
 
 ;; Bundle [Listof Symbol] → [Listof Symbol]
@@ -136,13 +137,11 @@
 
 ;; Blame Mod → Boolean
 (define ((blame-me? me) blm)
-  (equal? (blame-violator blm)
-          (path->string (mod-target me))))
+  (equal? (blame-violator blm) (mod-target me)))
 
 ;; Blame Mod → Boolean
 (define ((blame-violates-my-contract? me) blm)
-  (equal? (blame-server blm)
-          (path->string (mod-target me))))
+  (equal? (blame-server blm) (mod-target me)))
 
 ;; Blame → Path-String
 (define (blame-violator blm)
@@ -159,3 +158,16 @@
   (match blm
     [(list _ _ (list _ line col) _ _)
      (values line col)]))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; test
+
+(module+ test
+  (require chk
+           racket/pretty
+           "elaborate.rkt"
+           "../test/mod.rkt")
+
+  (define ty-ty (list ty-ty-server-mod #;ty-ty-client-mod))
+  (optimize ty-ty)
+  )

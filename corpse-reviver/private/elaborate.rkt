@@ -44,7 +44,7 @@
   (define expanded-stx (expand/dir target raw-stx))
   (define contracts (make-contracts expanded-stx))
   (define elaborated-stx
-    (normalize-srcloc (elaborate contracts raw-stx #t) target))
+    (normalize-srcloc (elaborate raw-stx contracts #t) target))
   (compile+write/dir target expanded-stx)
   (mod
    target raw-stx
@@ -115,17 +115,17 @@
 ;; Returns new require syntax to be injected into a module according to the
 ;; bundle.
 (define (require-inject ctcs lang)
-  (define libs (contracts-libs ctcs))
   (define bundle (contracts-require ctcs))
-  (define prov (provide-inject bundle))
-  #`(begin
-      (module require/safe #,lang
-        #,prelude
-        (require #,@libs)
-        #,prov)
-      (require/define 'require/safe
-                      #,(hash-keys (bundle-exports bundle))
-                      #,(structs-exports (bundle-structs bundle)))))
+  (with-syntax ([?prov (provide-inject bundle)]
+                [(?lib ...) (contracts-libs ctcs)])
+    #`(begin
+        (module require/safe #,lang
+          #,prelude
+          (require ?lib ...)
+          ?prov)
+        (require/define 'require/safe
+                        #,(hash-keys (bundle-exports bundle))
+                        #,(structs-exports (bundle-structs bundle))))))
 
 ;; Bundle Boolean → Syntax
 ;; Returns new provide syntax to be injected into a module according to the

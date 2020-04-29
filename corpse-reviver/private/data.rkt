@@ -7,7 +7,7 @@
 (provide
  (contract-out
   (struct mod
-    ([target complete-path?]
+    ([target (and/c string? complete-path?)]
      [raw syntax?]
      [syntax syntax?]
      [contracts (or/c contracts? #f)]
