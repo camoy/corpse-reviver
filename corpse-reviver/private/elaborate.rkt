@@ -64,13 +64,16 @@
 ;; Mod Boolean → Syntax
 ;; Elaborates a module according to its contracts.
 (define (elaborate m scv?)
-  (define elaborated-stx
-    (parameterize ([current-scv? scv?])
-      (-elaborate m)))
-  (struct-copy mod m
-               [syntax elaborated-stx]
-               [positions (contract-positions elaborated-stx)]
-               [deps (contract-dependency elaborated-stx)]))
+  (cond
+    [(mod-typed? m)
+     (define elaborated-stx
+       (parameterize ([current-scv? scv?])
+         (-elaborate m)))
+     (struct-copy mod m
+                  [syntax elaborated-stx]
+                  [positions (contract-positions elaborated-stx)]
+                  [deps (contract-dependency elaborated-stx)])]
+    [else m]))
 
 ;; Mod → Syntax
 ;; Elaborates syntax according to their contracts.
@@ -78,7 +81,7 @@
   (define ctcs (mod-contracts m))
   (define prov-bundle (contracts-provide ctcs))
   (define stx
-    (syntax-parse (mod-syntax m)
+    (syntax-parse (mod-raw m)
       #:datum-literals (module)
       [(module ?name ?lang (?mb ?body ...))
        #:with ?lang/nc (no-check #'?lang)

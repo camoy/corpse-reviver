@@ -26,6 +26,7 @@
          threading
          "compile.rkt"
          "data.rkt"
+         "elaborate.rkt"
          "struct.rkt"
          "util.rkt")
 
@@ -37,9 +38,16 @@
 ;; are proven safe and by creating an unsafe submodule that untyped modules
 ;; which are proven safe can use. We ignore all blame of a typed module (these
 ;; are known false positives by Typed Racket's soundness).
-(define (optimize mods)
+(define (optimize -mods)
+  (define mods (map (elaborate _ #f) -mods))
+  (define scv-mods (map (elaborate _ #t) -mods))
+
+  ;; STOP! This is always needed (and I've wasted many hours debugging by
+  ;; forgetting it). Without compiling modules with the elaborated source, SCV
+  ;; will give mysterious missing identifier errors.
+  (compile-modules (filter mod-typed? mods))
   (define/for/lists (targets stxs)
-    ([mod (in-list mods)])
+    ([mod (in-list scv-mods)])
     (values (mod-target mod) (mod-syntax mod)))
   (define -blms
     (with-patched-typed-racket
@@ -168,6 +176,6 @@
            "elaborate.rkt"
            "../test/mod.rkt")
 
-  (define ty-ty (list ty-ty-server-mod #;ty-ty-client-mod))
+  (define ty-ty (list ty-ty-server-mod ty-ty-client-mod))
   (optimize ty-ty)
   )
