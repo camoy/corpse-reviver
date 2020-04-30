@@ -7,7 +7,7 @@
 (provide
  (contract-out
   [make-mod (-> path-string? mod?)]
-  [elaborate (-> syntax? contracts? boolean? syntax?)]))
+  [elaborate (-> mod? boolean? mod?)]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; require
@@ -18,6 +18,7 @@
          racket/match
          racket/set
          syntax/parse
+         threading
          "compile.rkt"
          "data.rkt"
          "dependency.rkt"
@@ -43,15 +44,8 @@
 (define (typed->mod target raw-stx)
   (define expanded-stx (expand/dir target raw-stx))
   (define contracts (make-contracts expanded-stx))
-  (define elaborated-stx
-    (normalize-srcloc (elaborate raw-stx contracts #t) target))
   (compile+write/dir target expanded-stx)
-  (mod
-   target raw-stx
-   elaborated-stx contracts
-   #t (imports target)
-   (contract-positions elaborated-stx)
-   (contract-dependency elaborated-stx)))
+  (mod target raw-stx raw-stx contracts #t (imports target) #f #f))
 
 ;; Path-String Syntax → Module
 ;; Returns module for an untyped file from raw syntax. This does nothing since
@@ -67,23 +61,35 @@
 ;; Parameter for if the elaboration should be made for input to SCV.
 (define current-scv? (make-parameter #f))
 
-;; Syntax Contracts Boolean → Syntax
+;; Mod Boolean → Syntax
+;; Elaborates a module according to its contracts.
+(define (elaborate m scv?)
+  (define elaborated-stx
+    (parameterize ([current-scv? scv?])
+      (-elaborate m)))
+  (struct-copy mod m
+               [syntax elaborated-stx]
+               [positions (contract-positions elaborated-stx)]
+               [deps (contract-dependency elaborated-stx)]))
+
+;; Mod → Syntax
 ;; Elaborates syntax according to their contracts.
-(define (elaborate stx ctcs scv?)
-  (parameterize ([current-scv? scv?])
-    (define prov-bundle (contracts-provide ctcs))
-    (define stx*
-      (syntax-parse stx
-        #:datum-literals (module)
-        [(module ?name ?lang (?mb ?body ...))
-         #:with ?lang/nc (no-check #'?lang)
-         #:with ?prov (provide-inject prov-bundle)
-         #:with ?req  (require-inject ctcs #'?lang/nc)
-         (prepare
-          ctcs
-          #`(module ?name ?lang/nc
-              #,prelude ?prov ?req ?body ...))]))
-    (contract-sc stx*)))
+(define (-elaborate m)
+  (define ctcs (mod-contracts m))
+  (define prov-bundle (contracts-provide ctcs))
+  (define stx
+    (syntax-parse (mod-syntax m)
+      #:datum-literals (module)
+      [(module ?name ?lang (?mb ?body ...))
+       #:with ?lang/nc (no-check #'?lang)
+       #:with ?prov (provide-inject prov-bundle)
+       #:with ?req  (require-inject ctcs #'?lang/nc)
+       (prepare ctcs
+                #`(module ?name ?lang/nc
+                    #,prelude ?prov ?req ?body ...))]))
+  (~> stx
+      contract-sc
+      (normalize-srcloc (mod-target m))))
 
 ;; Syntax Boolean → Syntax
 ;; Returns the name of the no-check language for the new module.
@@ -209,6 +215,7 @@
            racket/function
            rackunit
            "extract.rkt"
+           "../test/path.rkt"
            "../test/expand.rkt")
 
   (define (uncontract stx)
@@ -216,15 +223,15 @@
       [(contract-out x) (syntax->datum #'x)]
       [_ (raise-result-error 'uncontract "did not get a contract-out form")]))
 
+  (define streams-mod (make-mod streams))
   (define streams-ctcs (make-contracts streams-expand))
   (define streams-provide (contracts-provide streams-ctcs))
 
   (test-case "elaborate"
-    (define streams-elaborated
-      (elaborate streams-stx streams-ctcs #t))
+    (define streams-mod* (elaborate streams-mod #t))
     (define 0-10
       (parameterize ([current-namespace (make-base-namespace)])
-        (eval streams-elaborated)
+        (eval (mod-syntax streams-mod*))
         (namespace-require ''streams)
         (eval #'(letrec ([f (λ (n)
                               (λ ()
