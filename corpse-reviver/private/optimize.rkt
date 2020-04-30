@@ -27,6 +27,7 @@
          "compile.rkt"
          "data.rkt"
          "elaborate.rkt"
+         "log.rkt"
          "struct.rkt"
          "util.rkt")
 
@@ -46,6 +47,8 @@
   ;; forgetting it). Without compiling modules with the elaborated source, SCV
   ;; will give mysterious missing identifier errors.
   (compile-modules (filter mod-typed? mods))
+
+  ;; Run SCV
   (define/for/lists (targets stxs)
     ([mod (in-list scv-mods)])
     (values (mod-target mod) (mod-syntax mod)))
@@ -54,6 +57,7 @@
       (verify-modules targets stxs)))
   (define blms (filter (untyped-blame? mods) -blms))
 
+  ;; Optimize with analysis results
   (for/list ([mod (in-list mods)])
     (define blms-mod
       (filter (if (mod-typed? mod)
@@ -67,7 +71,7 @@
 ;; Optimize a module by attaching metadata to direct bypassing contracts on safe
 ;; imports.
 (define (optimize+unsafe m unsafe-hash)
-  (define stx*
+  (define stx
     (syntax-parse (mod-syntax m)
       [(module ?name ?lang ?body ...)
        #:with ?lang* (optimize-lang #'?lang)
@@ -75,7 +79,9 @@
         #`(module ?name ?lang*
             (register-unsafe-hash! #,unsafe-hash)
             ?body ...))]))
-  (struct-copy mod m [syntax stx*]))
+  (debug "Optimized ~a:" (mod-target m))
+  (debug "~a" stx)
+  (struct-copy mod m [syntax stx]))
 
 ;; Syntax → Syntax
 ;; Returns the name of the SCV-CR language for the new module.
@@ -172,7 +178,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; test
 
-(module+ test
+#;(module+ test
   (require chk
            racket/list
            racket/pretty
