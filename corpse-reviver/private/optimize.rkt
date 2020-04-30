@@ -61,15 +61,15 @@
                   (blame-me? mod))
               blms))
     (define unsafe-hash (unsafe mod mods blms-mod))
-    (optimize-mod mod unsafe-hash)))
+    (optimize+unsafe mod unsafe-hash)))
 
 ;; Mod [Hash Complete-Path Symbol] → Mod
 ;; Optimize a module by attaching metadata to direct bypassing contracts on safe
 ;; imports.
-(define (optimize-mod m unsafe-hash)
+(define (optimize+unsafe m unsafe-hash)
   (define stx*
-    (syntax-parse (mod-raw m)
-      [(module ?name ?lang (?mb ?body ...))
+    (syntax-parse (mod-syntax m)
+      [(module ?name ?lang ?body ...)
        #:with ?lang* (optimize-lang #'?lang)
        (strip-context
         #`(module ?name ?lang*
@@ -83,8 +83,10 @@
   (match (syntax-e lang)
     ['racket/base #'corpse-reviver/private/lang/untyped/base]
     ['racket #'corpse-reviver/private/lang/untyped/full]
-    ['typed/racket/base #'corpse-reviver/private/lang/typed/base]
-    ['typed/racket #'corpse-reviver/private/lang/typed/full]
+    ['corpse-reviver/private/lang/normal/base
+     #'corpse-reviver/private/lang/typed/base]
+    ['corpse-reviver/private/lang/normal/full
+     #'corpse-reviver/private/lang/typed/full]
     [else (error 'untyped-lang "unknown language ~a" lang)]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -172,10 +174,19 @@
 
 (module+ test
   (require chk
+           racket/list
            racket/pretty
            "elaborate.rkt"
+           "../test/path.rkt"
            "../test/mod.rkt")
 
   (define ty-ty (list ty-ty-server-mod ty-ty-client-mod))
-  (optimize ty-ty)
+  (define ty-ty-opt (optimize ty-ty))
+  (pretty-print ty-ty-opt)
+  (pretty-print (syntax->datum (mod-syntax (car ty-ty-opt))))
+  (pretty-print (syntax->datum (mod-syntax (cadr ty-ty-opt))))
+  (compile-modules (filter mod-typed? ty-ty-opt))
+  (define g
+    (dynamic-require (string->path ty-ty-client) 'g))
+  (g 10)
   )

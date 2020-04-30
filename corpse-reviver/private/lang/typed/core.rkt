@@ -4,7 +4,6 @@
 ;; provide
 
 (provide (rename-out [-require require])
-         (rename-out [require racket:require])
          (all-from-out racket/require)
          filter-safe
          register-unsafe-hash!
@@ -40,15 +39,19 @@
     [(_ mods ...)
      (define reqs
        (for/list ([mod (in-list (attribute mods))])
-         (define mod-string
-           (path->string (resolve-module-path (syntax->datum mod))))
-         (replace-context
-          stx
-          (if (hash-has-key? unsafe-hash mod-string)
-              #`(racket:require
-                 (subtract-in #,mod (filter-safe #,mod #,mod))
-                 (filter-safe #,mod (submod #,mod provide/unsafe)))
-              #`(racket:require #,mod)))))
+         (define mod* (syntax->datum mod))
+         (cond
+           [(module-path? mod*)
+            (define mod-string
+              (path->string (resolve-module-path (syntax->datum mod))))
+            (replace-context
+             stx
+             (if (hash-has-key? unsafe-hash mod-string)
+                 #`(require
+                    (subtract-in #,mod (filter-safe #,mod #,mod))
+                    (filter-safe #,mod (submod #,mod provide/unsafe)))
+                 #`(require #,mod)))]
+           [else #`(require #,mod)])))
      #`(begin #,@reqs)]))
 
 ;; Helpers require transformer for filtering only safe bindings.
