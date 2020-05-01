@@ -14,6 +14,7 @@
 
 (require racket/cmdline
          racket/contract
+         soft-contract/main
          threading
          "private/compile.rkt"
          "private/data.rkt"
@@ -44,8 +45,7 @@
 ;; Path-String ... → Any
 ;; Compiles files at the given paths with SCV-CR.
 (define (compile-files/scv-cr . -targets)
-  (define targets
-    (map (λ~> path->complete-path path->string) -targets))
+  (define targets (map canonicalize-path -targets))
   (for ([target (in-list targets)])
     (delete-bytecode target))
 
