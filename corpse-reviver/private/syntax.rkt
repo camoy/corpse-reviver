@@ -60,10 +60,13 @@
   (let go ([e stx]
            [ref srcloc-stx])
     (cond
-      [(syntax? e)
+      [(and (syntax? e) (syntax? ref))
        (define e* (go (syntax-e e) (syntax-e ref)))
        (datum->syntax e e* ref e)]
-      [(pair? e)
+      [(and (syntax? e) (pair? ref))
+       (define e* (go (syntax-e e) ref))
+       (datum->syntax e e* #f e)]
+      [(and (pair? e) (pair? ref))
        (cons (go (car e) (car ref))
              (go (cdr e) (cdr ref)))]
       [else e])))
