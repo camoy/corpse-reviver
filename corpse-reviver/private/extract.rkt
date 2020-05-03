@@ -31,7 +31,7 @@
 (define (make-contracts stx)
   (contracts (make-bundle stx 'provide)
              (make-bundle stx 'require)
-             (map syntax->datum (syntax-property-values stx 'lib))
+             (syntax-property-list stx 'lib)
              (make-predicates stx)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -77,6 +77,13 @@
   (for/hash ([v (in-set (syntax-property-values stx 'make-predicate))])
     (match-define (vector x y) v)
     (values (syntax->datum x) (lifted->l y))))
+
+;; Syntax Symbol → List
+;; Returns a list of unique values from the syntax of the syntax property.
+(define (syntax-property-list stx key)
+  (set->list
+   (for/set ([x (in-set (syntax-property-values stx key))])
+     (syntax-e x))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; syntax classes

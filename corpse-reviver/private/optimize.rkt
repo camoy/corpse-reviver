@@ -40,8 +40,7 @@
 ;; which are proven safe can use. We ignore all blame of a typed module (these
 ;; are known false positives by Typed Racket's soundness).
 (define (optimize -mods)
-  (define mods (map (elaborate _ #f) -mods))
-  (define scv-mods (map (elaborate _ #t) -mods))
+  (define mods (map (elaborate _) -mods))
 
   ;; STOP! This is always needed (and I've wasted many hours debugging by
   ;; forgetting it). Without compiling modules with the elaborated source, SCV
@@ -50,7 +49,7 @@
 
   ;; Run SCV
   (define/for/lists (targets stxs)
-    ([mod (in-list scv-mods)])
+    ([mod (in-list mods)])
     (values (mod-target mod) (mod-syntax mod)))
   (define -blms
     (with-patched-typed-racket
@@ -59,11 +58,9 @@
 
   ;; Optimize with analysis results
   (for/list ([mod (in-list mods)])
-    (define blms-mod
-      (filter (if (mod-typed? mod)
-                  (blame-violates-my-contract? mod)
-                  (blame-me? mod))
-              blms))
+    (define blame-filter
+      (if (mod-typed? mod) blame-violates-my-contract? blame-me?))
+    (define blms-mod (filter blame-filter blms))
     (define unsafe-hash (unsafe mod mods blms-mod))
     (optimize+unsafe mod unsafe-hash)))
 
@@ -89,11 +86,9 @@
   (match (syntax-e lang)
     ['racket/base #'corpse-reviver/private/lang/untyped/base]
     ['racket #'corpse-reviver/private/lang/untyped/full]
-    ['corpse-reviver/private/lang/normal/base
-     #'corpse-reviver/private/lang/typed/base]
-    ['corpse-reviver/private/lang/normal/full
-     #'corpse-reviver/private/lang/typed/full]
-    [else (error 'untyped-lang "unknown language ~a" lang)]))
+    ['typed/racket/base #'corpse-reviver/private/lang/typed/base]
+    ['typed/racket #'corpse-reviver/private/lang/typed/full]
+    [else (error 'optimize-lang "unknown language ~a" lang)]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; unsafe

@@ -3,21 +3,17 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; provide
 
-(provide (rename-out [-require require])
-         (all-from-out racket/require)
-         filter-safe
-         register-unsafe-hash!
-         (for-syntax (all-from-out racket/base)))
+(provide (rename-out [-require/typed require/typed])
+         #;(rename-out [-require/typed/provide require/typed/provide])
+         register-unsafe-hash!)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; require
 
 (require (for-syntax racket/base
-                     racket/function
-                     racket/require-transform
                      syntax/modresolve
                      syntax/parse
-                     syntax/strip-context)
+                     "../../syntax.rkt")
          racket/require)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -34,38 +30,17 @@
      #'(void)]))
 
 ;; Rewrite require to import safe bindings from the uncontracted submodule.
-(define-syntax (-require stx)
+(define-syntax (-require/typed stx)
+  (define (unsafe-clause m id)
+    (define m-path (path->string (resolve-module-path (syntax->datum m))))
+    (define unsafes (hash-ref unsafe-hash m-path))
+    (member (syntax->datum id) unsafes))
   (syntax-parse stx
-    [(_ mods ...)
-     (define reqs
-       (for/list ([mod (in-list (attribute mods))])
-         (define mod* (syntax->datum mod))
-         (cond
-           [(module-path? mod*)
-            (define mod-string
-              (path->string (resolve-module-path (syntax->datum mod))))
-            (replace-context
-             stx
-             (if (hash-has-key? unsafe-hash mod-string)
-                 #`(require
-                    (subtract-in #,mod (filter-safe #,mod #,mod))
-                    (filter-safe #,mod (submod #,mod provide/unsafe)))
-                 #`(require #,mod)))]
-           [else #`(require #,mod)])))
-     #`(begin #,@reqs)]))
-
-;; Helpers require transformer for filtering only safe bindings.
-(define-syntax filter-safe
-  (make-require-transformer
-   (lambda (stx)
-     (syntax-parse stx
-       [(_ base path)
-        (define path-string
-          (path->string (resolve-module-path (syntax->datum #'base))))
-        (define unsafes (hash-ref unsafe-hash path-string))
-        (define-values (imports import-srcs)
-          (expand-import #'path))
-        (values (filter (λ (import)
-                          (not (member (import-src-sym import) unsafes)))
-                        imports)
-                import-srcs)]))))
+    [(_ m c:clause ...)
+     #:with (?c-unsafe ...)
+     (filter (λ (x) (unsafe-clause #'m (attr x x))) (syntax-e #'(c ...)))
+     #:with (?c-safe ...)
+     (filter (λ (x) (not (unsafe-clause #'m (attr x x)))) (syntax-e #'(c ...)))
+     #'(begin
+         (require/typed ?c-unsafe ...)
+         (unsafe-require/typed ?c-safe ...))]))

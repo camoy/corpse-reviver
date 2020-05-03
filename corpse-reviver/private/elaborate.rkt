@@ -6,8 +6,7 @@
 (require racket/contract)
 (provide
  (contract-out
-  [make-mod (-> path-string? mod?)]
-  [elaborate (-> mod? boolean? mod?)]))
+  [make-mod (-> path-string? mod?)]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; require
@@ -43,9 +42,13 @@
 ;; Returns module for a typed file from raw syntax.
 (define (typed->mod target raw-stx)
   (define expanded-stx (expand/dir target raw-stx))
-  (define contracts (make-contracts expanded-stx))
+  (define ctcs (make-contracts expanded-stx))
+  (define elaborated (elaborate raw-stx ctcs target))
   (compile+write/dir target expanded-stx)
-  (mod target raw-stx raw-stx contracts #t (imports target) #f #f))
+  (mod target
+       raw-stx elaborated ctcs #t (imports target)
+       (contract-positions elaborated)
+       (contract-dependency elaborated)))
 
 ;; Path-String Syntax → Module
 ;; Returns module for an untyped file from raw syntax. This does nothing since
@@ -57,65 +60,31 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; elaborate
 
-;; [Parameter Boolean]
-;; Parameter for if the elaboration should be made for input to SCV.
-(define current-scv? (make-parameter #f))
-
-;; Mod Boolean → Syntax
-;; Elaborates a module according to its contracts.
-(define (elaborate m scv?)
-  (cond
-    [(mod-typed? m)
-     (define elaborated-stx
-       (parameterize ([current-scv? scv?])
-         (-elaborate m)))
-     (struct-copy mod m
-                  [syntax elaborated-stx]
-                  [positions (contract-positions elaborated-stx)]
-                  [deps (contract-dependency elaborated-stx)])]
-    [else m]))
-
-;; Mod → Syntax
+;; Syntax Contracts Path-String → Syntax
 ;; Elaborates syntax according to their contracts.
-(define (-elaborate m)
-  (define ctcs (mod-contracts m))
+(define (elaborate raw-stx ctcs target)
   (define prov-bundle (contracts-provide ctcs))
   (define stx
-    (syntax-parse (mod-raw m)
+    (syntax-parse raw-stx
       #:datum-literals (module)
       [(module ?name ?lang (?mb ?body ...))
        #:with ?lang/nc (no-check #'?lang)
        #:with ?prov (provide-inject prov-bundle)
        #:with ?req  (require-inject ctcs #'?lang/nc)
-       (prepare ctcs
-                #`(module ?name ?lang/nc
-                    #,prelude ?prov ?req ?body ...))]))
+       #`(module ?name ?lang/nc
+           ?prov ?req ?body ...)]))
   (~> stx
+      (prepare ctcs)
       contract-sc
-      (normalize-srcloc (mod-target m))))
+      (normalize-srcloc target)))
 
 ;; Syntax Boolean → Syntax
 ;; Returns the name of the no-check language for the new module.
 (define (no-check lang)
   (match (syntax-e lang)
-    ['typed/racket/base
-     (if (current-scv?)
-         #'corpse-reviver/private/lang/scv/base
-         #'corpse-reviver/private/lang/normal/base)]
-    ['typed/racket
-     (if (current-scv?)
-         #'corpse-reviver/private/lang/scv/full
-         #'corpse-reviver/private/lang/normal/full)]
+    ['typed/racket/base #'corpse-reviver/private/lang/scv/base]
+    ['typed/racket #'corpse-reviver/private/lang/scv/full]
     [else (error 'no-check "unknown language ~a" lang)]))
-
-;; Datum
-;; This is prefixed onto all elaborated modules. It fakes being a typed module
-;; and defines a flag indicating that this is an SCV-CR module. Both are needed
-;; for require/typed/check to work correctly.
-(define prelude
-  #'(begin (module #%type-decl racket/base)
-           (require (for-syntax racket/base))
-           (define-syntax scv-cr? #t)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; inject
@@ -129,12 +98,9 @@
                 [(?lib ...) (contracts-libs ctcs)])
     #`(begin
         (module require/safe #,lang
-          #,prelude
           (require ?lib ...)
           ?prov)
-        (require/define 'require/safe
-                        #,(hash-keys (bundle-exports bundle))
-                        #,(structs-exports (bundle-structs bundle))))))
+        (require 'require/safe))))
 
 ;; Bundle Boolean → Syntax
 ;; Returns new provide syntax to be injected into a module according to the
@@ -144,19 +110,11 @@
 (define (provide-inject bundle)
   (define defn-hash (bundle-definitions bundle))
   (with-syntax ([(exp ...)  (provide-exports bundle #t)]
-                [(exp-unsafe ...)  (provide-exports bundle #f)]
                 [(ctc ...)  (hash-keys defn-hash)]
                 [(dep ...)  (bundle-deps bundle)]
                 [(defn ...) (provide-defns defn-hash)])
-    (define unsafe-submodule
-      (if (current-scv?)
-          #'(void)
-          #'(module+ provide/unsafe
-              (scv:provide exp-unsafe ...))))
-    #`(begin (scv:provide exp ...)
-             #,unsafe-submodule
-             (scv:ignore (provide ctc ...))
-             (scv:ignore (require (only-in (combine-in dep ...))))
+    #`(begin (provide exp ... ctc ...)
+             (require (only-in (combine-in dep ...)))
              defn ...)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -216,7 +174,10 @@
 (module+ test
   (require chk
            racket/function
+           racket/path
+           racket/unsafe/ops
            rackunit
+           soft-contract/main
            "extract.rkt"
            "../test/path.rkt"
            "../test/expand.rkt")
@@ -230,11 +191,10 @@
   (define streams-ctcs (make-contracts streams-expand))
   (define streams-provide (contracts-provide streams-ctcs))
 
-  (test-case "elaborate"
-    (define streams-mod* (elaborate streams-mod #t))
+  (test-case "elaborate (streams)"
     (define 0-10
       (parameterize ([current-namespace (make-base-namespace)])
-        (eval (mod-syntax streams-mod*))
+        (eval (mod-syntax streams-mod))
         (namespace-require ''streams)
         (eval #'(letrec ([f (λ (n)
                               (λ ()
@@ -243,6 +203,26 @@
     (chk
      0-10 '(0 1 2 3 4 5 6 7 8 9)
      ))
+
+  (test-case "elaborate (client and server)"
+    (define (chk-elaborate server-path client-path)
+      (define server (make-mod server-path))
+      (define client (make-mod client-path))
+      (delete-bytecode (list server-path client-path))
+      (compile-modules (filter mod-typed? (list server client)))
+      (chk
+       (verify-modules (list server-path client-path)
+                       (list (mod-syntax server) (mod-syntax client)))
+       '())
+      (parameterize ([current-namespace (make-base-namespace)]
+                     [current-directory (path-only server-path)])
+        (eval (mod-syntax client))
+        (namespace-require ''client)
+        (chk (unsafe-struct-ref (eval #'(g 42)) 0) 42)))
+    (chk-elaborate ty-ty-server ty-ty-client)
+    (chk-elaborate ty-ut-server ty-ut-client)
+    (chk-elaborate ut-ty-server ut-ty-client)
+    (chk-elaborate ut-ut-server ut-ut-client))
 
   (test-case "single-outs"
     (chk

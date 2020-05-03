@@ -3,20 +3,16 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; provide
 
-(provide scv-ignore:provide
-         require/define)
+(provide require/define)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; require
 
 (require (for-syntax racket/base
-                     racket/function
                      racket/list
                      racket/struct-info
                      racket/syntax
-                     syntax/parse
-                     "../syntax.rkt"
-                     "../log.rkt"))
+                     syntax/parse))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; utils
@@ -37,13 +33,6 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; macros
-
-;; Syntax → Syntax
-;; Provide form that is ignored by SCV.
-(define-syntax (scv-ignore:provide stx)
-  (syntax-parse stx
-    [(_ x ...)
-     (scv-ignore #'(provide x ...))]))
 
 ;; Syntax → Syntax
 ;; Require, but redefine the given imports and struct exports in this module.
