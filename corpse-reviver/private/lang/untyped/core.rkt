@@ -60,5 +60,4 @@
                  (racket:require (only-in #,mod #,@unsafes))
                  (racket:require (except-in (submod #,mod unsafe) #,@unsafes))))]
            [else #`(require #,mod)])))
-     (pretty-print (syntax->datum #`(begin #,@reqs)))
      #`(begin #,@reqs)]))
