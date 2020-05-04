@@ -5,13 +5,17 @@
 (require (for-syntax racket/base
                      racket/sequence
                      racket/syntax
+                     syntax/transformer
                      "path.rkt"
                      "util.rkt")
+         mischief/memoize
          syntax/parse/define
          "../private/syntax.rkt"
          "../private/compile.rkt")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define expand/dir/memo (memoize-procedure expand/dir))
 
 (define-simple-macro (provide-test-expansions)
   #:with [[?x . ?y] ...] (hash->list TEST-PATHS)
@@ -20,7 +24,9 @@
   (begin
     (provide ?x-stx ... ?x-expand ...)
     (define ?x-stx (syntax-fetch '?y)) ...
-    (define ?x-expand (expand/dir '?y ?x-stx)) ...))
+    (define-syntax ?x-expand
+      (make-variable-like-transformer
+       #'(expand/dir/memo '?y ?x-stx))) ...))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 

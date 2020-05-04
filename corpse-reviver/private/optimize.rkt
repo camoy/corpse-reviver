@@ -39,22 +39,26 @@
 ;; are proven safe and by creating an unsafe submodule that untyped modules
 ;; which are proven safe can use. We ignore all blame of a typed module (these
 ;; are known false positives by Typed Racket's soundness).
-(define (optimize -mods)
-  (define mods (map (elaborate _) -mods))
+(define (optimize mods)
+  (debug "Begin (optimize ~a)." mods)
 
   ;; STOP! This is always needed (and I've wasted many hours debugging by
   ;; forgetting it). Without compiling modules with the elaborated source, SCV
   ;; will give mysterious missing identifier errors.
-  (compile-modules (filter mod-typed? mods))
+  (compile-modules mods)
 
   ;; Run SCV
   (define/for/lists (targets stxs)
     ([mod (in-list mods)])
     (values (mod-target mod) (mod-syntax mod)))
+  (debug "Optimizing ~a." targets)
   (define -blms
-    (with-patched-typed-racket
-      (verify-modules targets stxs)))
+    (measure 'analyze
+      (with-patched-typed-racket
+        (verify-modules targets stxs))))
+  (debug "Raw analysis ~a." -blms)
   (define blms (filter (untyped-blame? mods) -blms))
+  (debug "Filtered analysis ~a." -blms)
 
   ;; Optimize with analysis results
   (for/list ([mod (in-list mods)])
@@ -69,15 +73,16 @@
 ;; imports.
 (define (optimize+unsafe m unsafe-hash)
   (define stx
-    (syntax-parse (mod-syntax m)
-      [(module ?name ?lang ?body ...)
+    (syntax-parse (mod-raw m)
+      #:datum-literals (module #%module-begin)
+      [(module ?name ?lang (#%module-begin ?body ...))
        #:with ?lang* (optimize-lang #'?lang)
        (strip-context
         #`(module ?name ?lang*
-            (register-unsafe-hash! #,unsafe-hash)
-            ?body ...))]))
-  (debug "Optimized ~a:" (mod-target m))
-  (debug "~a" stx)
+            (#%module-begin
+             (register-unsafe-hash! #,unsafe-hash)
+             ?body ...)))]))
+  (debug "Optimized (~a): ~a." (mod-target m) stx)
   (struct-copy mod m [syntax stx]))
 
 ;; Syntax → Syntax
@@ -173,7 +178,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; test
 
-#;(module+ test
+(module+ test
   (require chk
            racket/list
            racket/pretty
@@ -181,13 +186,14 @@
            "../test/path.rkt"
            "../test/mod.rkt")
 
-  (define ty-ty (list ty-ty-server-mod ty-ty-client-mod))
-  (define ty-ty-opt (optimize ty-ty))
-  (pretty-print ty-ty-opt)
-  (pretty-print (syntax->datum (mod-syntax (car ty-ty-opt))))
-  (pretty-print (syntax->datum (mod-syntax (cadr ty-ty-opt))))
-  (compile-modules (filter mod-typed? ty-ty-opt))
-  (define g
-    (dynamic-require (string->path ty-ty-client) 'g))
-  (g 10)
+  (measure 'test
+           (define ty-ty (list ty-ty-server-mod ty-ty-client-mod))
+           (define ty-ty-opt (optimize ty-ty))
+           (dynamic-wind
+             (λ ()
+               (compile-modules ty-ty-opt))
+             (λ ()
+               (define g (dynamic-require (string->path ty-ty-client) 'g))
+               (g 10))
+             cleanup-bytecode))
   )

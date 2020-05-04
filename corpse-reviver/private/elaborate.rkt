@@ -23,6 +23,7 @@
          "dependency.rkt"
          "extract.rkt"
          "prepare.rkt"
+         "log.rkt"
          "struct.rkt"
          "syntax.rkt"
          "util.rkt")
@@ -33,6 +34,7 @@
 ;; Path-String → Mod
 ;; Returns a module from a file and syntax.
 (define (make-mod target)
+  (debug "Begin (make-mod ~a)." target)
   (define raw-stx (syntax-fetch target))
   (if (typed? target)
       (typed->mod target raw-stx)
@@ -44,7 +46,7 @@
   (define expanded-stx (expand/dir target raw-stx))
   (define ctcs (make-contracts expanded-stx))
   (define elaborated (elaborate raw-stx ctcs target))
-  (compile+write/dir target expanded-stx)
+  (debug "Elaborated (~a):\n ~a." target elaborated)
   (mod target
        raw-stx elaborated ctcs #t (imports target)
        (contract-positions elaborated)
@@ -54,7 +56,6 @@
 ;; Returns module for an untyped file from raw syntax. This does nothing since
 ;; untyped code needs no elaboration.
 (define (untyped->mod target raw-stx)
-  (compile+write/dir target raw-stx)
   (mod target raw-stx raw-stx #f #f (imports target) #f #f))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -208,7 +209,6 @@
     (define (chk-elaborate server-path client-path)
       (define server (make-mod server-path))
       (define client (make-mod client-path))
-      (delete-bytecode (list server-path client-path))
       (compile-modules (filter mod-typed? (list server client)))
       (chk
        (verify-modules (list server-path client-path)
@@ -218,7 +218,8 @@
                      [current-directory (path-only server-path)])
         (eval (mod-syntax client))
         (namespace-require ''client)
-        (chk (unsafe-struct-ref (eval #'(g 42)) 0) 42)))
+        (chk (unsafe-struct-ref (eval #'(g 42)) 0) 42))
+      (for-each delete-bytecode (list server-path client-path)))
     (chk-elaborate ty-ty-server ty-ty-client)
     (chk-elaborate ty-ut-server ty-ut-client)
     (chk-elaborate ut-ty-server ut-ty-client)
