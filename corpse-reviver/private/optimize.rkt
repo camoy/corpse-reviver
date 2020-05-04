@@ -191,13 +191,14 @@
   (dynamic-wind
     cleanup-bytecode
     (λ ()
-      (test-case "optimize (streams)"
-        (define mods (optimize (list streams-mod sieve-main-mod)))
+      (test-case "optimize (slow sieve)"
+        (define mods (optimize (list sieve-slow-streams-mod
+                                     sieve-slow-main-mod)))
         (define old-times
           (with-output-to-string
             (λ ()
               (parameterize ([current-namespace (make-base-namespace)])
-                (dynamic-require (string->path sieve-main) #f)))))
+                (dynamic-require (string->path sieve-slow-main) #f)))))
 
         (compile-modules mods)
 
@@ -205,15 +206,15 @@
           (with-output-to-string
             (λ ()
               (parameterize ([current-namespace (make-base-namespace)])
-                (dynamic-require (string->path sieve-main) #f)))))
+                (dynamic-require (string->path sieve-slow-main) #f)))))
 
         (define (real-time x)
           (string->number (second (regexp-match #px"real time: (\\d+)" x))))
 
-        ;; Conservatively, the speedup from optimization should be at least 20x.
+        ;; Conservatively, the speedup from optimization should be at least 5x.
         (define speedup (/ (real-time old-times) (real-time new-times)))
         (chk
-         #:t (> speedup 20)))
+         #:t (> speedup 5)))
 
       (test-case "optimize (client and server)"
         (define (chk-optimize server client)

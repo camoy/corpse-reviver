@@ -43,4 +43,7 @@
   ut-ut-server "ut-ut/server.rkt"
 
   sieve-main "sieve/main.rkt"
-  streams "sieve/streams.rkt")
+  streams "sieve/streams.rkt"
+
+  sieve-slow-main "sieve-slow/main.rkt"
+  sieve-slow-streams "sieve-slow/streams.rkt")

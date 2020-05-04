@@ -199,7 +199,7 @@
   (dynamic-wind
    cleanup-bytecode
    (λ ()
-     (test-case "elaborate (streams)"
+     (test-case "elaborate (sieve)"
        (define 0-10
          (parameterize ([current-namespace (make-base-namespace)])
            (eval (mod-syntax streams-mod))
