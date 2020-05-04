@@ -5,6 +5,7 @@
 
 (provide (rename-out [require racket:require])
          (rename-out [-require require])
+         (rename-out [-provide provide])
          (all-from-out racket/require)
          register-unsafe-hash!)
 
@@ -61,6 +62,13 @@
                  (racket:require (except-in (submod #,mod unsafe) #,@unsafes))))]
            [else #`(require #,mod)])))
      #`(begin #,@reqs)]))
+
+(define-syntax (-provide stx)
+  (syntax-case stx ()
+    [(_ spec ...)
+     #'(begin
+         (provide spec) ...
+         (module+ unsafe (provide spec)) ...)]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; test

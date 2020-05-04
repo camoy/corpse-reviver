@@ -82,7 +82,7 @@
             (#%module-begin
              (register-unsafe-hash! #,unsafe-hash)
              ?body ...)))]))
-  (debug "Optimized (~a): ~a." (mod-target m) stx)
+  (debug "Optimized (~a):\n~a." (mod-target m) stx)
   (struct-copy mod m [syntax stx]))
 
 ;; Syntax → Syntax
@@ -113,8 +113,7 @@
       (define residuals (residual-contracts mod blm))
       (hash (blame-server blm) (bundle->unsafe-exports bundle residuals))))
   (define default-hash
-    (for/hash ([mod (in-list mods)]
-               #:when (mod-typed? mod))
+    (for/hash ([mod (in-list mods)])
       (values (mod-target mod) null)))
   (apply hash-union #:combine append default-hash unsafe))
 
@@ -182,18 +181,49 @@
   (require chk
            racket/list
            racket/pretty
+           racket/port
+           racket/unsafe/ops
+           rackunit
            "elaborate.rkt"
            "../test/path.rkt"
            "../test/mod.rkt")
 
-  (measure 'test
-           (define ty-ty (list ty-ty-server-mod ty-ty-client-mod))
-           (define ty-ty-opt (optimize ty-ty))
-           (dynamic-wind
-             (λ ()
-               (compile-modules ty-ty-opt))
-             (λ ()
-               (define g (dynamic-require (string->path ty-ty-client) 'g))
-               (g 10))
-             cleanup-bytecode))
+  (dynamic-wind
+    cleanup-bytecode
+    (λ ()
+      (test-case "optimize (streams)"
+        (define mods (optimize (list streams-mod sieve-main-mod)))
+        (define old-times
+          (with-output-to-string
+            (λ ()
+              (parameterize ([current-namespace (make-base-namespace)])
+                (dynamic-require (string->path sieve-main) #f)))))
+
+        (compile-modules mods)
+
+        (define new-times
+          (with-output-to-string
+            (λ ()
+              (parameterize ([current-namespace (make-base-namespace)])
+                (dynamic-require (string->path sieve-main) #f)))))
+
+        (define (real-time x)
+          (string->number (second (regexp-match #px"real time: (\\d+)" x))))
+
+        ;; Conservatively, the speedup from optimization should be at least 20x.
+        (define speedup (/ (real-time old-times) (real-time new-times)))
+        (chk
+         #:t (> speedup 20)))
+
+      (test-case "optimize (client and server)"
+        (define (chk-optimize server client)
+          (define mods (optimize (list server client)))
+          (compile-modules mods)
+          (define g (dynamic-require (string->path (mod-target client)) 'g))
+          (chk (unsafe-struct-ref (g 42) 0) 42))
+        (chk-optimize ty-ty-server-mod ty-ty-client-mod)
+        (chk-optimize ty-ut-server-mod ty-ut-client-mod)
+        (chk-optimize ut-ty-server-mod ut-ty-client-mod)
+        (chk-optimize ut-ut-server-mod ut-ut-client-mod)))
+    cleanup-bytecode)
   )

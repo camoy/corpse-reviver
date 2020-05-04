@@ -47,6 +47,7 @@
   (define ctcs (make-contracts expanded-stx))
   (define elaborated (elaborate raw-stx ctcs target))
   (debug "Elaborated (~a):\n ~a." target elaborated)
+  (compile+write/dir target expanded-stx)
   (mod target
        raw-stx elaborated ctcs #t (imports target)
        (contract-positions elaborated)
@@ -56,6 +57,7 @@
 ;; Returns module for an untyped file from raw syntax. This does nothing since
 ;; untyped code needs no elaboration.
 (define (untyped->mod target raw-stx)
+  (compile+write/dir target raw-stx)
   (mod target raw-stx raw-stx #f #f (imports target) #f #f))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -176,6 +178,7 @@
   (require chk
            racket/function
            racket/path
+           racket/port
            racket/unsafe/ops
            rackunit
            soft-contract/main
@@ -191,62 +194,72 @@
   (define streams-mod (make-mod streams))
   (define streams-ctcs (make-contracts streams-expand))
   (define streams-provide (contracts-provide streams-ctcs))
+  (define sieve-main-mod (make-mod sieve-main))
 
-  (test-case "elaborate (streams)"
-    (define 0-10
-      (parameterize ([current-namespace (make-base-namespace)])
-        (eval (mod-syntax streams-mod))
-        (namespace-require ''streams)
-        (eval #'(letrec ([f (λ (n)
-                              (λ ()
-                                (make-stream n (f (add1 n)))))])
-                  (stream-take ((f 0)) 10)))))
-    (chk
-     0-10 '(0 1 2 3 4 5 6 7 8 9)
-     ))
+  (dynamic-wind
+   cleanup-bytecode
+   (λ ()
+     (test-case "elaborate (streams)"
+       (define 0-10
+         (parameterize ([current-namespace (make-base-namespace)])
+           (eval (mod-syntax streams-mod))
+           (namespace-require ''streams)
+           (eval #'(letrec ([f (λ (n)
+                                 (λ ()
+                                   (make-stream n (f (add1 n)))))])
+                     (stream-take ((f 0)) 10)))))
+       (compile-modules (list streams-mod sieve-main-mod))
+       (define sieve-output
+         (with-output-to-string
+           (λ ()
+             (dynamic-require (string->path sieve-main) #f))))
+       (chk
+        0-10 '(0 1 2 3 4 5 6 7 8 9)
+        #:t (regexp-match? #rx"cpu time:" sieve-output)
+        ))
 
-  (test-case "elaborate (client and server)"
-    (define (chk-elaborate server-path client-path)
-      (define server (make-mod server-path))
-      (define client (make-mod client-path))
-      (compile-modules (filter mod-typed? (list server client)))
-      (chk
-       (verify-modules (list server-path client-path)
-                       (list (mod-syntax server) (mod-syntax client)))
-       '())
-      (parameterize ([current-namespace (make-base-namespace)]
-                     [current-directory (path-only server-path)])
-        (eval (mod-syntax client))
-        (namespace-require ''client)
-        (chk (unsafe-struct-ref (eval #'(g 42)) 0) 42))
-      (for-each delete-bytecode (list server-path client-path)))
-    (chk-elaborate ty-ty-server ty-ty-client)
-    (chk-elaborate ty-ut-server ty-ut-client)
-    (chk-elaborate ut-ty-server ut-ty-client)
-    (chk-elaborate ut-ut-server ut-ut-client))
+     (test-case "elaborate (client and server)"
+       (define (chk-elaborate server-path client-path)
+         (define server (make-mod server-path))
+         (define client (make-mod client-path))
+         (compile-modules (filter mod-typed? (list server client)))
+         (chk
+          (verify-modules (list server-path client-path)
+                          (list (mod-syntax server) (mod-syntax client)))
+          '())
+         (parameterize ([current-namespace (make-base-namespace)]
+                        [current-directory (path-only server-path)])
+           (eval (mod-syntax client))
+           (namespace-require ''client)
+           (chk (unsafe-struct-ref (eval #'(g 42)) 0) 42)))
+       (chk-elaborate ty-ty-server ty-ty-client)
+       (chk-elaborate ty-ut-server ty-ut-client)
+       (chk-elaborate ut-ty-server ut-ty-client)
+       (chk-elaborate ut-ut-server ut-ut-client))
 
-  (test-case "single-outs"
-    (chk
-     #:eq set=?
-     (map (compose first uncontract) (single-outs streams-provide #t))
-     '(stream-take stream-unfold stream-get make-stream)))
+     (test-case "single-outs"
+       (chk
+        #:eq set=?
+        (map (compose first uncontract) (single-outs streams-provide #t))
+        '(stream-take stream-unfold stream-get make-stream)))
 
-  (test-case "struct-outs"
-    (chk
-     #:t
-     (match (map uncontract (struct-outs streams-provide #t))
-       [`((struct stream ((first ,_) (rest ,_)))) #t]
-       [_ #f])))
+     (test-case "struct-outs"
+       (chk
+        #:t
+        (match (map uncontract (struct-outs streams-provide #t))
+          [`((struct stream ((first ,_) (rest ,_)))) #t]
+          [_ #f])))
 
-  (test-case "bundle-deps"
-    (define deps
-      '((lib "racket/contract/base.rkt")
-        (lib "racket/base.rkt")
-        (lib "racket/contract.rkt")))
+     (test-case "bundle-deps"
+       (define deps
+         '((lib "racket/contract/base.rkt")
+           (lib "racket/base.rkt")
+           (lib "racket/contract.rkt")))
 
-    (chk
-     #:eq set=?
-     deps
-     (map syntax->datum (bundle-deps streams-provide))
-     ))
+       (chk
+        #:eq set=?
+        deps
+        (map syntax->datum (bundle-deps streams-provide))
+        )))
+   cleanup-bytecode)
   )

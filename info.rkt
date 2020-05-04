@@ -13,7 +13,6 @@
   '(("base" #:version "7.4")
     "fancy-app"
     "lang-file"
-    "lens"
     "mischief"
     "threading"))
 

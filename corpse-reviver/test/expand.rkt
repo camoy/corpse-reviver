@@ -2,6 +2,10 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
+(provide cleanup-bytecode)
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 (require (for-syntax racket/base
                      racket/sequence
                      racket/syntax
@@ -10,6 +14,7 @@
                      "util.rkt")
          mischief/memoize
          syntax/parse/define
+         "path.rkt"
          "../private/syntax.rkt"
          "../private/compile.rkt")
 
@@ -28,6 +33,7 @@
       (make-variable-like-transformer
        #'(expand/dir/memo '?y ?x-stx))) ...))
 
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+(define (cleanup-bytecode)
+  (for-each delete-bytecode (hash-values TEST-PATHS)))
 
 (provide-test-expansions)

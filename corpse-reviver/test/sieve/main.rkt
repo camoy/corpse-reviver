@@ -34,7 +34,7 @@
 (define primes (sieve (count-from 2)))
 
 (: N-1 Natural)
-(define N-1 20)
+(define N-1 150)
 
 (: main (-> Void))
 (define (main)
