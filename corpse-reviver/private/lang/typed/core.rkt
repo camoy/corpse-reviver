@@ -4,16 +4,22 @@
 ;; provide
 
 (provide (rename-out [-require/typed require/typed])
-         #;(rename-out [-require/typed/provide require/typed/provide])
+         (rename-out [-require/typed/provide require/typed/provide])
+         (rename-out [-provide provide])
          register-unsafe-hash!)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; require
 
-(require (for-syntax racket/base
+(require (for-syntax mischief/for
+                     racket/base
+                     racket/sequence
+                     racket/list
                      syntax/modresolve
                      syntax/parse
                      "../../syntax.rkt")
+         (only-in typed/racket/base require/typed require/typed/provide)
+         typed/racket/unsafe
          racket/require)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -29,18 +35,50 @@
      (set! unsafe-hash (syntax->datum #'h))
      #'(void)]))
 
-;; Rewrite require to import safe bindings from the uncontracted submodule.
-(define-syntax (-require/typed stx)
-  (define (unsafe-clause m id)
+(begin-for-syntax
+  (define (unsafe-id? m id)
     (define m-path (path->string (resolve-module-path (syntax->datum m))))
     (define unsafes (hash-ref unsafe-hash m-path))
     (member (syntax->datum id) unsafes))
-  (syntax-parse stx
-    [(_ m c:clause ...)
-     #:with (?c-unsafe ...)
-     (filter (λ (x) (unsafe-clause #'m (attr x x))) (syntax-e #'(c ...)))
-     #:with (?c-safe ...)
-     (filter (λ (x) (not (unsafe-clause #'m (attr x x)))) (syntax-e #'(c ...)))
+
+  (define (clauses m clauses ids unsafe?)
+    (for/filter ([clause (in-syntax clauses)]
+                 [id (in-syntax ids)])
+      (cond
+        [unsafe? (and (unsafe-id? m id) clause)]
+        [else (and (not (unsafe-id? m id)) clause)])))
+
+  (define (void-if-empty x ys)
+    (if (empty? (syntax->list ys))
+        #'(void)
+        x))
+
+  ;; Rewrite require to import safe bindings from the uncontracted submodule.
+  (define ((make-require/typed provide?) stx)
+    (with-syntax ([?rt (if provide?
+                           #'require/typed/provide
+                           #'require/typed)]
+                  [?urt (if provide?
+                            #'unsafe-require/typed/provide
+                            #'unsafe-require/typed)])
+      (syntax-parse stx
+        [(_ m c:clause ...)
+         #:with (?c-unsafe ...) (clauses #'m #'(c ...) #'(c.x ...) #t)
+         #:with (?c-safe ...) (clauses #'m #'(c ...) #'(c.x ...) #f)
+         #:with ?require/typed (void-if-empty #'(?rt m ?c-unsafe ...)
+                                              #'(?c-unsafe ...))
+         #:with ?unsafe-require/typed (void-if-empty #'(?urt m ?c-safe ...)
+                                                     #'(?c-safe ...))
+         #'(begin ?require/typed
+                  ?unsafe-require/typed)])))
+  )
+
+(define-syntax -require/typed (make-require/typed #f))
+(define-syntax -require/typed/provide (make-require/typed #t))
+
+(define-syntax (-provide stx)
+  (syntax-case stx ()
+    [(_ spec ...)
      #'(begin
-         (require/typed ?c-unsafe ...)
-         (unsafe-require/typed ?c-safe ...))]))
+         (provide spec) ...
+         (module+ unsafe (unsafe-provide spec)) ...)]))

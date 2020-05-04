@@ -3,12 +3,10 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; provide
 
-(provide (rename-out [-require require])
-         (rename-out [require racket:require])
+(provide (rename-out [require racket:require])
+         (rename-out [-require require])
          (all-from-out racket/require)
-         filter-safe
-         register-unsafe-hash!
-         (for-syntax (all-from-out racket/base)))
+         register-unsafe-hash!)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; require
@@ -16,9 +14,13 @@
 (require (for-syntax racket/base
                      racket/function
                      racket/require-transform
+                     racket/syntax
+                     racket/pretty
                      syntax/modresolve
                      syntax/parse
-                     syntax/strip-context)
+                     syntax/strip-context
+                     threading
+                     "../../util.rkt")
          racket/require)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -35,34 +37,28 @@
      #'(void)]))
 
 ;; Rewrite require to import safe bindings from the uncontracted submodule.
+;; (We steal the trick of faking a typed module from an untyped from the
+;; live-free-or-die package).
 (define-syntax (-require stx)
   (syntax-parse stx
     [(_ mods ...)
      (define reqs
        (for/list ([mod (in-list (attribute mods))])
          (define mod-string
-           (path->string (resolve-module-path (syntax->datum mod))))
-         (replace-context
-          stx
-          (if (hash-has-key? unsafe-hash mod-string)
-              #`(racket:require
-                 (subtract-in #,mod (filter-safe #,mod #,mod))
-                 (filter-safe #,mod (submod #,mod provide/unsafe)))
-              #`(racket:require #,mod)))))
+           (and~>> mod
+                   syntax->datum
+                   (satisfies module-path?)
+                   resolve-module-path
+                   path->string))
+         (cond
+           [(and unsafe-hash (hash-has-key? unsafe-hash mod-string))
+            (define unsafes (hash-ref unsafe-hash mod-string))
+            (define unsafe-mod (format-symbol "~a/unsafe" (syntax->datum mod)))
+            (replace-context
+             stx
+             #`(begin
+                 (racket:require (only-in #,mod #,@unsafes))
+                 (racket:require (except-in (submod #,mod unsafe) #,@unsafes))))]
+           [else #`(require #,mod)])))
+     (pretty-print (syntax->datum #`(begin #,@reqs)))
      #`(begin #,@reqs)]))
-
-;; Helpers require transformer for filtering only safe bindings.
-(define-syntax filter-safe
-  (make-require-transformer
-   (lambda (stx)
-     (syntax-parse stx
-       [(_ base path)
-        (define path-string
-          (path->string (resolve-module-path (syntax->datum #'base))))
-        (define unsafes (hash-ref unsafe-hash path-string))
-        (define-values (imports import-srcs)
-          (expand-import #'path))
-        (values (filter (λ (import)
-                          (not (member (import-src-sym import) unsafes)))
-                        imports)
-                import-srcs)]))))
