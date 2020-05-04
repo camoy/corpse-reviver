@@ -61,3 +61,17 @@
                  (racket:require (except-in (submod #,mod unsafe) #,@unsafes))))]
            [else #`(require #,mod)])))
      #`(begin #,@reqs)]))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; test
+
+(module+ test
+  (require chk)
+
+  (chk
+   #:x (dynamic-require "../../../test/langs/bad-untyped.rkt" #f)
+   "add1: contract violation"
+
+   #:x (dynamic-require "../../../test/langs/good-untyped.rkt" #f)
+   "adder: contract violation"
+   ))
