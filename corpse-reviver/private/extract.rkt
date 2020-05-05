@@ -31,7 +31,7 @@
 (define (make-contracts stx)
   (contracts (make-bundle stx 'provide)
              (make-bundle stx 'require)
-             (syntax-property-list stx 'lib)
+             (make-libs stx)
              (make-predicates stx)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -65,10 +65,14 @@
 ;; Syntax Exports → Exports
 ;; Updates the exports to include exports defined by the syntax.
 (define (make-exports stx exports)
+  (define (exports-set name ctc)
+    (hash-set exports (syntax-e name) (munge name ctc)))
   (syntax-parse stx
     #:literals (begin)
-    [(~or (begin _:definition ... ?e:export) ?e:import)
-     (hash-set exports (syntax-e #'?e.name) (munge #'?e.name #'?e.contract))]
+    [(begin _:definition ... ?e:export) (exports-set #'?e.name #'?e.contract)]
+    [?e:import
+     #:when (not (syntax-property #'?e.lib 'opaque))
+     (exports-set #'?e.name #'?e.contract)]
     [_ exports]))
 
 ;; Syntax → [Hash Any Syntax]
@@ -78,11 +82,12 @@
     (match-define (vector x y) v)
     (values (syntax->datum x) (lifted->l y))))
 
-;; Syntax Symbol → List
+;; Syntax → List
 ;; Returns a list of unique values from the syntax of the syntax property.
-(define (syntax-property-list stx key)
+(define (make-libs stx)
   (set->list
-   (for/set ([x (in-set (syntax-property-values stx key))])
+   (for/set ([x (in-set (syntax-property-values stx 'lib))]
+             #:unless (syntax-property x 'opaque))
      (syntax-e x))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -106,7 +111,7 @@
 (define-syntax-class import
   #:datum-literals (begin require only-in define-ignored)
   (pattern (begin
-             (require (only-in _ (name:id _)))
+             (require (only-in lib:expr (name:id _)))
              _
              (define-ignored _ (_ contract:expr _ _ _ _ _)))))
 

@@ -12,6 +12,7 @@
 ;; require
 
 (require (for-syntax mischief/for
+                     racket/syntax
                      racket/base
                      racket/sequence
                      racket/list
@@ -63,14 +64,20 @@
                             #'unsafe-require/typed)])
       (syntax-parse stx
         [(_ m c:clause ...)
-         #:with (?c-unsafe ...) (clauses #'m #'(c ...) #'(c.x ...) #t)
-         #:with (?c-safe ...) (clauses #'m #'(c ...) #'(c.x ...) #f)
-         #:with ?require/typed (void-if-empty #'(?rt m ?c-unsafe ...)
-                                              #'(?c-unsafe ...))
-         #:with ?unsafe-require/typed (void-if-empty #'(?urt m ?c-safe ...)
-                                                     #'(?c-safe ...))
-         #'(begin ?require/typed
-                  ?unsafe-require/typed)])))
+         (if (syntax-property #'m 'opaque)
+             #'(?rt m c ...)
+             (with-syntax* ([(?c-unsafe ...)
+                             (clauses #'m #'(c ...) #'(c.x ...) #t)]
+                            [(?c-safe ...)
+                             (clauses #'m #'(c ...) #'(c.x ...) #f)]
+                            [?require/typed
+                             (void-if-empty #'(?rt m ?c-unsafe ...)
+                                            #'(?c-unsafe ...))]
+                            [?unsafe-require/typed
+                             (void-if-empty #'(?urt m ?c-safe ...)
+                                            #'(?c-safe ...))])
+               #'(begin ?require/typed
+                        ?unsafe-require/typed)))])))
   )
 
 (define-syntax -require/typed (make-require/typed #f))
