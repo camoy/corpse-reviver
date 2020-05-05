@@ -22,7 +22,6 @@
          "data.rkt"
          "dependency.rkt"
          "extract.rkt"
-         "prepare.rkt"
          "log.rkt"
          "struct.rkt"
          "syntax.rkt"
@@ -72,12 +71,15 @@
       #:datum-literals (module)
       [(module ?name ?lang (?mb ?body ...))
        #:with ?lang/nc (no-check #'?lang)
+       #:with ?sneak (syntax-property #''sneak 'payload ctcs)
        #:with ?prov (provide-inject prov-bundle)
        #:with ?req  (require-inject ctcs #'?lang/nc)
        #`(module ?name ?lang/nc
+           (register-contracts! ?sneak)
            ?prov ?req ?body ...)]))
   (~> stx
-      (prepare ctcs)
+      hide-provide
+      strip-context*
       contract-sc
       (normalize-srcloc target)))
 
@@ -88,6 +90,23 @@
     ['typed/racket/base #'corpse-reviver/private/lang/scv/base]
     ['typed/racket #'corpse-reviver/private/lang/scv/full]
     [else (error 'no-check "unknown language ~a" lang)]))
+
+;; Syntax → Syntax
+;; Hide provide forms. This is necessary because SCV directly looks at forms
+;; labeled as provide. We need a level of indirection (scv-cr:provide) to get
+;; around this.
+(define (hide-provide stx)
+  (let go ([e stx]
+           [inside? #f])
+    (cond
+      [(syntax? e) (datum->syntax e (go (syntax-e e) inside?) e e)]
+      [(and (pair? e))
+       (cond
+         [(and (eq? (syntax-e (car e)) 'module) inside?) e]
+         [(eq? (syntax-e (car e)) 'provide)
+          (cons 'scv-cr:provide (cdr e))]
+         [else (cons (go (car e) #t) (go (cdr e) #t))])]
+      [else e])))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; inject
@@ -100,8 +119,8 @@
   (with-syntax ([?prov (provide-inject bundle)]
                 [(?lib ...) (contracts-libs ctcs)])
     #`(begin
-        (module require/safe #,lang
-          (require ?lib ...)
+        (module require/safe racket/base
+          (require racket/contract ?lib ...)
           ?prov)
         (require 'require/safe))))
 

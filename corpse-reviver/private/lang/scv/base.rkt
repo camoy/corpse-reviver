@@ -10,7 +10,9 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; require
 
-(require (except-in typed/racket/base/no-check
-                    ∀ case-> -> set/c define ->*)
+(require racket/require
+         (subtract-in typed/racket/base/no-check
+                      soft-contract/fake-contract
+                      "core.rkt")
          (except-in soft-contract/fake-contract provide)
          "core.rkt")

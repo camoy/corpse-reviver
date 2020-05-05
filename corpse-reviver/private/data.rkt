@@ -66,19 +66,19 @@
 ;;   libs is a list of libraries imported with require/typed,
 ;;   predicates maps predicates, as an s-expression, to their definition
 ;;     (these predicates come from make-predicate or define-predicate).
-(struct contracts (provide require libs predicates) #:transparent)
+(struct contracts (provide require libs predicates) #:prefab)
 
 ;; A Bundle is a struct where
 ;;   definitions maps an identifier representing a contract to its definition,
 ;;   exports maps an export to its contract or #f to be uncontracted,
 ;;   structs maps struct names to their information.
-(struct bundle (definitions exports structs) #:transparent)
+(struct bundle (definitions exports structs) #:prefab)
 
 ;; A Struct-Data is a struct where
 ;;   parent is the parent struct name or #f if there is none,
 ;;   fields is a list of fields,
 ;;   contracts is a list of field contracts.
-(struct struct-data (parent fields contracts) #:transparent)
+(struct struct-data (parent fields contracts) #:prefab)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; etc
