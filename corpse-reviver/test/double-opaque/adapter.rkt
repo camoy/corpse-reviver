@@ -1,7 +1,7 @@
 #lang typed/racket/base
 
-(require scv-cr/opaque)
+(require corpse-reviver/opaque)
 
-(require/typed/opaque "abs.rkt"
+(require/typed/provide/opaque "abs.rkt"
   [absz (-> Real Number)]
   [#:opaque Pict pict?])

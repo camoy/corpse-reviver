@@ -1,4 +1,4 @@
 #lang typed/racket/base
 
 (require "adapter.rkt")
-(displayln (abs -23))
+(displayln (absz -23))
