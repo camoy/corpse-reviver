@@ -48,7 +48,15 @@
         [`(f:contract-out ,out ...) #f]
         [(? symbol? x) (hash-has-key? exports x)]
         [x (error 'exclude-outs "unrecognized provide form ~a" x)]))
-    (filter (negate should-exclude?) xs)))
+    (filter (negate should-exclude?) xs))
+
+  ;; Syntax → Syntax
+  ;; Get predicate from syntax.
+  (define (get-predicate stx)
+    (replace-context
+     stx
+     (hash-ref (contracts-predicates contracts) (syntax->datum stx))))
+  )
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; macros
@@ -91,12 +99,11 @@
 (define-syntax (define-predicate stx)
   (syntax-parse stx
     [(_ ?x:id _)
-     #:with ?defn (hash-ref (contracts-predicates contracts) (syntax->datum stx))
+     #:with ?defn (get-predicate stx)
      #'(define ?x ?defn)]))
 
 ;; Returns a predicate based on a type.
-(define-syntax (make-predicate stx)
-  (hash-ref (contracts-predicates contracts) (syntax->datum stx)))
+(define-syntax make-predicate get-predicate)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; redefinition
