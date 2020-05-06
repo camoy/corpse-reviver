@@ -3,7 +3,7 @@
 ;; Resolving offsets between moments
 
 (require
-  scv-cr/require-typed-check
+  corpse-reviver/require-typed-check
   "tzinfo-adapter.rkt"
   "core-adapter.rkt"
   "gregor-adapter.rkt"

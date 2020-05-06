@@ -1,7 +1,7 @@
 #lang typed/racket/base
 
 (require
-  scv-cr/require-typed-check
+  corpse-reviver/require-typed-check
   "summary-adapted.rkt")
 
 (require/typed/check "spreadsheet.rkt"

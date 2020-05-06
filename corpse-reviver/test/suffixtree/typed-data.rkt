@@ -12,7 +12,7 @@
   set-node-parent!
   set-node-suffix-link!)
 
-(require scv-cr/require-typed-check)
+(require corpse-reviver/require-typed-check)
 
 (require/typed/check "data.rkt"
   [#:struct label ([datum : (Vectorof (U Char Symbol))]

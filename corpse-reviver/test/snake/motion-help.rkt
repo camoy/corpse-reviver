@@ -1,6 +1,6 @@
 #lang typed/racket
 
-(require scv-cr/require-typed-check
+(require corpse-reviver/require-typed-check
          "data-adaptor.rkt")
 (require/typed/check "cut-tail.rkt"
                      [cut-tail ((NEListof Posn) . -> . (Listof Posn))])

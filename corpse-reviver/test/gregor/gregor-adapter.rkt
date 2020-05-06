@@ -1,7 +1,7 @@
 #lang typed/racket/base
 
 (require
-  scv-cr/require-typed-check
+  corpse-reviver/require-typed-check
   "core-adapter.rkt")
 
 (require/typed/check "gregor-structs.rkt"

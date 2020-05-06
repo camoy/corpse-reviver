@@ -3,7 +3,7 @@
 ;; Create a few examples and run abstract interpretation
 
 (require
-  scv-cr/require-typed-check
+  corpse-reviver/require-typed-check
   "structs-adapted.rkt"
 )
 (require/typed/check "ui.rkt"

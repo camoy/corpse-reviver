@@ -12,7 +12,7 @@
 
 (require (only-in racket/list empty?)
          (only-in racket/string string-split string-trim)
-         scv-cr/require-typed-check
+         corpse-reviver/require-typed-check
          "typed-zo-structs.rkt"
          racket/match)
 

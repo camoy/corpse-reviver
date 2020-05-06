@@ -21,9 +21,9 @@
 ;; -----------------------------------------------------------------------------
 
 (require
-  scv-cr/require-typed-check
+  corpse-reviver/require-typed-check
   (only-in racket/math exact-round)
-  scv-cr/opaque
+  corpse-reviver/opaque
   "core-adapter.rkt"
   "gregor-adapter.rkt"
   racket/match)

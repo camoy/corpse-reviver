@@ -1,6 +1,6 @@
 #lang typed/racket/base
 
-(require scv-cr/require-typed-check
+(require corpse-reviver/require-typed-check
          "typed-data.rkt"
          (for-syntax racket/base)
          (only-in racket/list first second rest))

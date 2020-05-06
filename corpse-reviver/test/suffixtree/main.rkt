@@ -1,6 +1,6 @@
 #lang typed/racket/base
 
-(require scv-cr/require-typed-check
+(require corpse-reviver/require-typed-check
  (only-in racket/file file->lines file->string))
 
 (require/typed/check "lcs.rkt"

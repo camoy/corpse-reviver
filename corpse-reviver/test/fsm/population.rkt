@@ -27,7 +27,7 @@
   (->* [Population Natural] [(U False Real)] Population))
 
 ;; =============================================================================
-(require scv-cr/require-typed-check
+(require corpse-reviver/require-typed-check
  "automata-adapted.rkt")
 (require/typed/check "utilities.rkt"
  (choose-randomly

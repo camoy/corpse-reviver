@@ -4,7 +4,7 @@
 
 (: population-payoffs (-> Population Boolean))
 
-(require scv-cr/require-typed-check
+(require corpse-reviver/require-typed-check
          "automata-adapted.rkt")
 
 (define (population-payoffs population0)

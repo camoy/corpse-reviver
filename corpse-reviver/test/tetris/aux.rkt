@@ -1,7 +1,7 @@
 #lang typed/racket
 
 (require "base-types.rkt")
-(require scv-cr/require-typed-check)
+(require corpse-reviver/require-typed-check)
 (require/typed/check "tetras.rkt"
   [build-tetra-blocks (-> Color Real Real Real Real Real Real Real Real Real Real Tetra)]
   )

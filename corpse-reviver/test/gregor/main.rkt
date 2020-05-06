@@ -1,7 +1,7 @@
 #lang typed/racket/base
 
 (require
-  scv-cr/require-typed-check
+  corpse-reviver/require-typed-check
   "../base/types.rkt"
   "gregor-adapter.rkt"
   "tzinfo-adapter.rkt"

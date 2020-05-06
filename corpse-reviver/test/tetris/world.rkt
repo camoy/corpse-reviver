@@ -1,7 +1,7 @@
 #lang typed/racket
 
 (require "base-types.rkt")
-(require scv-cr/require-typed-check)
+(require corpse-reviver/require-typed-check)
 (require/typed/check "bset.rkt"
    [blocks-union (-> BSet BSet BSet)]
    [blocks-max-x (-> BSet Real)]

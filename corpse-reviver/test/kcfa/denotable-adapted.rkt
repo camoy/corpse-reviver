@@ -1,7 +1,7 @@
 #lang typed/racket/base
 
 (require
-  scv-cr/require-typed-check
+  corpse-reviver/require-typed-check
   "structs-adapted.rkt"
   "benv-adapted.rkt"
   "time-adapted.rkt"

@@ -6,7 +6,7 @@
 
 (require
  (except-in "typed-data.rkt" label)
- scv-cr/require-typed-check
+ corpse-reviver/require-typed-check
 )
 (require/typed/check "label.rkt"
   [label-length (-> Label Index)]

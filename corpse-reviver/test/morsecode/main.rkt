@@ -7,7 +7,7 @@
 ;; -----------------------------------------------------------------------------
 
 (require
-  scv-cr/require-typed-check
+  corpse-reviver/require-typed-check
   (only-in racket/file file->value))
 
 (require/typed/check "morse-code-strings.rkt"

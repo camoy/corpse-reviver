@@ -20,8 +20,8 @@
 ;; -----------------------------------------------------------------------------
 
 (require
- scv-cr/require-typed-check
- scv-cr/opaque
+ corpse-reviver/require-typed-check
+ corpse-reviver/opaque
   "core-adapter.rkt"
   "gregor-adapter.rkt"
   racket/match)

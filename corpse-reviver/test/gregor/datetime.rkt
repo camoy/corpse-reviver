@@ -4,7 +4,7 @@
 ;; (i.e. dates and times at the same time)
 
 (require
-  scv-cr/require-typed-check
+  corpse-reviver/require-typed-check
   "core-adapter.rkt"
   "gregor-adapter.rkt"
   racket/match

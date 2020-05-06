@@ -1,7 +1,7 @@
 #lang typed/racket
 ;; Movie handlers
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-(require scv-cr/require-typed-check
+(require corpse-reviver/require-typed-check
          "data-adaptor.rkt")
 (require/typed/check "collide.rkt"
                      [snake-wall-collide? (Snake . -> . Boolean)]

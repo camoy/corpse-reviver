@@ -2,7 +2,7 @@
 
 ;; Adapter module for the tzinfo subproject
 
-(require scv-cr/opaque)
+(require corpse-reviver/opaque)
 
 (require/typed/provide/opaque "../base/tzinfo/main.rkt"
   [system-tzid (-> (U tz #f))]

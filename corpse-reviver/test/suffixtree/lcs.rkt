@@ -1,7 +1,7 @@
 #lang typed/racket/base
 ;; Some utilities.
 
-(require scv-cr/require-typed-check
+(require corpse-reviver/require-typed-check
          (except-in "typed-data.rkt" label)
          racket/list)
 

@@ -3,7 +3,7 @@
 ;; User Interface to `ai.rkt`
 
 (require
-  scv-cr/require-typed-check
+  corpse-reviver/require-typed-check
   (except-in racket/set set/c)
   "structs-adapted.rkt"
   "benv-adapted.rkt"

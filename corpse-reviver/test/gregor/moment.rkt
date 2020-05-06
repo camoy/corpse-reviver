@@ -5,7 +5,7 @@
 ;; Need the requires on top to stop syntax errors; opaques must
 ;; come lexically before their use
 (require
-  scv-cr/require-typed-check
+  corpse-reviver/require-typed-check
   "../base/types.rkt"
   "gregor-adapter.rkt"
   racket/match

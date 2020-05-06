@@ -1,7 +1,7 @@
 #lang typed/racket/base
 
 (require
-  scv-cr/require-typed-check
+  corpse-reviver/require-typed-check
   "image-adapted.rkt"
 )
 (require/typed/check "zombie.rkt"

@@ -11,7 +11,7 @@
 
 (provide string->morse)
 
-(require scv-cr/require-typed-check)
+(require corpse-reviver/require-typed-check)
 
 (require/typed/check "morse-code-table.rkt"
   [char-table (HashTable Char String)])

@@ -11,7 +11,7 @@
 ;; -----------------------------------------------------------------------------
 
 (require
-  scv-cr/require-typed-check
+  corpse-reviver/require-typed-check
   racket/match
   "core-adapter.rkt"
   "gregor-adapter.rkt"

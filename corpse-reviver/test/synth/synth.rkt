@@ -6,7 +6,7 @@
   seconds->samples
   emit)
 
-(require scv-cr/require-typed-check
+(require corpse-reviver/require-typed-check
          "typed-data.rkt"
          (only-in racket/unsafe/ops unsafe-fx+ unsafe-fx<)
          (only-in racket/math exact-floor))

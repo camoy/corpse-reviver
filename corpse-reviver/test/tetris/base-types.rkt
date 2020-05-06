@@ -1,7 +1,7 @@
 #lang typed/racket
 
 (define-type Color Symbol)
-(require scv-cr/require-typed-check)
+(require corpse-reviver/require-typed-check)
 (require/typed/check "data.rkt"
   [#:struct posn ([x : Real]
                   [y : Real])]

@@ -7,11 +7,11 @@
  zo-read
  init)
 
-(require scv-cr/require-typed-check
+(require corpse-reviver/require-typed-check
          (only-in racket/string string-split string-join string-trim)
          "typed-zo-structs.rkt"
          racket/match
-         scv-cr/opaque)
+         corpse-reviver/opaque)
 
 (require/typed/check "zo-string.rkt"
   [zo->spec (-> zo Spec)]

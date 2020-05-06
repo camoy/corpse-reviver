@@ -17,9 +17,9 @@
 ;; -----------------------------------------------------------------------------
 
 (require
-  scv-cr/require-typed-check
+  corpse-reviver/require-typed-check
   racket/path
-  scv-cr/opaque
+  corpse-reviver/opaque
   (only-in racket/file file->value)
   (only-in racket/vector vector-append)
   "modulegraph-adapted.rkt")

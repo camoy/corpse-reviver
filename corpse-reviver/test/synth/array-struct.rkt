@@ -2,7 +2,7 @@
 
 (require (for-syntax racket/base syntax/parse)
          (only-in racket/fixnum fx+ fx*)
-         scv-cr/require-typed-check
+         corpse-reviver/require-typed-check
          "typed-data.rkt")
 
 (require/typed/check "array-utils.rkt"

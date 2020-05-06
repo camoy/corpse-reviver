@@ -4,7 +4,7 @@
 (random-seed 7480)
 
 ;; =============================================================================
-(require scv-cr/require-typed-check
+(require corpse-reviver/require-typed-check
  "automata-adapted.rkt")
 (require/typed/check "population.rkt"
  (build-random-population

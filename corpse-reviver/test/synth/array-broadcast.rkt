@@ -4,7 +4,7 @@
          (only-in racket/vector vector-append)
          (only-in racket/string string-join)
          (only-in racket/list empty? first rest)
-         scv-cr/require-typed-check
+         corpse-reviver/require-typed-check
          "typed-data.rkt")
 
 (require/typed/check "array-struct.rkt"

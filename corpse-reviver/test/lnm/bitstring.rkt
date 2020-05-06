@@ -11,7 +11,7 @@
 
 (require
  (only-in racket/math exact-ceiling exact-truncate)
- scv-cr/opaque
+ corpse-reviver/opaque
  (only-in racket/list remove-duplicates))
 
 (require/typed/opaque "fake-format.rkt"
