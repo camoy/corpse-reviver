@@ -74,12 +74,12 @@
        #:with ?sneak (syntax-property #''sneak 'payload ctcs)
        #:with ?prov (provide-inject prov-bundle)
        #:with ?req  (require-inject ctcs #'?lang/nc)
+       #:with ?bodies (mangle-provides #'(begin ?body ...))
        #`(module ?name ?lang/nc
            (module #%type-decl racket/base)
            (register-contracts! ?sneak)
-           ?prov ?req ?body ...)]))
+           ?req ?bodies ?prov)]))
   (~> stx
-      hide-provide
       strip-context*
       contract-sc
       (normalize-srcloc target)))
@@ -93,21 +93,26 @@
     [else (error 'no-check "unknown language ~a" lang)]))
 
 ;; Syntax → Syntax
-;; Hide provide forms. This is necessary because SCV directly looks at forms
-;; labeled as provide. We need a level of indirection (scv-cr:provide) to get
-;; around this.
-(define (hide-provide stx)
-  (let go ([e stx]
-           [inside? #f])
-    (cond
-      [(syntax? e) (datum->syntax e (go (syntax-e e) inside?) e e)]
-      [(and (pair? e))
-       (cond
-         [(and (eq? (syntax-e (car e)) 'module) inside?) e]
-         [(eq? (syntax-e (car e)) 'provide)
-          (cons 'scv-cr:provide (cdr e))]
-         [else (cons (go (car e) #t) (go (cdr e) #t))])]
-      [else e])))
+;; Hide provide forms and move them to the bottom of the module. This is
+;; necessary because SCV directly looks at forms labeled as provide. We
+;; need a level of indirection (scv-cr:provide) to get around this.
+;; Moving all provides to the end is needed to avoid problems when exporting
+;; syntax (like types) before they're defined.
+(define (mangle-provides stx)
+  (define provides '())
+  (define stx*
+    (let go ([e stx])
+      (cond
+        [(syntax? e) (datum->syntax e (go (syntax-e e)) e e)]
+        [(and (pair? e))
+         (cond
+           [(and (eq? (syntax-e (car e)) 'module)) e]
+           [(eq? (syntax-e (car e)) 'provide)
+            (set! provides (cons #`(scv-cr:provide #,@(cdr e)) provides))
+            '(void)]
+           [else (cons (go (car e)) (go (cdr e)))])]
+        [else e])))
+  #`(begin #,stx* #,@provides))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; inject
@@ -256,6 +261,14 @@
        (chk-elaborate ty-ut-server ty-ut-client)
        (chk-elaborate ut-ty-server ut-ty-client)
        (chk-elaborate ut-ut-server ut-ut-client))
+
+     (test-case "mangle-provides"
+       (chk
+        (syntax->datum
+         (mangle-provides #'(begin (add1 42) (provide x) (add1 3) (provide y))))
+        '(begin (begin (add1 42) (void) (add1 3) (void))
+                (scv-cr:provide y)
+                (scv-cr:provide x))))
 
      (test-case "single-outs"
        (chk
