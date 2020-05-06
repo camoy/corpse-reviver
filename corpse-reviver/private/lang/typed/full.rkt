@@ -12,5 +12,7 @@
 (require (except-in typed/racket
                     require/typed
                     require/typed/provide
-                    provide)
+                    provide
+                    ;; HACK: For kCFA benchmark (see TR bug 931).
+                    exp)
          "core.rkt")

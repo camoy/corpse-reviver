@@ -87,8 +87,8 @@
   (syntax-case stx ()
     [(_ spec ...)
      #'(begin
-         (provide spec) ...
-         (module+ unsafe (unsafe-provide spec)) ...)]))
+         (provide spec ...)
+         (module+ unsafe (unsafe-provide spec ...)))]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; test

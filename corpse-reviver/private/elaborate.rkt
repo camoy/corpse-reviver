@@ -75,6 +75,7 @@
        #:with ?prov (provide-inject prov-bundle)
        #:with ?req  (require-inject ctcs #'?lang/nc)
        #`(module ?name ?lang/nc
+           (module #%type-decl racket/base)
            (register-contracts! ?sneak)
            ?prov ?req ?body ...)]))
   (~> stx
