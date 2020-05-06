@@ -58,7 +58,7 @@
         [any-wrap/c #'any/c]
 
         ;; Contract for predicate checking
-        [pred-cnt #'predicate/c]
+        [pred-cnt #'(-> any/c boolean?)]
 
         ;; TR hash
         [typed-racket-hash/c #'hash/c]

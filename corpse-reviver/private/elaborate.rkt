@@ -128,7 +128,9 @@
         (module require/safe racket/base
           (require racket/contract ?lib ...)
           ?prov)
-        (require 'require/safe))))
+        (require/define 'require/safe
+                        #,(hash-keys (bundle-exports bundle))
+                        #,(hash-keys (bundle-structs bundle))))))
 
 ;; Bundle Boolean → Syntax
 ;; Returns new provide syntax to be injected into a module according to the

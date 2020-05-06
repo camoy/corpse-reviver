@@ -10,7 +10,8 @@
          (rename-out [-provide scv-cr:provide])
          (rename-out [provide racket:provide])
          define-predicate
-         make-predicate)
+         make-predicate
+         require/define)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; require
@@ -96,3 +97,52 @@
 ;; Returns a predicate based on a type.
 (define-syntax (make-predicate stx)
   (hash-ref (contracts-predicates contracts) (syntax->datum stx)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; redefinition
+;;
+;; Suppose a module imports an identifier, say a predicate that defines an opaque
+;; type. Use of that opaque type in other modules will point the predicate's
+;; binding to that module. However, when we do elaboration, that module's imports
+;; will be pushed into a require/contracts submodule, invalidating that
+;; reference. To solve this we re-define single (non-struct) imports in the
+;; current module if it was imported from require/contracts. Some scope nonsense
+;; is necessary to prevent this from clashing with the existing import of
+;; require/typed.
+
+(begin-for-syntax
+  ;; Scope for redefinition import.
+  (define sc (make-syntax-introducer))
+
+  ;; Syntax → Syntax
+  ;; Get the name of a predicate.
+  (define (predicate-name id)
+    (format-id id "~a?" id))
+
+  ;; Syntax → Syntax
+  ;; Get the real predicate identifier.
+  (define (predicate-id id)
+    (third (extract-struct-info (syntax-local-value (sc id))))))
+
+;; Syntax → Syntax
+;; Require, but redefine the given imports and struct exports in this module.
+(define-syntax (require/define stx)
+  (syntax-parse stx
+    [(_ m (imp:id ...) (s-imp:id ...))
+     #:with [s-imp? ...] (map predicate-name (attribute s-imp))
+     #:with m* (sc #'m)
+     #'(begin
+         (require (only-in m* imp ... s-imp? ...)
+                  (except-in m imp ... s-imp? ...))
+         (redefine (imp ...) (s-imp ...)))]))
+
+;; Syntax → Syntax
+;; Do the actual redefinition (this time we have the struct info).
+(define-syntax (redefine stx)
+  (syntax-parse stx
+    [(_ (imp:id ...) (s-imp:id ...))
+     #:with [s-imp? ...] (map predicate-name (attribute s-imp))
+     #:with [s-imp?* ...] (map (compose sc predicate-id) (attribute s-imp))
+     #:with [imp* ...] (map sc (attribute imp))
+     #'(define-values (imp ... s-imp? ...)
+         (values imp* ... s-imp?* ...))]))
