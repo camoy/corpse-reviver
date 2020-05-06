@@ -130,7 +130,7 @@
           ?prov)
         (require/define 'require/safe
                         #,(hash-keys (bundle-exports bundle))
-                        #,(hash-keys (bundle-structs bundle))))))
+                        ()))))
 
 ;; Bundle Boolean → Syntax
 ;; Returns new provide syntax to be injected into a module according to the

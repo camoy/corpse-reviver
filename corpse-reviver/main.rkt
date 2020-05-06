@@ -105,15 +105,13 @@
   ;; Returns if this file is the main.
   (define is-main?
     (λ~>> file-name-string (string=? "main.rkt")))
-#|
-|#
+
   (test-case
     "Adapter imports reprovides a module as opaque (with an opaque type)."
     (test-optimize "double-opaque"
                    "main.rkt"
                    '("main.rkt"
                      "adapter.rkt")))
-
 
   (test-case
     "Testing the identifier fixup based on FSM."
@@ -123,8 +121,6 @@
                      "automata-adapted.rkt"
                      "automata.rkt")))
 
-
-
   (test-case
     "Subset of struct definitions from kCFA benchmark."
     (test-optimize "kcfa-data"
@@ -132,7 +128,7 @@
                    '("ai.rkt"
                      "structs-adapted.rkt"
                      "structs.rkt")))
-#|
+
   (test-case
     "Adapter and module from LNM benchmark."
     (test-optimize "lnm-data"
@@ -141,12 +137,14 @@
                      "plot-adapted.rkt"
                      "plot.rkt")))
 
+#|
+  ;; BAD
   (test-case
     "Define and make-predicate."
     (test-optimize "predicate"
                    "main.rkt"
                    '("main.rkt"
-                     "typed.rkt")))
+                     "server.rkt")))
 
   (test-case
     "Struct predicate reference needs to be fixed."
@@ -162,12 +160,14 @@
                    "main.rkt"
                    '("main.rkt")))
 
+  ;; BAD
   (test-case
     "Test require/typed/opaque."
     (test-optimize "require-typed-opaque"
                    "main.rkt"
                    '("main.rkt")))
 
+  ;; BAD
   (test-case
     "Test require/typed/provide/opaque."
     (test-optimize "require-typed-provide-opaque"

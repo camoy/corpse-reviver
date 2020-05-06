@@ -195,7 +195,7 @@
     (chk
      (munge-e #'lifted/1) 'l1
      (munge-e #'any-wrap/c) 'any/c
-     (munge-e #'pred-cnt) 'predicate/c
+     (munge-e #'pred-cnt) '(-> any/c boolean?)
      (munge-e #'typed-racket-hash/c) 'hash/c
      (munge-e #'(mutable-vector/c any/c)) '(vector/c any/c)
      (munge-e #'(immutable-vector/c any/c)) '(vector/c any/c)
