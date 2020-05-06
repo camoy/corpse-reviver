@@ -113,7 +113,8 @@
                    "main.rkt"
                    '("main.rkt"
                      "adapter.rkt")))
-#|
+
+
   (test-case
     "Testing the identifier fixup based on FSM."
     (test-optimize "fixup-again"
@@ -122,6 +123,8 @@
                      "automata-adapted.rkt"
                      "automata.rkt")))
 
+
+
   (test-case
     "Subset of struct definitions from kCFA benchmark."
     (test-optimize "kcfa-data"
@@ -129,7 +132,7 @@
                    '("ai.rkt"
                      "structs-adapted.rkt"
                      "structs.rkt")))
-
+#|
   (test-case
     "Adapter and module from LNM benchmark."
     (test-optimize "lnm-data"

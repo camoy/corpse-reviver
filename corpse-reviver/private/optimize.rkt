@@ -54,8 +54,9 @@
   (debug "Optimizing ~a." targets)
   (define -blms
     (measure 'analyze
-      (with-patched-typed-racket
-        (verify-modules targets stxs))))
+      (with-continuation-mark 'scv? #t
+        (with-patched-typed-racket
+          (verify-modules targets stxs)))))
   (debug "Raw analysis ~a." -blms)
   (define blms (filter (untyped-blame? mods) -blms))
   (debug "Filtered analysis ~a." -blms)

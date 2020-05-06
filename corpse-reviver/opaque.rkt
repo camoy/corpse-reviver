@@ -3,7 +3,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; provide
 
-(provide #;require/opaque
+(provide require/opaque
          require/typed/opaque
          require/typed/provide/opaque)
 
@@ -18,11 +18,14 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; macros
 
-#;(define-syntax (require/opaque stx)
+(define-syntax (require/opaque stx)
   (syntax-parse stx
     [(_ m x:clause ...)
-     #:with m* (syntax-property #'m 'opaque #t)
-     (replace-context stx #'(require m))]))
+     (replace-context
+      stx
+      (if (continuation-mark-set-first (current-continuation-marks) 'scv?)
+          #'(begin x.opaque ...)
+          #'(require m)))]))
 
 (define-syntax (require/typed/opaque stx)
   (syntax-parse stx
