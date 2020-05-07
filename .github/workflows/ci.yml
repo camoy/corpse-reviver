@@ -16,6 +16,9 @@ jobs:
       # Typed Racket Hacks prints to STDOUT causing exit code 1.
       # Let's just force success :)
       - run: raco pkg install --deps search-auto || true
-      - run: raco test --drdr .
+      - run: raco test -x --drdr corpse-reviver/main.rkt corpse-reviver/private
         env:
+          # So SCV can identify Z3.
           Z3_LIB: /usr/lib/
+          # Need for headless server.
+          DISPLAY: ":0"
