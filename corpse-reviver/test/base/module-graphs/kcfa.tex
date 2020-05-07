@@ -1,0 +1,29 @@
+\begin{tikzpicture}
+
+  \node (00)  {\rkt{4}{structs}};
+  \node (10) [left of=00,xshift=-0.8cm] {\rkt{1}{benv}};
+  \node (20) [left of=10,xshift=-0.8cm] {\rkt{5}{time}};
+  \node (30) [left of=20,xshift=-0.8cm] {\rkt{2}{denotable}};
+  \node (40) [left of=30,xshift=-0.8cm] {\rkt{0}{ai}};
+  \node (50) [left of=40,xshift=-0.8cm] {\rkt{6}{ui}};
+  \node (60) [left of=50,xshift=-0.8cm] {\rkt{3}{main}};
+
+  \draw[->] (10) -- (00);
+  \draw[->] (20) -- (10);
+  \draw[->] (20) edge[bend left] (00);
+  \draw[->] (30) -- (20);
+  \draw[->] (30) edge[bend right] (10);
+  \draw[->] (30) edge[bend left] (00);
+  \draw[->] (40) -- (30);
+  \draw[->] (40) edge[bend left] (20);
+  \draw[->] (40) edge[bend right] (10);
+  \draw[->] (40) edge[bend left] (00);
+  \draw[->] (50) -- (40);
+  \draw[->] (50) edge[bend left] (20);
+  \draw[->] (50) edge[bend right] (30);
+  \draw[->] (50) edge[bend right] (10);
+  \draw[->] (50) edge[bend left] (00);
+  \draw[->] (60) -- (50);
+  \draw[->] (60) edge[bend left] (00);
+
+\end{tikzpicture}

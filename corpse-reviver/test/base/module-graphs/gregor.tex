@@ -1,0 +1,93 @@
+\begin{tikzpicture}
+
+  \node (00)              {};
+  \node (01) [below of=00,xshift=1.2cm] {\rkt{1}{core-structs}};
+  \node (02) [below of=01,xshift=1.2cm] {};
+
+  \node (10) [left of=00] {\rkt{5}{gregor-structs}};
+  \node (11) [left of=01] {\rkt{6}{hmsn}};
+  \node (12) [left of=02] {\rkt{12}{ymd}};
+
+  \node (20) [left of=10] {\rkt{11}{time}};
+  \node (21) [left of=11] {};
+  \node (22) [left of=12] {\rkt{2}{date}};
+
+  \node (30) [left of=20] {};
+  \node (31) [left of=21] {\rkt{3}{datetime}};
+  \node (32) [left of=22] {};
+
+  \node (40) [left of=30] {\rkt{8}{moment-base}};
+  \node (41) [left of=31] {};
+  \node (42) [left of=32] {\rkt{4}{difference}};
+
+  \node (50) [left of=40] {\rkt{10}{offset-resolvers}};
+  \node (51) [left of=41] {};
+  \node (52) [left of=42] {};
+
+  \node (60) [left of=50] {\rkt{9}{moment}};
+  \node (61) [left of=51] {};
+  \node (62) [left of=52] {};
+
+  \node (70) [left of=60] {\rkt{0}{clock}};
+  \node (71) [left of=61] {};
+  \node (72) [left of=62] {};
+
+  \node (81) [left of=71] {\rkt{7}{main}};
+
+  %% -- edges
+  %% gregor-structs
+  \draw[->] (10) -- (01);
+  %% hmsn
+  \draw[->] (11) -- (01);
+  %% ymd
+  \draw[->] (12) -- (01);
+  %% date
+  \draw[->] (22) -- (10);
+  \draw[->] (22) -- (01);
+  \draw[->] (22) -- (12);
+  %% time
+  \draw[->] (20) -- (01);
+  \draw[->] (20) -- (10);
+  \draw[->] (20) -- (11);
+  %% datetime
+  \draw[->] (31) -- (20);
+  \draw[->] (31) -- (22);
+  \draw[->] (31) -- (11);
+  \draw[->] (31) -- (10);
+  \draw[->] (31) -- (01);
+  %% diff
+  \draw[->] (42) -- (01);
+  \draw[->] (42) -- (10);
+  \draw[->] (42) -- (11);
+  \draw[->] (42) edge[bend right=60] (12);
+  \draw[->] (42) -- (22);
+  \draw[->] (42) -- (31);
+  %% moment-base
+  \draw[->] (40) edge[bend left=60] (10);
+  \draw[->] (40) -- (31);
+  %% offset-resolvers
+  \draw[->] (50) -- (01);
+  \draw[->] (50) edge[bend left=60] (10);
+  \draw[->] (50) -- (11);
+  \draw[->] (50) -- (31);
+  \draw[->] (50) -- (40);
+  %% moment
+  \draw[->] (60) edge[bend left=60] (10);
+  \draw[->] (60) -- (11);
+  \draw[->] (60) -- (31);
+  \draw[->] (60) edge[bend left=60] (40);
+  \draw[->] (60) -- (50);
+  %% clock
+  \draw[->] (70) edge[bend left=60] (10);
+  \draw[->] (70) -- (31);
+  \draw[->] (70) -- (60);
+  %% main
+  \draw[->] (81) -- (10);
+  \draw[->] (81) -- (20);
+  \draw[->] (81) -- (22);
+  \draw[->] (81) -- (31);
+  \draw[->] (81) -- (60);
+  \draw[->] (81) -- (70);
+  \draw[->] (81) -- (42);
+
+\end{tikzpicture}

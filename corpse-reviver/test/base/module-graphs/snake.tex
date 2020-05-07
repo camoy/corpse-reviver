@@ -1,0 +1,29 @@
+\begin{tikzpicture}
+
+  \node (00)  {\rkt{3}{data}};
+  \node (10) [left of=00,xshift=-1cm] {\rkt{1}{const}};
+  \node (11) [below of=10,yshift=-0.4cm] {\rkt{2}{cut-tail}};
+  \node (20) [left of=10,xshift=-1cm] {\rkt{0}{collide}};
+  \node (21) [below of=20,yshift=-0.4cm] {\rkt{6}{motion-help}};
+  \node (30) [left of=20,xshift=-1cm] {\rkt{7}{motion}};
+  \node (40) [left of=30,xshift=-1cm] {\rkt{4}{handlers}};
+  \node (50) [left of=40,xshift=-1cm] {\rkt{5}{main}};
+
+  \draw[->] (10) -- (00);
+  \draw[->] (11) -- (00);
+  \draw[->] (20) -- (10);
+  \draw[->] (20) edge[bend left] (00);
+  \draw[->] (21) -- (11);
+  \draw[->] (21) -- (00);
+  \draw[->] (30) -- (21);
+  \draw[->] (30) edge[bend right] (10);
+  \draw[->] (30) edge[bend left] (00);
+  \draw[->] (40) edge[bend left] (20);
+  \draw[->] (40) -- (30);
+  \draw[->] (40) edge[bend left] (00);
+  \draw[->] (50) edge[bend right] (30);
+  \draw[->] (50) -- (40);
+  \draw[->] (50) edge[bend right] (10);
+  \draw[->] (50) edge[bend left] (00);
+
+\end{tikzpicture}

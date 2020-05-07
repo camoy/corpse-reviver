@@ -1,0 +1,13 @@
+\begin{tikzpicture}
+
+  \node (1) {\rkt{1}{constants}};
+  \node (0) [left of=1, yshift=-0.5cm] {\rkt{0}{client}};
+  \node (2) [left of=1, xshift=-1cm]  {\rkt{2}{main}};
+  \node (3) [left of=1, yshift=0.5cm] {\rkt{3}{server}};
+
+  \draw[->] (0) -- (1);
+  \draw[->] (2) -- (0);
+  \draw[->] (2) -- (3);
+  \draw[->] (3) -- (1);
+
+\end{tikzpicture}
