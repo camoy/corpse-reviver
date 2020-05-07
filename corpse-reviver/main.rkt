@@ -59,23 +59,22 @@
            racket/string
            rackunit)
 
+  ;; Path-String
+  ;; Directory where the tests are located.
   (define TEST-DIR "test")
 
   ;; Module-Path Module-Path → Void
   ;; Checks to make sure running optimization on the modules does not yield
   ;; an issue by running the main target.
   (define (test-optimize root main targets)
-    (define at-root
-      (λ~>> (build-path TEST-DIR root)
-            simplify-path
-            path->complete-path))
+    (define at-root (λ~>> (build-path root) simplify-path path->complete-path))
     (define main* (at-root main))
     (apply compile-files/scv-cr (map at-root targets))
     (check-not-exn
      (λ ()
       (in-dir main*
-              (parameterize ([current-namespace (make-base-namespace)])
-                (dynamic-require main* #f))))))
+        (parameterize ([current-namespace (make-base-namespace)])
+          (dynamic-require main* #f))))))
 
   ;; String {[List-of String]} → Void
   ;; Takes benchmark name and runs all files with test-optimize.
@@ -98,7 +97,7 @@
 
   ;; Path → String
   ;; Returns the file name of a path as a string.
-   (define file-name-string
+  (define file-name-string
     (λ~>> file-name-from-path path->string))
 
   ;; Path → Boolean
@@ -106,91 +105,78 @@
   (define is-main?
     (λ~>> file-name-string (string=? "main.rkt")))
 
-  (test-case
-    "Adapter imports reprovides a module as opaque (with an opaque type)."
-    (test-optimize "double-opaque"
-                   "main.rkt"
-                   '("main.rkt"
-                     "adapter.rkt")))
-
-  (test-case
-    "Testing the identifier fixup based on FSM."
-    (test-optimize "fixup-again"
-                   "population.rkt"
-                   '("population.rkt"
-                     "automata-adapted.rkt"
-                     "automata.rkt")))
-
-  (test-case
-    "Subset of struct definitions from kCFA benchmark."
-    (test-optimize "kcfa-data"
-                   "ai.rkt"
-                   '("ai.rkt"
-                     "structs-adapted.rkt"
-                     "structs.rkt")))
-
-  (test-case
-    "Adapter and module from LNM benchmark."
-    (test-optimize "lnm-data"
-                   "lnm-plot.rkt"
-                   '("lnm-plot.rkt"
-                     "plot-adapted.rkt"
-                     "plot.rkt")))
-
-#|
-  ;; BAD
-  (test-case
-    "Define and make-predicate."
-    (test-optimize "predicate"
-                   "main.rkt"
-                   '("main.rkt"
-                     "server.rkt")))
-
-  (test-case
-    "Struct predicate reference needs to be fixed."
-    (test-optimize "redefine-struct-predicate"
-                   "lnm-plot.rkt"
-                   '("lnm-plot.rkt"
-                     "plot-adapted.rkt"
-                     "plot.rkt")))
-
-  (test-case
-    "Test require/opaque."
-    (test-optimize "require-opaque"
-                   "main.rkt"
-                   '("main.rkt")))
-
-  ;; BAD
-  (test-case
-    "Test require/typed/opaque."
-    (test-optimize "require-typed-opaque"
-                   "main.rkt"
-                   '("main.rkt")))
-
-  ;; BAD
-  (test-case
-    "Test require/typed/provide/opaque."
-    (test-optimize "require-typed-provide-opaque"
-                   "main.rkt"
-                   '("main.rkt"
-                     "adapter.rkt")))
-
-  (test-case
-    "Test rest argument."
-    (test-optimize "rest-args"
-                   "main.rkt"
-                   '("main.rkt")))
-
-  (test-benchmark "fsm" #:omit '("benchmark-util.rkt"))
-  (test-benchmark "morsecode")
-  (test-benchmark "zombie")
-  (test-benchmark "zordoz")
-  (test-benchmark "lnm")
-  (test-benchmark "suffixtree")
-  (test-benchmark "kcfa")
-  (test-benchmark "snake")
-  (test-benchmark "tetris")
-  (test-benchmark "synth")
-  (test-benchmark "gregor")
-  |#
-  )
+  (parameterize ([current-directory TEST-DIR])
+    (test-case
+      "Adapter imports reprovides a module as opaque (with an opaque type)."
+      (test-optimize "double-opaque"
+                     "main.rkt"
+                     '("main.rkt"
+                       "adapter.rkt")))
+    (test-case
+      "Testing the identifier fixup based on FSM."
+      (test-optimize "fixup-again"
+                     "population.rkt"
+                     '("population.rkt"
+                       "automata-adapted.rkt"
+                       "automata.rkt")))
+    (test-case
+      "Subset of struct definitions from kCFA benchmark."
+      (test-optimize "kcfa-data"
+                     "ai.rkt"
+                     '("ai.rkt"
+                       "structs-adapted.rkt"
+                       "structs.rkt")))
+    (test-case
+      "Adapter and module from LNM benchmark."
+      (test-optimize "lnm-data"
+                     "lnm-plot.rkt"
+                     '("lnm-plot.rkt"
+                       "plot-adapted.rkt"
+                       "plot.rkt")))
+    (test-case
+      "Define and make-predicate."
+      (test-optimize "predicate"
+                     "main.rkt"
+                     '("main.rkt"
+                       "server.rkt")))
+    (test-case
+      "Struct predicate reference needs to be fixed."
+      (test-optimize "redefine-struct-predicate"
+                     "lnm-plot.rkt"
+                     '("lnm-plot.rkt"
+                       "plot-adapted.rkt"
+                       "plot.rkt")))
+    (test-case
+      "Test require/opaque."
+      (test-optimize "require-opaque"
+                     "main.rkt"
+                     '("main.rkt")))
+    (test-case
+      "Test require/typed/opaque."
+      (test-optimize "require-typed-opaque"
+                     "main.rkt"
+                     '("main.rkt")))
+    (test-case
+      "Test require/typed/provide/opaque."
+      (test-optimize "require-typed-provide-opaque"
+                     "main.rkt"
+                     '("main.rkt"
+                       "adapter.rkt")))
+    (test-case
+      "Test rest argument."
+      (test-optimize "rest-args"
+                     "main.rkt"
+                     '("main.rkt")))
+    (test-benchmark "sieve")
+    (test-benchmark "fsm" #:omit '("benchmark-util.rkt"))
+    (test-benchmark "morsecode")
+    (test-benchmark "zombie")
+    (test-benchmark "zordoz")
+    (test-benchmark "lnm")
+    (test-benchmark "suffixtree")
+    (test-benchmark "kcfa")
+    (test-benchmark "snake")
+    (test-benchmark "tetris")
+    (test-benchmark "synth")
+    (test-benchmark "gregor")
+    ))

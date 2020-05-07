@@ -128,8 +128,7 @@
     #`(begin
         (module require/safe typed/racket/base/no-check
           (require soft-contract/fake-contract ?lib ...)
-          ?opaque ...
-          ?prov)
+          ?opaque ... ?prov)
         (require/define 'require/safe
                         #,(set-subtract (hash-keys (bundle-exports bundle))
                                         (structs-exports (bundle-structs bundle)))

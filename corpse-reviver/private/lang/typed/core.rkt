@@ -37,10 +37,13 @@
      #'(void)]))
 
 (begin-for-syntax
+  ;; Conservatively, if we don't have any information on an identifier, we assume
+  ;; it's unsafe.
   (define (unsafe-id? m id)
     (define m-path (path->string (resolve-module-path (syntax->datum m))))
-    (define unsafes (hash-ref unsafe-hash m-path))
-    (member (syntax->datum id) unsafes))
+    (define unsafes (hash-ref unsafe-hash m-path (λ () #f)))
+    (or (not unsafes)
+        (member (syntax->datum id) unsafes)))
 
   (define (clauses m clauses ids unsafe?)
     (for/filter ([clause (in-syntax clauses)]

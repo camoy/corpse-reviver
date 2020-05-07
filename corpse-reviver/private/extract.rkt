@@ -82,10 +82,13 @@
 ;; Syntax → List
 ;; Returns a list of unique values from the syntax of the syntax property.
 (define (make-libs stx)
+  (define dont-import-lib (set 'racket/base))
   (set->list
-   (for/set ([x (in-set (syntax-property-values stx 'lib))]
-             #:unless (syntax-property x 'opaque))
-     (syntax-e x))))
+   (set-subtract
+    (for/set ([x (in-set (syntax-property-values stx 'lib))]
+              #:unless (syntax-property x 'opaque))
+      (syntax-e x))
+    dont-import-lib)))
 
 ;; Syntax → [Listof Syntax]
 ;; Returns a list of syntax for defining opaque imports.
