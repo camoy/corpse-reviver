@@ -12,8 +12,10 @@
 (define deps
   '(("base" #:version "7.4")
     "fancy-app"
+    "graph"
     "lang-file"
     "mischief"
+    "git://github.com/camoy/soft-contract.git#scv-cr"
     "threading"))
 
 (define build-deps
