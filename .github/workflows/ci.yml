@@ -11,11 +11,11 @@ jobs:
           distribution: 'full'
           variant: 'regular'
           version: '7.4'
-      - env:
-          Z3_LIB: /usr/lib/
       # Install Z3 for SCV.
       - run: sudo apt install -y z3
       # Typed Racket Hacks prints to STDOUT causing exit code 1.
       # Let's just force success :)
       - run: raco pkg install --deps search-auto || true
       - run: raco test --drdr .
+        env:
+          Z3_LIB: /usr/lib/
