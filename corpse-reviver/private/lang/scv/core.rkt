@@ -70,12 +70,7 @@
 
 ;; Disable require/typed within an analysis (since this will always be provided
 ;; by SCV-CR via a require/safe submodule).
-(define-syntax (require/typed stx)
-  (syntax-parse stx
-    [(_ ?m:expr ?x:clause ...)
-     (if (syntax-property #'?m 'opaque)
-         (replace-context stx #'(begin ?x.opaque ...))
-         #'(void))]))
+(define-syntax (require/typed stx) #'(void))
 
 ;; Disable require/typed/provide within an analysis for the same reason as above,
 ;; but provide the bindings since Typed Racket will not give those to the provide
@@ -83,9 +78,7 @@
 (define-syntax (require/typed/provide stx)
   (syntax-parse stx
     [(_ ?m:expr ?x:clause ...)
-     (if (syntax-property #'?m 'opaque)
-         (replace-context stx #'(begin (provide ?x.out ...) ?x.opaque ...))
-         (replace-context stx #'(provide ?x.out ...)))]))
+     (replace-context stx #'(provide ?x.out ...))]))
 
 ;; Provide but excluding identifiers that were already exported by SCV-CR with
 ;; contracts.

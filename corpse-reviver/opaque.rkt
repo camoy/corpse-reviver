@@ -30,11 +30,11 @@
 (define-syntax (require/typed/opaque stx)
   (syntax-parse stx
     [(_ m x:clause ...)
-     #:with m* (syntax-property #'m 'opaque #t)
-     (replace-context stx #'(require/typed m x ...))]))
+     #:with m* (syntax-property #'m 'opaque #'(begin x.opaque ...))
+     (replace-context stx #'(require/typed m* x ...))]))
 
 (define-syntax (require/typed/provide/opaque stx)
   (syntax-parse stx
     [(_ m x:clause ...)
-     #:with m* (syntax-property #'m 'opaque #t)
+     #:with m* (syntax-property #'m 'opaque #'(begin x.opaque ...))
      (replace-context stx #'(require/typed/provide m* x ...))]))

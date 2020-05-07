@@ -32,6 +32,7 @@
   (contracts (make-bundle stx 'provide)
              (make-bundle stx 'require)
              (make-libs stx)
+             (make-opaques stx)
              (make-predicates stx)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -65,14 +66,10 @@
 ;; Syntax Exports → Exports
 ;; Updates the exports to include exports defined by the syntax.
 (define (make-exports stx exports)
-  (define (exports-set name ctc)
-    (hash-set exports (syntax-e name) (munge name ctc)))
   (syntax-parse stx
     #:literals (begin)
-    [(begin _:definition ... ?e:export) (exports-set #'?e.name #'?e.contract)]
-    [?e:import
-     #:when (not (syntax-property #'?e.lib 'opaque))
-     (exports-set #'?e.name #'?e.contract)]
+    [(~or (begin _:definition ... ?e:export) ?e:import)
+     (hash-set exports (syntax-e #'?e.name) (munge #'?e.name #'?e.contract))]
     [_ exports]))
 
 ;; Syntax → [Hash Any Syntax]
@@ -89,6 +86,16 @@
    (for/set ([x (in-set (syntax-property-values stx 'lib))]
              #:unless (syntax-property x 'opaque))
      (syntax-e x))))
+
+;; Syntax → [Listof Syntax]
+;; Returns a list of syntax for defining opaque imports.
+(define (make-opaques stx)
+  (for/lists (done result #:result result)
+             ([x (in-set (syntax-property-values stx 'lib))]
+              #:when (syntax-property x 'opaque)
+              #:when (not (member (syntax-e x) done)))
+    (values (syntax-e x)
+            (syntax-property x 'opaque))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; syntax classes
@@ -111,7 +118,7 @@
 (define-syntax-class import
   #:datum-literals (begin require only-in define-ignored)
   (pattern (begin
-             (require (only-in lib:expr (name:id _)))
+             (require (only-in _ (name:id _)))
              _
              (define-ignored _ (_ contract:expr _ _ _ _ _)))))
 
@@ -287,4 +294,15 @@
     (chk
      #:t (hash-has-key? predicate-hash '(define-predicate is-number*? Integer))
      #:t (hash-has-key? predicate-hash '(make-predicate Number))))
+
+  (test-case "make-opaques"
+    (define x (syntax-property #'x 'opaque #'(define foo "foo")))
+    (define y (syntax-property #'y 'opaque #'(define bar "bar")))
+    (define z #`(begin #,(syntax-property #'1 'lib x)
+                       #,(syntax-property #'2 'lib x)
+                       #,(syntax-property #'3 'lib y)))
+    (chk
+     #:eq set=?
+     (map syntax->datum (make-opaques z))
+     '((define bar "bar") (define foo "foo"))))
   )

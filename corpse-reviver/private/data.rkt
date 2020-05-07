@@ -20,6 +20,7 @@
     ([provide bundle?]
      [require bundle?]
      [libs (listof module-path?)]
+     [opaques (listof syntax?)]
      [predicates (hash/c any/c syntax?)]))
 
   (struct bundle
@@ -64,9 +65,10 @@
 ;;   provide contains information for contracts on exports,
 ;;   require contains information for contracts on untyped imports,
 ;;   libs is a list of libraries imported with require/typed,
+;;   opaques is a list syntax definitions for defining opaque imports,
 ;;   predicates maps predicates, as an s-expression, to their definition
 ;;     (these predicates come from make-predicate or define-predicate).
-(struct contracts (provide require libs predicates) #:prefab)
+(struct contracts (provide require libs opaques predicates) #:prefab)
 
 ;; A Bundle is a struct where
 ;;   definitions maps an identifier representing a contract to its definition,

@@ -11,8 +11,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; require
 
-(require fancy-app
-         graph
+(require graph
          mischief/for
          racket/function
          racket/hash
@@ -105,7 +104,7 @@
 (define (unsafe mod mods blms)
   (define (server-module blm)
     (define path (blame-server blm))
-    (findf (equal? (mod-target _) path) mods))
+    (findf (λ (x) (equal? (mod-target x) path)) mods))
   (define unsafe
     (for/list ([blm (in-list blms)]
                #:when (server-module blm))
@@ -121,7 +120,7 @@
 ;; Bundle [Listof Symbol] → [Listof Symbol]
 ;; Returns a list of unsafe exports given a list of residual contracts.
 (define (bundle->unsafe-exports bundle residuals)
-  (filter (member _ residuals)
+  (filter (λ (x) (member x residuals))
           (append (hash-keys (bundle-exports bundle))
                   (structs-exports (bundle-structs bundle)))))
 
