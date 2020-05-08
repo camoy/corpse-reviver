@@ -1,0 +1,28 @@
+\begin{tikzpicture}
+
+  \node (0)             {\rkt{0}{data}};
+  \node (1) [left of=0] {\rkt{1}{label}};
+  \node (2) [left of=1] {\rkt{4}{structs}};
+  \node (3) [left of=2] {\rkt{5}{ukkonen}};
+  \node (4) [left of=3] {\rkt{2}{lcs}};
+  \node (5) [left of=4] {\rkt{3}{main}};
+
+  %% -- edges
+  %% label
+  \draw[->] (1) -- (0);
+  %% structs
+  \draw[->] (2) edge[bend right=75] (0);
+  \draw[->] (2) -- (1);
+  %% ukkonen
+  \draw[->] (3) edge[bend left=75] (0);
+  \draw[->] (3) edge[bend left=75] (1);
+  \draw[->] (3) -- (2);
+  %% lcs
+  \draw[->] (4) edge[bend right=75] (0);
+  \draw[->] (4) edge[bend right=75] (1);
+  \draw[->] (4) edge[bend right=75] (2);
+  \draw[->] (4) -- (3);
+  %% main
+  \draw[->] (5) -- (4);
+
+\end{tikzpicture}
