@@ -26,7 +26,7 @@
          "compile.rkt"
          "data.rkt"
          "elaborate.rkt"
-         "log.rkt"
+         "logging.rkt"
          "struct.rkt"
          "util.rkt")
 
@@ -52,7 +52,7 @@
     (values (mod-target mod) (mod-syntax mod)))
   (debug "Optimizing ~a." targets)
   (define -blms
-    (measure 'analyze
+    (measure 'analyze #f
       (with-continuation-mark 'scv? #t
         (with-patched-typed-racket
           (verify-modules targets stxs)))))

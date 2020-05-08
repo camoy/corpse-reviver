@@ -4,7 +4,8 @@
 ;; provide
 
 (provide debug
-         measure)
+         measure
+         scv-cr-logger)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; require
@@ -15,7 +16,6 @@
 ;; logger
 
 (define-logger scv-cr)
-(define-logger scv-cr-time #:parent scv-cr-logger)
 
 ;; String Any ... → Void
 ;; Log value for debugging purposes (and make it pretty).
@@ -26,8 +26,8 @@
                         x)
                     ...))
 
-(define-syntax-rule (measure key x ...)
+(define-syntax-rule (measure key tgt x ...)
   (let-values ([(results cpu-time real-time gc-time)
                 (time-apply (λ () (begin x ...)) '())])
-    (log-scv-cr-time-info "~a took ~a." key (list cpu-time real-time gc-time))
+    (log-scv-cr-info "~s" (list key tgt cpu-time real-time gc-time))
     (apply values results)))

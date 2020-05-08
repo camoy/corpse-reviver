@@ -19,6 +19,7 @@
          "private/compile.rkt"
          "private/data.rkt"
          "private/elaborate.rkt"
+         "private/logging.rkt"
          "private/optimize.rkt"
          "private/syntax.rkt")
 
@@ -45,11 +46,12 @@
 ;; Path-String ... → Any
 ;; Compiles files at the given paths with SCV-CR.
 (define (compile-files/scv-cr . -targets)
-  (define targets (map canonicalize-path -targets))
-  (for-each delete-bytecode targets)
-  (define mods (sort-by-dep (map make-mod targets)))
-  (define opt-mods (optimize mods))
-  (compile-modules opt-mods))
+  (measure 'total #f
+    (define targets (map canonicalize-path -targets))
+    (for-each delete-bytecode targets)
+    (define mods (sort-by-dep (map make-mod targets)))
+    (define opt-mods (optimize mods))
+    (compile-modules opt-mods)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; test

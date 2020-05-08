@@ -35,7 +35,7 @@
          syntax/modresolve
          threading
          "data.rkt"
-         "log.rkt"
+         "logging.rkt"
          "util.rkt")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -59,7 +59,7 @@
 ;; Path-String Syntax → Compiled-Expression
 ;; Compiles syntax in the directory of the given path.
 (define (compile/dir target stx)
-  (measure 'compile
+  (measure 'compile target
     (in-dir target
       (parameterize ([current-namespace (make-base-namespace)])
         (compile stx)))))
@@ -69,7 +69,7 @@
 ;; Racket. We use the compiled-load handler for monkey patching (i.e. some Typed
 ;; Racket modules are redirected to our implementation).
 (define (expand/dir target stx)
-  (measure 'expand
+  (measure 'expand target
     (in-dir target
       (with-patched-typed-racket
         (expand stx)))))

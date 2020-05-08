@@ -22,7 +22,7 @@
          "data.rkt"
          "dependency.rkt"
          "extract.rkt"
-         "log.rkt"
+         "logging.rkt"
          "struct.rkt"
          "syntax.rkt"
          "util.rkt")
