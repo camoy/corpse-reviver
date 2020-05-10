@@ -7,3 +7,5 @@
   '(("scv-cr-benchmark" (submod corpse-reviver-benchmark main)
                         "Benchmark the performance of SCV-CR optimized programs."
                         #f)))
+
+(define compile-omit-paths '("benchmarks"))
