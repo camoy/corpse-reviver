@@ -139,7 +139,7 @@
       [struct-data
        (define struct-provides (struct-data-exports id struct-data))
        (set-union unsafe (set-intersect struct-provides exports))]
-      [(member id residuals) (set-add unsafe id)]
+      [(member id exports) (set-add unsafe id)]
       [else unsafe])))
 
 ;; Mod Blame → [Listof Symbol]
