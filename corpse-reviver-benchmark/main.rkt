@@ -35,7 +35,7 @@
 
 (define BENCHMARKS
   '("sieve"
-    #;"fsm"
+    ("fsm" . ("benchmark-util.rkt"))
     #;"morsecode"
     #;"zombie"
     #;"zordoz"
@@ -53,14 +53,20 @@
 (define current-target (make-parameter #f))
 (define current-timing (make-parameter #f))
 (define current-config-timing (make-parameter #f))
+(define current-ignore (make-parameter '()))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; main
 
 (module+ main
   (define config (parse (current-command-line-arguments)))
-  (define targets (map (build-path BENCHMARK-DIR _) BENCHMARKS))
-  (measure-task targets config))
+  (for ([b (in-list BENCHMARKS)])
+    (define-values (benchmark ignore)
+      (if (cons? b)
+          (values (car b) (cdr b))
+          (values b null)))
+    (define target (build-path BENCHMARK-DIR benchmark))
+    (measure-task benchmark ignore target config)))
 
 ;; [Vector String] → List
 ;; Converts command line arguments into arguments suitable for a call to
@@ -71,7 +77,7 @@
   (command-line
    #:program "scv-cr-benchmark"
    #:argv argv
-   #:once-any
+   #:once-each
    [("-i" "--iterations")
     iters
     "Number of iterations"
@@ -107,23 +113,21 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; main functions
 
-;; [Listof Path-String] Config → Task [Hash Path-String Timing]
-(define (measure-task targets config)
-  (define targets*
-    (for/list ([tgt (in-list targets)])
-      (cons (path->string (normalize-path tgt))
-            (valid-target? tgt))))
+;; Path-String Config → Task [Hash Path-String Timing]
+(define (measure-task benchmark ignore tgt config)
+  (define target*
+    (cons (path->string (normalize-path tgt))
+          (valid-target? tgt)))
   (define config* (init-config (hash->immutable-hash config)))
-  (define task (init-task targets* config*))
+  (define task (init-task (list target*) config*))
   (for ([cfg (in-list (task->config* task))])
     (check-pkg-deps (config-ref cfg key:bin) #:auto? #true))
-  (for ([tgt targets]
-        [benchmark BENCHMARKS]
-        [st (in-list (in-subtasks task))])
+  (for ([st (in-list (in-subtasks task))])
     (define timing (make-queue))
     (parameterize ([current-file-runner file-runner]
                    [current-target tgt]
-                   [current-timing timing])
+                   [current-timing timing]
+                   [current-ignore ignore])
       (subtask-run! st))
     (define timestamp
       (parameterize ([date-display-format 'iso-8601])
@@ -141,7 +145,10 @@
 (define (file-runner main config)
   (define main-dir (path-only (path->complete-path (string->path main))))
   (define targets
-    (filter (λ (x) (and (rkt? x) (not (fake-prefixed? x))))
+    (filter (λ (x) (and (rkt? x)
+                        (not (fake-prefixed? x))
+                        (not (member (path->string (file-name-from-path x))
+                                     (current-ignore)))))
             (directory-list main-dir #:build? main-dir)))
   (define should-try? #t)
   (λ ([out-port (current-output-port)])
@@ -219,10 +226,10 @@
           (hash-ref summarized 'expand (λ () (list 0 0 0))))
         (match-define
           (list compile-cpu-time compile-real-time compile-gc-time)
-          (hash-ref summarized 'compile))
+          (hash-ref summarized 'compile (λ () (list 0 0 0))))
         (match-define
           (list analyze-cpu-time analyze-real-time analyze-gc-time)
-          (hash-ref summarized 'analyze))
+          (hash-ref summarized 'analyze (λ () (list 0 0 0))))
         (for/list ([time (in-list times)])
           (hash 'benchmark benchmark
                 'config config
