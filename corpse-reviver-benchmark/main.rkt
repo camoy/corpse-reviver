@@ -17,6 +17,7 @@
          gcstats/core
          mischief/for
          racket/cmdline
+         racket/exn
          racket/list
          racket/match
          racket/path
@@ -133,6 +134,7 @@
   (define targets
     (filter (λ (x) (and (rkt? x) (not (fake-prefixed? x))))
             (directory-list main-dir #:build? main-dir)))
+  (define should-try? #t)
   (λ ([out-port (current-output-port)])
     (define config-timing (make-queue))
 
@@ -162,53 +164,64 @@
             (L)))
         (define thr (thread handler))
         (parameterize ([current-directory main-dir])
-          (apply compile-files/scv-cr (map path->string targets)))
+          (with-handlers ([exn:fail? (λ (e)
+                                       (set! should-try? #f)
+                                       (enqueue! config-timing
+                                                 (list 'error-scv-cr #f (exn->string e))))])
+            (apply compile-files/scv-cr (map path->string targets))))
         (define gc-string (open-output-string))
         (parameterize ([current-output-port gc-string])
           (continue buf initial-times
                     (cons (current-process-milliseconds)
                           (current-inexact-milliseconds))))
         (kill-thread thr)
-        (enqueue! config-timing (list 'gc-stats #f (get-output-string gc-string)))
-        (enqueue! (current-timing) (queue->list config-timing)))
+        (enqueue! config-timing (list 'gc-stats #f (get-output-string gc-string))))
       #:logger scv-cr-logger
       'info)
 
     ;; run
     (define resolved-main (make-resolved-module-path (string->path main)))
     (define iterations (config-ref config key:iterations))
-    (for ([_ (in-range iterations)])
-      (parameterize ([current-namespace (make-base-namespace)]
-                     [current-output-port out-port])
-        (dynamic-require resolved-main #f)))))
-
+    (when should-try?
+      (for ([_ (in-range iterations)])
+        (parameterize ([current-namespace (make-base-namespace)]
+                       [current-output-port out-port])
+          (with-handlers ([exn:fail? (λ (e)
+                                       (enqueue! config-timing
+                                                 (list 'error-run #f (exn->string e))))])
+            (dynamic-require resolved-main #f)))))
+    (enqueue! (current-timing) (queue->list config-timing))))
+(require racket/pretty)
 (define (parse-gtp-measure-data path benchmark timings)
   (define scv-cr-timings (hash-ref timings path))
   (with-input-from-file path
     (λ ()
       (void (read-line))
       (for/append ([ln (in-lines)]
+                   [scv-cr-time (in-list scv-cr-timings)]
                    #:when (non-empty-string? ln))
         (define ln-val (string->value ln))
         (define config (first ln-val))
-        (for/list ([time (in-list (second ln-val))]
-                   [scv-cr-time (in-list scv-cr-timings)])
-          (define merged (merge-timings scv-cr-time))
-          (define summarized (summarize-timings merged))
-          (match-define
-            (list expand-cpu-time expand-real-time expand-gc-time)
-            (hash-ref summarized 'expand (λ () (list 0 0 0))))
-          (match-define
-            (list compile-cpu-time compile-real-time compile-gc-time)
-            (hash-ref summarized 'compile))
-          (match-define
-            (list analyze-cpu-time analyze-real-time analyze-gc-time)
-            (hash-ref summarized 'analyze))
+        (define times (if (empty? (second ln-val)) '(#f) (second ln-val)))
+        (define merged (merge-timings scv-cr-time))
+        (define summarized (summarize-timings merged))
+        (match-define
+          (list expand-cpu-time expand-real-time expand-gc-time)
+          (hash-ref summarized 'expand (λ () (list 0 0 0))))
+        (match-define
+          (list compile-cpu-time compile-real-time compile-gc-time)
+          (hash-ref summarized 'compile))
+        (match-define
+          (list analyze-cpu-time analyze-real-time analyze-gc-time)
+          (hash-ref summarized 'analyze))
+        (for/list ([time (in-list times)])
           (hash 'benchmark benchmark
                 'config config
-                'cpu-time (time-string->cpu-time time)
-                'real-time (time-string->real-time time)
-                'gc-time (time-string->gc-time time)
+                'error-scv-cr (escape-newline (hash-ref summarized 'error-scv-cr (λ () "")))
+                'error-run (escape-newline (hash-ref summarized 'error-run (λ () "")))
+                'cpu-time (and time (time-string->cpu-time time))
+                'real-time (and time (time-string->real-time time))
+                'gc-time (and time (time-string->gc-time time))
                 'expand-cpu-time expand-cpu-time
                 'expand-real-time expand-real-time
                 'expand-gc-time expand-gc-time
@@ -218,7 +231,6 @@
                 'analyze-cpu-time analyze-cpu-time
                 'analyze-real-time analyze-real-time
                 'analyze-gc-time analyze-gc-time
-                'unsafe-ids (format "~s" (hash-ref summarized 'unsafe-ids))
                 'warning (escape-newline (hash-ref summarized 'warning (λ () "")))
                 'blame (format "~s" (hash-ref summarized 'blame (λ () null)))
                 'gc-stats (escape-newline (hash-ref summarized 'gc-stats))))))))
@@ -241,7 +253,6 @@
 (define (merge-timings timings)
   (for/fold ([acc (hash)])
             ([timing (in-list timings)])
-    (displayln timing)
     (match-define (list key path this) timing)
     (hash-update acc
                  (list key path)
