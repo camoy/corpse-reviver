@@ -148,6 +148,35 @@
                      '("lnm-plot.rkt"
                        "plot-adapted.rkt"
                        "plot.rkt")))
+
+    (test-case
+      "Good (fully verifies)."
+      (test-optimize "good"
+                     "main.rkt"
+                     '("main.rkt"
+                       "server.rkt")))
+
+    (test-case
+      "Bad (doesn't fully verify)."
+      (test-optimize "bad"
+                     "main.rkt"
+                     '("main.rkt"
+                       "server.rkt")))
+
+    (test-case
+      "Good struct (fully verifies)."
+      (test-optimize "good-struct"
+                     "main.rkt"
+                     '("main.rkt"
+                       "server.rkt")))
+
+    (test-case
+      "Bad struct (doesn't fully verify)."
+      (test-optimize "bad-struct"
+                     "main.rkt"
+                     '("main.rkt"
+                       "server.rkt")))
+
     (test-case
       "Test require/opaque."
       (test-optimize "require-opaque"

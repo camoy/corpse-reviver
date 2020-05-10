@@ -33,7 +33,7 @@
 ;; Path-String → Mod
 ;; Returns a module from a file and syntax.
 (define (make-mod target)
-  (debug "Begin (make-mod ~a)." target)
+  (debug "elaborating: ~a" target)
   (define raw-stx (syntax-fetch target))
   (if (typed? target)
       (typed->mod target raw-stx)
@@ -45,7 +45,7 @@
   (define expanded-stx (expand/dir target raw-stx))
   (define ctcs (make-contracts expanded-stx))
   (define elaborated (elaborate raw-stx ctcs target))
-  (debug "Elaborated (~a):\n ~a." target elaborated)
+  (debug "elaborated (~a):\n~a." target elaborated)
   (compile+write/dir target expanded-stx)
   (mod target
        raw-stx elaborated ctcs #t (imports target)

@@ -218,7 +218,10 @@
                 'analyze-cpu-time analyze-cpu-time
                 'analyze-real-time analyze-real-time
                 'analyze-gc-time analyze-gc-time
-                'gc-stats (format "~s" (hash-ref summarized 'gc-stats))))))))
+                'unsafe-ids (format "~s" (hash-ref summarized 'unsafe-ids))
+                'warning (escape-newline (hash-ref summarized 'warning (λ () "")))
+                'blame (format "~s" (hash-ref summarized 'blame (λ () null)))
+                'gc-stats (escape-newline (hash-ref summarized 'gc-stats))))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; helper functions
@@ -226,26 +229,24 @@
 (define ((merge-id x))
   (cond
     [(string? x) ""]
-    [(list? x) '(0 0 0)]))
+    [(timing-list? x) '(0 0 0)]
+    [else null]))
 
 (define ((merge-op x) y)
   (cond
-    [(string? x) (string-append x y)]
-    [(list? x) (map + x y)]))
+    [(string? x) (string-append x "\n" y)]
+    [(timing-list? x) (map + x y)]
+    [else (cons x y)]))
 
 (define (merge-timings timings)
   (for/fold ([acc (hash)])
             ([timing (in-list timings)])
-    (match-define (list key path this-times)
-      (cond
-        [(eq? (car timing) 'gc-stats) timing]
-        [else
-         (match-define (list key path cpu real gc) timing)
-         (list key path (list cpu real gc))]))
+    (displayln timing)
+    (match-define (list key path this) timing)
     (hash-update acc
                  (list key path)
-                 (merge-op this-times)
-                 (merge-id this-times))))
+                 (merge-op this)
+                 (merge-id this))))
 
 (define (summarize-timings merged)
   (for/fold ([acc (hash)])
@@ -287,3 +288,11 @@
 
 (define (fake-prefixed? target)
   (string-prefix? (path->string (file-name-from-path target)) "fake-"))
+
+(define (escape-newline str)
+  (string-replace str "\n" "\\n"))
+
+(define (timing-list? x)
+  (and (list? x)
+       (andmap number? x)
+       (= (length x) 3)))

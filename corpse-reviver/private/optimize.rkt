@@ -18,6 +18,8 @@
          racket/list
          racket/match
          racket/math
+         racket/pretty
+         racket/set
          racket/struct
          soft-contract/main
          syntax/parse
@@ -39,7 +41,7 @@
 ;; which are proven safe can use. We ignore all blame of a typed module (these
 ;; are known false positives by Typed Racket's soundness).
 (define (optimize mods)
-  (debug "Begin (optimize ~a)." mods)
+  (debug "optimize: ~a" (pretty-format mods))
 
   ;; STOP! This is always needed (and I've wasted many hours debugging by
   ;; forgetting it). Without compiling modules with the elaborated source, SCV
@@ -50,15 +52,15 @@
   (define/for/lists (targets stxs)
     ([mod (in-list mods)])
     (values (mod-target mod) (mod-syntax mod)))
-  (debug "Optimizing ~a." targets)
+  (debug "targets: ~a" targets)
   (define -blms
     (measure 'analyze #f
       (with-continuation-mark 'scv? #t
         (with-patched-typed-racket
           (verify-modules targets stxs)))))
-  (debug "Raw analysis ~a." -blms)
+  (info 'blame -blms)
   (define blms (filter (untyped-blame? mods) -blms))
-  (debug "Filtered analysis ~a." -blms)
+  (debug "filtered analysis: ~a" -blms)
 
   ;; Optimize with analysis results
   (for/list ([mod (in-list mods)])
@@ -82,7 +84,7 @@
             (#%module-begin
              (register-unsafe-hash! #,unsafe-hash)
              ?body ...)))]))
-  (debug "Optimized (~a):\n~a." (mod-target m) stx)
+  (debug "optimized ~a:\n~a" (mod-target m) stx)
   (struct-copy mod m [syntax stx]))
 
 ;; Syntax → Syntax
@@ -104,7 +106,8 @@
 (define (unsafe mod mods blms)
   (define (server-module blm)
     (define path (blame-server blm))
-    (findf (λ (x) (equal? (mod-target x) path)) mods))
+    (define result (findf (λ (x) (equal? (mod-target x) path)) mods))
+    result)
   (define unsafe
     (for/list ([blm (in-list blms)]
                #:when (server-module blm))
@@ -112,6 +115,12 @@
       (define bundle (contracts-provide (mod-contracts mod)))
       (define residuals (residual-contracts mod blm))
       (hash (blame-server blm) (bundle->unsafe-exports bundle residuals))))
+
+  ;; HACK: Needed to avoid #3168. Move into `server-module` for Racket >=7.8
+  (for ([blm (in-list blms)]
+        #:when (not (server-module blm)))
+    (warn (format "cannot locate contract for blame: ~a" (pretty-format blm))))
+
   (define default-hash
     (for/hash ([mod (in-list mods)])
       (values (mod-target mod) null)))
@@ -121,8 +130,8 @@
 ;; Returns a list of unsafe exports given a list of residual contracts.
 (define (bundle->unsafe-exports bundle residuals)
   (filter (λ (x) (member x residuals))
-          (append (hash-keys (bundle-exports bundle))
-                  (structs-exports (bundle-structs bundle)))))
+          (set-union (hash-keys (bundle-exports bundle))
+                     (structs-exports (bundle-structs bundle)))))
 
 ;; Mod Blame → [Listof Symbol]
 ;; Returns a list of contract identifiers that need to be kept according to the

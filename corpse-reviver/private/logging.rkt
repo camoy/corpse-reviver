@@ -4,7 +4,9 @@
 ;; provide
 
 (provide debug
+         info
          measure
+         warn
          scv-cr-logger)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -26,8 +28,14 @@
                         x)
                     ...))
 
+(define-syntax-rule (warn str)
+  (log-scv-cr-warning "~s" (list 'warning #f str)))
+
+(define-syntax-rule (info key datum)
+  (log-scv-cr-info "~s" (list key #f datum)))
+
 (define-syntax-rule (measure key tgt x ...)
   (let-values ([(results cpu-time real-time gc-time)
                 (time-apply (λ () (begin x ...)) '())])
-    (log-scv-cr-info "~s" (list key tgt cpu-time real-time gc-time))
+    (log-scv-cr-info "~s" (list key tgt (list cpu-time real-time gc-time)))
     (apply values results)))
