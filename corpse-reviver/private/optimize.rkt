@@ -67,7 +67,7 @@
     (define blame-filter
       (if (mod-typed? mod) blame-violates-my-contract? blame-me?))
     (define blms-mod (filter blame-filter blms))
-    (define unsafe-hash (unsafe mod mods blms-mod))
+    (define unsafe-hash (unsafe mods blms-mod))
     (optimize+unsafe mod unsafe-hash)))
 
 ;; Mod [Hash Complete-Path Symbol] → Mod
@@ -100,10 +100,10 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; unsafe
 
-;; Mod [Listof Mod] [Listof Blame] → [Hash Complete-Path [Listof Symbol]]
+;; [Listof Mod] [Listof Blame] → [Hash Complete-Path [Listof Symbol]]
 ;; Returns a hash that maps modules to a list of bindings that are unsafe and
 ;; must be imported with contracts enabled.
-(define (unsafe mod mods blms)
+(define (unsafe mods blms)
   (define (server-module blm)
     (define path (blame-server blm))
     (define result (findf (λ (x) (equal? (mod-target x) path)) mods))
@@ -127,11 +127,20 @@
   (apply hash-union #:combine append default-hash unsafe))
 
 ;; Bundle [Listof Symbol] → [Listof Symbol]
-;; Returns a list of unsafe exports given a list of residual contracts.
+;; Returns a list of unsafe exports given a list of residual contracts. If
+;; residuals has a struct name, we take all struct exports. Otherwise, we
+;; simply take the identifier itself if it's an export.
 (define (bundle->unsafe-exports bundle residuals)
-  (filter (λ (x) (member x residuals))
-          (set-union (hash-keys (bundle-exports bundle))
-                     (structs-exports (bundle-structs bundle)))))
+  (define exports (hash-keys (bundle-exports bundle)))
+  (for/fold ([unsafe null])
+            ([id (in-list residuals)])
+    (define struct-data (hash-ref (bundle-structs bundle) id (λ () #f)))
+    (cond
+      [struct-data
+       (define struct-provides (struct-data-exports id struct-data))
+       (set-union unsafe (set-intersect struct-provides exports))]
+      [(member id residuals) (set-add unsafe id)]
+      [else unsafe])))
 
 ;; Mod Blame → [Listof Symbol]
 ;; Returns a list of contract identifiers that need to be kept according to the
