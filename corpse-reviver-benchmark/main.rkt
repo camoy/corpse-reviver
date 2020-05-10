@@ -16,6 +16,7 @@
          gtp-util
          gcstats/core
          mischief/for
+         racket/date
          racket/cmdline
          racket/exn
          racket/list
@@ -59,8 +60,7 @@
 (module+ main
   (define config (parse (current-command-line-arguments)))
   (define targets (map (build-path BENCHMARK-DIR _) BENCHMARKS))
-  (define-values (task timings) (measure-task targets config))
-  (display-table (measure-data->table (measure-data task timings))))
+  (measure-task targets config))
 
 ;; [Vector String] → List
 ;; Converts command line arguments into arguments suitable for a call to
@@ -117,16 +117,25 @@
   (define task (init-task targets* config*))
   (for ([cfg (in-list (task->config* task))])
     (check-pkg-deps (config-ref cfg key:bin) #:auto? #true))
-  (define timings
-    (for/hash ([tgt targets]
-               [st (in-list (in-subtasks task))])
-      (define timing (make-queue))
-      (parameterize ([current-file-runner file-runner]
-                     [current-target tgt]
-                     [current-timing timing])
-        (subtask-run! st))
-      (values (gtp-measure-subtask-out st) (queue->list timing))))
-  (values task timings))
+  (for ([tgt targets]
+        [benchmark BENCHMARKS]
+        [st (in-list (in-subtasks task))])
+    (define timing (make-queue))
+    (parameterize ([current-file-runner file-runner]
+                   [current-target tgt]
+                   [current-timing timing])
+      (subtask-run! st))
+    (define timestamp
+      (parameterize ([date-display-format 'iso-8601])
+        (date->string (current-date) #t)))
+    (with-output-to-file (format "~a_~a.csv" timestamp benchmark)
+      (λ ()
+        (display-table
+         (measure-data->table
+          (measure-data (gtp-measure-subtask-out st)
+                        benchmark
+                        (queue->list timing)))))
+      #:exists 'replace)))
 
 ;; Path-String Config → Any
 (define (file-runner main config)
@@ -191,9 +200,9 @@
                                                  (list 'error-run #f (exn->string e))))])
             (dynamic-require resolved-main #f)))))
     (enqueue! (current-timing) (queue->list config-timing))))
-(require racket/pretty)
-(define (parse-gtp-measure-data path benchmark timings)
-  (define scv-cr-timings (hash-ref timings path))
+
+(define (parse-gtp-measure-data path benchmark scv-cr-timings)
+  #;(define scv-cr-timings (hash-ref timings path))
   (with-input-from-file path
     (λ ()
       (void (read-line))
@@ -268,7 +277,9 @@
                  (merge-op timing)
                  (merge-id timing))))
 
-(define (measure-data task timings)
+(define (measure-data out benchmark timings)
+  (parse-gtp-measure-data out benchmark timings)
+  #|
   (define out-dir (task->directory task))
   (define outs
     (filter (λ (x) (path-has-extension? x #".out"))
@@ -276,7 +287,8 @@
   (define outs* (sort outs path<?))
   (append-map (parse-gtp-measure-data _ _ timings)
               outs*
-              (sort BENCHMARKS string<?)))
+              (sort BENCHMARKS string<?))
+  |#)
 
 (define (measure-data->table data)
   (define e (first data))
