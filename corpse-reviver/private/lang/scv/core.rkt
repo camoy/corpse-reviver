@@ -25,6 +25,7 @@
                      syntax/parse
                      syntax/strip-context
                      "../../syntax.rkt"
+                     "../../struct.rkt"
                      "../../data.rkt")
          (only-in soft-contract/fake-contract [provide scv:provide]))
 
@@ -39,14 +40,18 @@
   ;; Takes in the forms of a provide and determines if they should be excluded
   ;; (since they have already been exported by SCV-CR).
   (define (exclude-outs xs)
-    (define exports (bundle-exports (contracts-provide contracts)))
-    (define structs (hash-keys (bundle-structs (contracts-provide contracts))))
+    (define bundle (contracts-provide contracts))
+    (define exports (bundle-exports bundle))
+    (define structs (bundle-structs bundle))
+    (define struct-names (hash-keys structs))
+    (define struct-exports (structs-exports structs))
     (define (should-exclude? form)
       (match (syntax->datum form)
-        [`(struct-out ,name) (member name structs)]
+        [`(struct-out ,name) (member name struct-names)]
         [`(contract-out ,out ...) #f]
         [`(f:contract-out ,out ...) #f]
-        [(? symbol? x) (hash-has-key? exports x)]
+        [(? symbol? x) (or (hash-has-key? exports x)
+                           (member x struct-exports))]
         [x (error 'exclude-outs "unrecognized provide form ~a" x)]))
     (filter (negate should-exclude?) xs))
 
