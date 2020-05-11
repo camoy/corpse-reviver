@@ -5,13 +5,15 @@
 (define collection 'multi)
 (define version "0.0")
 (define pkg-desc "Sound and efficient gradual typing via contract verification.")
-(define pkg-authors '("Cameron Moy"))
+(define pkg-authors '(camoy))
 
 ;; Dependencies
 
 (define deps
   '(("base" #:version "7.4")
+    "csv-writing"
     "fancy-app"
+    "gcstats"
     "graph"
     "lang-file"
     "mischief"
