@@ -24,7 +24,8 @@
      (replace-context
       stx
       (if (continuation-mark-set-first (current-continuation-marks) 'scv?)
-          #'(begin x.opaque ...)
+          #'(begin (require soft-contract/fake-contract)
+                   x.opaque ...)
           #'(require m)))]))
 
 (define-syntax (require/typed/opaque stx)

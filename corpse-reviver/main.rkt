@@ -141,7 +141,7 @@
                      '("lnm-plot.rkt"
                        "plot-adapted.rkt"
                        "plot.rkt")))
-    (test-case
+    #;(test-case
       "Define and make-predicate."
       (test-optimize "predicate"
                      "main.rkt"
@@ -187,6 +187,11 @@
     (test-case
       "Test require/opaque."
       (test-optimize "require-opaque"
+                     "main.rkt"
+                     '("main.rkt")))
+    (test-case
+      "Test require/opaque (untyped)."
+      (test-optimize "require-opaque-untyped"
                      "main.rkt"
                      '("main.rkt")))
     (test-case
