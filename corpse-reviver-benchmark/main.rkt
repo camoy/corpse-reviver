@@ -201,6 +201,7 @@
     (when should-try?
       (for ([_ (in-range iterations)])
         (parameterize ([current-namespace (make-base-namespace)]
+                       [current-directory (path-only (string->path main))]
                        [current-output-port out-port])
           (with-handlers ([exn:fail? (λ (e)
                                        (enqueue! config-timing
