@@ -210,19 +210,23 @@
 (define-syntax-class clause
   (pattern (~or x:id [x:id _])
            #:with out #'x
-           #:with opaque #'(define x #:opaque))
+           #:with opaque #'(define x #:opaque)
+           #:with define #'(void))
 
   (pattern [#:opaque x pred]
            #:with out #'pred
-           #:with opaque #'(define pred #:opaque))
+           #:with opaque #'(define pred #:opaque)
+           #:with define #'(define-type x (Opaque pred)))
 
   (pattern [#:struct x:id ([f:id : t] ...)]
            #:with out #'(struct-out x)
-           #:with opaque #'(struct x ([f : t] ...) #:transparent))
+           #:with opaque #'(struct x ([f : t] ...) #:transparent)
+           #:with define #'(void))
 
   (pattern [#:struct [x:id y:id] ([f:id : t] ...)]
            #:with out #'(struct-out x)
-           #:with opaque #'(struct x y ([f : t] ...) #:transparent)))
+           #:with opaque #'(struct x y ([f : t] ...) #:transparent)
+           #:with define #'(void)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; tests

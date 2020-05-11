@@ -133,7 +133,7 @@
 ;; (A value is a closure)
 
 (require
-  scv-cr/require-typed-check
+  corpse-reviver/require-typed-check
   racket/set
   "structs-adapted.rkt"
   "benv-adapted.rkt"
@@ -206,7 +206,7 @@
 ;; Create a few examples and run abstract interpretation
 
 (require
-  scv-cr/require-typed-check
+  corpse-reviver/require-typed-check
   "structs-adapted.rkt"
 )
 (require/typed/check "ui.rkt"
@@ -319,7 +319,7 @@
 ;; User Interface to `ai.rkt`
 
 (require
-  scv-cr/require-typed-check
+  corpse-reviver/require-typed-check
   racket/set
   "structs-adapted.rkt"
   "benv-adapted.rkt"

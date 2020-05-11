@@ -69,8 +69,12 @@
      #'(void)]))
 
 ;; Disable require/typed within an analysis (since this will always be provided
-;; by SCV-CR via a require/safe submodule).
-(define-syntax (require/typed stx) #'(void))
+;; by SCV-CR via a require/safe submodule). The only exception are clauses marked
+;; with opaque. These are not imported so we have to define them as opaque types.
+(define-syntax (require/typed stx)
+  (syntax-parse stx
+    [(_ ?m:expr ?x:clause ...)
+     (replace-context stx #'(begin ?x.define ...))]))
 
 ;; Disable require/typed/provide within an analysis for the same reason as above,
 ;; but provide the bindings since Typed Racket will not give those to the provide

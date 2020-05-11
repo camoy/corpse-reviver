@@ -122,6 +122,12 @@
                        "automata-adapted.rkt"
                        "automata.rkt")))
     (test-case
+      "Support for opaque types (from FSM)."
+      (test-optimize "opaque-type"
+                     "automata-adapted.rkt"
+                     '("automata-adapted.rkt"
+                       "automata.rkt")))
+    (test-case
       "Subset of struct definitions from kCFA benchmark."
       (test-optimize "kcfa-data"
                      "ai.rkt"

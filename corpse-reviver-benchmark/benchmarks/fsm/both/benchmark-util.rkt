@@ -51,20 +51,14 @@
     #:literals (prefix-in)
     [(_ (prefix-in p m:str) rt-clause ...)
      (cond
-       [(not (syntax-local-typed-context?))
+       [(typed-lib? #'m)
         #`(#,(datum->syntax stx 'require) (prefix-in p m))]
-       [(and (syntax-local-typed-context?)
-             (typed-lib? #'m))
-        #'(typed:require (prefix-in p m))]
        [else
         #`(#,(datum->syntax stx 'require/typed) m rt-clause ...)])]
     [(_ m:str rt-clause ...)
      (cond
-       [(not (syntax-local-typed-context?))
+       [(typed-lib? #'m)
         #`(#,(datum->syntax stx 'require) m)]
-       [(and (syntax-local-typed-context?)
-             (typed-lib? #'m))
-        #'(typed:require m)]
        [else
         #`(#,(datum->syntax stx 'require/typed) m rt-clause ...)])]))
 
