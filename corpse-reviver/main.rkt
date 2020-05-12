@@ -135,6 +135,21 @@
                        "structs-adapted.rkt"
                        "structs.rkt")))
     (test-case
+      "kCFA with potential for conflicting contract identifiers."
+      (test-optimize "kcfa-conflict"
+                     "main.rkt"
+                     '("ai.rkt"
+                       "benv-adapted.rkt"
+                       "benv.rkt"
+                       "denotable-adapted.rkt"
+                       "denotable.rkt"
+                       "main.rkt"
+                       "structs-adapted.rkt"
+                       "structs.rkt"
+                       "time-adapted.rkt"
+                       "time.rkt"
+                       "ui.rkt")))
+    (test-case
       "Adapter and module from LNM benchmark."
       (test-optimize "lnm-data"
                      "lnm-plot.rkt"

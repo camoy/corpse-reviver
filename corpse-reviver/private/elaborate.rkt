@@ -72,7 +72,7 @@
       [(module ?name ?lang (?mb ?body ...))
        #:with ?lang/nc (no-check #'?lang)
        #:with ?sneak (syntax-property #''sneak 'payload ctcs)
-       #:with ?prov (provide-inject prov-bundle)
+       #:with ?prov (provide-inject prov-bundle #f)
        #:with ?req  (require-inject ctcs #'?lang/nc)
        #:with ?bodies (mangle-provides #'(begin ?body ...))
        #`(module ?name ?lang/nc
@@ -122,7 +122,7 @@
 ;; bundle.
 (define (require-inject ctcs lang)
   (define bundle (contracts-require ctcs))
-  (with-syntax ([?prov (provide-inject bundle)]
+  (with-syntax ([?prov (provide-inject bundle #t)]
                 [(?opaque ...) (contracts-opaques ctcs)]
                 [(?lib ...) (contracts-libs ctcs)])
     #`(begin
@@ -139,10 +139,12 @@
 ;; bundle. We include the require here so that identifiers from spliced in
 ;; syntax can be loaded. We only want to instantiate the module not import
 ;; anything which is why we use only-in.
-(define (provide-inject bundle)
+(define (provide-inject bundle with-contracts?)
   (define defn-hash (bundle-definitions bundle))
   (with-syntax ([(exp ...)  (provide-exports bundle #t)]
-                [(ctc ...)  (hash-keys defn-hash)]
+                [(ctc ...)  (if with-contracts?
+                                (hash-keys defn-hash)
+                                #'())]
                 [(dep ...)  (bundle-deps bundle)]
                 [(defn ...) (provide-defns defn-hash)])
     #`(begin (provide exp ... ctc ...)
