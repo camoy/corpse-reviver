@@ -120,9 +120,11 @@
 (define (syntax-fetch target)
   (define port (open-input-file target))
   (port-count-lines! port)
-  (with-module-reading-parameterization
-    (thunk
-     (read-syntax (object-name port) port))))
+  (begin0
+    (with-module-reading-parameterization
+      (thunk
+       (read-syntax (object-name port) port)))
+    (close-input-port port)))
 
 ;; Syntax → [Listof Module-Path]
 ;; Returns the list of modules that this piece of syntax depends on. We need

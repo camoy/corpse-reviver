@@ -36,16 +36,16 @@
 (define BENCHMARKS
   '("sieve"
     ("fsm" . ("benchmark-util.rkt"))
-    #;"morsecode"
-    #;"zombie"
-    #;"zordoz"
-    #;"lnm"
-    #;"suffixtree"
-    #;"kcfa"
-    #;"snake"
-    #;"tetris"
-    #;"synth"
-    #;"gregor"))
+    "morsecode"
+    "zombie"
+    "zordoz"
+    "lnm"
+    "suffixtree"
+    "kcfa"
+    "snake"
+    "tetris"
+    "synth"
+    "gregor"))
 (define THIS-SYM 'scv-cr-benchmark)
 (define THIS-STR "scv-cr-benchmark")
 (define-runtime-path CWD ".")
