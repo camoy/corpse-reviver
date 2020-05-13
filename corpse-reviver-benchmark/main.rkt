@@ -231,6 +231,9 @@
         (match-define
           (list analyze-cpu-time analyze-real-time analyze-gc-time)
           (hash-ref summarized 'analyze (λ () (list 0 0 0))))
+        (match-define
+          (list total-cpu-time total-real-time total-gc-time)
+          (hash-ref summarized 'total (λ () (list 0 0 0))))
         (for/list ([time (in-list times)])
           (hash 'benchmark benchmark
                 'config config
@@ -248,6 +251,9 @@
                 'analyze-cpu-time analyze-cpu-time
                 'analyze-real-time analyze-real-time
                 'analyze-gc-time analyze-gc-time
+                'total-cpu-time total-cpu-time
+                'total-real-time total-real-time
+                'total-gc-time total-gc-time
                 'warning (escape-newline (hash-ref summarized 'warning (λ () "")))
                 'blame (format "~s" (hash-ref summarized 'blame (λ () null)))
                 'gc-stats (escape-newline (hash-ref summarized 'gc-stats))))))))
