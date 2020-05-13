@@ -3,7 +3,8 @@
 (require
   (for-syntax
     typed/untyped-utils
-    syntax/parse)
+    syntax/parse
+    syntax/strip-context)
   (prefix-in typed: (only-in typed/racket require))
 )
 
@@ -52,15 +53,15 @@
     [(_ (prefix-in p m:str) rt-clause ...)
      (cond
        [(typed-lib? #'m)
-        #`(#,(datum->syntax stx 'require) (prefix-in p m))]
+        (replace-context stx #'(require (prefix-in p m)))]
        [else
-        #`(#,(datum->syntax stx 'require/typed) m rt-clause ...)])]
+        (replace-context stx #'(require/typed m rt-clause ...))])]
     [(_ m:str rt-clause ...)
      (cond
        [(typed-lib? #'m)
-        #`(#,(datum->syntax stx 'require) m)]
+        (replace-context stx #'(require m))]
        [else
-        #`(#,(datum->syntax stx 'require/typed) m rt-clause ...)])]))
+        (replace-context stx #'(require/typed m rt-clause ...))])]))
 
 (provide
   require/typed/check)
