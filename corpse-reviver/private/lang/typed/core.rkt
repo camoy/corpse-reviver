@@ -80,7 +80,7 @@
              #'(begin ?provides
                       ?require/typed
                       ?unsafe-require/typed)))]))
-)
+  )
 
 (define-syntax -require/typed (make-require/typed #f))
 (define-syntax -require/typed/provide (make-require/typed #t))

@@ -87,7 +87,7 @@
 (define-syntax (require/typed/provide stx)
   (syntax-parse stx
     [(_ ?m:expr ?x:clause ...)
-     (replace-context stx #'(provide ?x.out ...))]))
+     (replace-context stx #'(begin ?x.define ... (provide ?x.out ...)))]))
 
 ;; Provide but excluding identifiers that were already exported by SCV-CR with
 ;; contracts.

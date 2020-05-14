@@ -216,7 +216,7 @@
            #:with define #'(void))
 
   (pattern [#:opaque x pred]
-           #:with out #'pred
+           #:with out #'x
            #:with opaque #'(define pred #:opaque)
            #:with define #'(define-type x (Opaque pred)))
 
