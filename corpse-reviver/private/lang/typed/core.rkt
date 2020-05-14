@@ -16,6 +16,7 @@
                      racket/base
                      racket/sequence
                      racket/list
+                     syntax/strip-context
                      syntax/modresolve
                      syntax/parse
                      "../../syntax.rkt")
@@ -59,29 +60,27 @@
 
   ;; Rewrite require to import safe bindings from the uncontracted submodule.
   (define ((make-require/typed provide?) stx)
-    (with-syntax ([?rt (if provide?
-                           #'require/typed/provide
-                           #'require/typed)]
-                  [?urt (if provide?
-                            #'unsafe-require/typed/provide
-                            #'unsafe-require/typed)])
-      (syntax-parse stx
-        [(_ m c:clause ...)
-         (if (syntax-property #'m 'opaque)
-             #'(?rt m c ...)
-             (with-syntax* ([(?c-unsafe ...)
-                             (clauses #'m #'(c ...) #'(c.x ...) #t)]
-                            [(?c-safe ...)
-                             (clauses #'m #'(c ...) #'(c.x ...) #f)]
-                            [?require/typed
-                             (void-if-empty #'(?rt m ?c-unsafe ...)
-                                            #'(?c-unsafe ...))]
-                            [?unsafe-require/typed
-                             (void-if-empty #'(?urt m ?c-safe ...)
-                                            #'(?c-safe ...))])
-               #'(begin ?require/typed
-                        ?unsafe-require/typed)))])))
-  )
+    (syntax-parse stx
+      [(_ m c:clause ...)
+       #:with ?provides ; strip-context to use -provide
+       (if provide? (replace-context stx #'(provide c.out ...)) #'(void))
+       (if (syntax-property #'m 'opaque)
+           #'(begin ?provides
+                    (require/typed m c ...))
+           (with-syntax* ([(?c-unsafe ...)
+                           (clauses #'m #'(c ...) #'(c.x ...) #t)]
+                          [(?c-safe ...)
+                           (clauses #'m #'(c ...) #'(c.x ...) #f)]
+                          [?require/typed
+                           (void-if-empty #'(require/typed m ?c-unsafe ...)
+                                          #'(?c-unsafe ...))]
+                          [?unsafe-require/typed
+                           (void-if-empty #'(unsafe-require/typed m ?c-safe ...)
+                                          #'(?c-safe ...))])
+             #'(begin ?provides
+                      ?require/typed
+                      ?unsafe-require/typed)))]))
+)
 
 (define-syntax -require/typed (make-require/typed #f))
 (define-syntax -require/typed/provide (make-require/typed #t))

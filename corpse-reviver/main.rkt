@@ -156,6 +156,12 @@
                      '("lnm-plot.rkt"
                        "plot-adapted.rkt"
                        "plot.rkt")))
+    (test-case
+      "LNM with only require/typed/provide."
+      (test-optimize "lnm-require-typed-provide"
+                     "lnm-plot.rkt"
+                     '("lnm-plot.rkt"
+                       "plot-adapted.rkt")))
     #;(test-case
       "Define and make-predicate."
       (test-optimize "predicate"
