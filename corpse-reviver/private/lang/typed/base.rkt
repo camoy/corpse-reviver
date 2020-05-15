@@ -14,6 +14,5 @@
                     require/typed/provide
                     provide
                     ;; HACK: For kCFA & zordoz benchmarks (see TR bug 931).
-                    exp
-                    prefix)
+                    exp)
          "core.rkt")

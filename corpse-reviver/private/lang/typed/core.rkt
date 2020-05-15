@@ -63,7 +63,7 @@
     (syntax-parse stx
       [(_ m c:clause ...)
        #:with ?provides ; strip-context to use -provide
-       (if provide? (replace-context stx #'(provide c.out ...)) #'(void))
+       (if provide? (replace-context stx #'(provide c.out ... ...)) #'(void))
        (if (syntax-property #'m 'opaque)
            #'(begin ?provides
                     (require/typed m c ...))
