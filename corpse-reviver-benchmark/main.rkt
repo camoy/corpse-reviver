@@ -1,4 +1,4 @@
-#lang racket/base
+#lang errortrace racket/base
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; require
@@ -8,7 +8,6 @@
          corpse-reviver
          csv-writing
          data/queue
-         fancy-app
          gtp-measure/private/check-pkg-deps
          gtp-measure/private/configure
          gtp-measure/private/parse
@@ -28,24 +27,29 @@
          threading
          "private/logging.rkt")
 
-(require/expose gtp-measure/private/task (gtp-measure-subtask-out))
+(require/expose gtp-measure/private/task
+                (gtp-measure-subtask-out
+                 gtp-measure-task-uid
+                 gtp-measure-task-dir
+                 format-target-tag
+                 INPUT-EXTENSION))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; definitions
 
 (define BENCHMARKS
   '("sieve"
-    ("fsm" . ("benchmark-util.rkt"))
-    "morsecode"
-    "zombie"
-    "zordoz"
-    "lnm"
-    "suffixtree"
-    "kcfa"
-    "snake"
-    "tetris"
-    "synth"
-    "gregor"))
+    #;("fsm" . ("benchmark-util.rkt"))
+    #;"morsecode"
+    #;"zombie"
+    #;"zordoz"
+    #;"lnm"
+    #;"suffixtree"
+    #;"kcfa"
+    #;"snake"
+    #;"tetris"
+    #;"synth"
+    #;"gregor"))
 (define THIS-SYM 'scv-cr-benchmark)
 (define THIS-STR "scv-cr-benchmark")
 (define-runtime-path CWD ".")
@@ -120,6 +124,7 @@
           (valid-target? tgt)))
   (define config* (init-config (hash->immutable-hash config)))
   (define task (init-task (list target*) config*))
+  (init-untyped-typed-subtasks! task target* config*)
   (for ([cfg (in-list (task->config* task))])
     (check-pkg-deps (config-ref cfg key:bin) #:auto? #true))
   (for ([st (in-list (in-subtasks task))])
@@ -258,6 +263,23 @@
                 'blame (format "~s" (hash-ref summarized 'blame (λ () null)))
                 'gc-stats (escape-newline (hash-ref summarized 'gc-stats))))))))
 
+(define (init-untyped-typed-subtasks! task target config)
+  (define uid (gtp-measure-task-uid task))
+  (define task-dir (gtp-measure-task-dir task))
+  (define ps (car target))
+  (define base-filename (build-path task-dir (format-target-tag ps 0)))
+  (define num-components (typed-untyped->num-components ps))
+  (define (in-file subtask char)
+    (define filename
+      (path-add-extension
+       (path-add-extension base-filename (string-append "-" subtask) #".")
+       INPUT-EXTENSION #"_"))
+    (with-output-to-file filename
+      (λ ()
+        (displayln (make-string num-components char)))))
+  (in-file "untyped" #\0)
+  (in-file "typed" #\1))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; helper functions
 
@@ -321,7 +343,7 @@
   (for/hash (((k v) (in-hash h)))
     (values k v)))
 
-(define rkt? (path-has-extension? _ #".rkt"))
+(define rkt? (λ (x) (path-has-extension? x #".rkt")))
 
 (define (fake-prefixed? target)
   (string-prefix? (path->string (file-name-from-path target)) "fake-"))
