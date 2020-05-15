@@ -1,10 +1,16 @@
 on: [push, pull_request]
-name: CI
+name: build
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@master
+      - uses: actions/cache@v1
+        with:
+          path: ~/.racket
+          key: ${{ runner.os }}-raco-${{ hashFiles('**/info.rkt') }}
+          restore-keys: |
+            ${{ runner.os }}-raco-
       - uses: Bogdanp/setup-racket@v0.6
         with:
           architecture: 'x64'
