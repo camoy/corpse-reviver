@@ -23,6 +23,7 @@
          json
          make-log-interceptor
          mischief/for
+         racket/runtime-path
          racket/bool
          racket/cmdline
          racket/date
@@ -55,7 +56,21 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; consts
 
+(define DEFAULT-BENCHMARKS
+  '("sieve"
+    "fsm"
+    "morsecode"
+    "zombie"
+    "zordoz"
+    "lnm"
+    "suffixtree"
+    "kcfa"
+    "snake"
+    "tetris"
+    "synth"
+    "gregor"))
 (define CSV-HEADER-PRIORITY '(benchmark config))
+(define-runtime-path BENCHMARK-DIR "benchmarks")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; parameters
@@ -65,6 +80,7 @@
 (define current-skip? (make-parameter #f))
 (define current-num-samples (make-parameter 4))
 (define current-sample-factor (make-parameter 10))
+(define current-output-dir (make-parameter "."))
 
 (define current-benchmark (make-parameter #f))
 (define current-analyses (make-parameter #f))
@@ -74,7 +90,11 @@
 ;; main
 
 (module+ main
-  (define args (parse (current-command-line-arguments)))
+  (define -args (parse (current-command-line-arguments)))
+  (define args
+    (if (empty? -args)
+        (map (λ~>> (build-path BENCHMARK-DIR)) DEFAULT-BENCHMARKS)
+        -args))
   (apply benchmark/scv-cr args))
 
 ;; [Vector String] → List
@@ -104,6 +124,10 @@
    [("-R" "--num-samples") num-samples
                            "Number of samples"
                            (current-num-samples (string->number num-samples))]
+
+   [("-o" "--output") output-dir
+                      "Result output directory"
+                      (current-output-dir output-dir)]
    #:args targets
    targets))
 
@@ -252,7 +276,8 @@
   (define timestamp
     (parameterize ([date-display-format 'iso-8601])
       (date->string (current-date) #t)))
-  (with-output-to-file (format "~a_~a_~a.csv" timestamp benchmark key)
+  (define filename (format "~a_~a_~a.csv" timestamp benchmark key))
+  (with-output-to-file (build-path (current-output-dir) filename)
     (λ ()
       (display-table (list->table (queue->list queue))))))
 
