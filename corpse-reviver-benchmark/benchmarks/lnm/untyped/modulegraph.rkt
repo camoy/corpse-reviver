@@ -24,7 +24,7 @@
   (only-in racket/string string-split string-trim)
   )
 
-(require/opaque "fake-list.rkt" sort*)
+(require/opaque "_list.rkt" sort*)
 
 ;; =============================================================================
 ;; --- data definition: modulegraph

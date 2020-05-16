@@ -36,7 +36,7 @@
     iso-weeks-in-year ;(-> Natural (U 52 53))]
     ))
 
-(require/opaque "fake-format.rkt" ~r)
+(require/opaque "_format.rkt" ~r)
 
 ;; =============================================================================
 

@@ -15,7 +15,7 @@
   (only-in racket/list remove-duplicates)
   )
 
-(require/opaque "fake-format.rkt" ~r)
+(require/opaque "_format.rkt" ~r)
 
 ;; =============================================================================
 

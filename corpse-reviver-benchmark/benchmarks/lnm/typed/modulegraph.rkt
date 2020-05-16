@@ -23,7 +23,7 @@
   (only-in racket/sequence sequence->list)
   (only-in racket/string string-split string-trim))
 
-(require/typed/opaque "fake-list.rkt"
+(require/typed/opaque "_list.rkt"
   [sort* (All (a b)
            (-> (Listof a)
                (-> b b Boolean)

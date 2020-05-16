@@ -16,7 +16,7 @@
  "zo-find.rkt"
  corpse-reviver/opaque)
 
-(require/opaque "fake-compiler-zo-parse.rkt" zo-parse zo?)
+(require/opaque "_compiler-zo-parse.rkt" zo-parse zo?)
 
 ;; -----------------------------------------------------------------------------
 

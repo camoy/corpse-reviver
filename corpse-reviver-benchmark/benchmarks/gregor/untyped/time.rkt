@@ -32,7 +32,7 @@
     NS/SECOND ;Natural]
     ))
 
-(require/opaque "fake-format.rkt" ~r ~r*)
+(require/opaque "_format.rkt" ~r ~r*)
 
 ;; =============================================================================
 

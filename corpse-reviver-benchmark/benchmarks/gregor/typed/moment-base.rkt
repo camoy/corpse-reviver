@@ -21,7 +21,7 @@
     [datetime->iso8601 (-> DateTime String)]
     )
 
-(require/typed/opaque "fake-format.rkt"
+(require/typed/opaque "_format.rkt"
   [~r** (-> Exact-Rational
             Nonnegative-Integer
             String

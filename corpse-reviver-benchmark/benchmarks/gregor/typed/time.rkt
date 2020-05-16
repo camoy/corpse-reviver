@@ -32,7 +32,7 @@
     [NS/SECOND Natural]
     )
 
-(require/typed/opaque "fake-format.rkt"
+(require/typed/opaque "_format.rkt"
   [~r (-> Exact-Rational
           Nonnegative-Integer
           String
