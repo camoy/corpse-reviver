@@ -58,6 +58,10 @@
 (define current-num-samples (make-parameter 4))
 (define current-sample-factor (make-parameter 10))
 
+(define current-benchmark (make-parameter #f))
+(define current-analyses (make-parameter #f))
+(define current-runtimes (make-parameter #f))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; main
 
@@ -101,33 +105,29 @@
 ;; Path-String ... → Any
 (define (benchmark/scv-cr . targets)
   (define config (make-config))
+  (define analyses (make-queue))
+  (define runtimes (make-queue))
   (for ([-target (in-list targets)])
     (define target (path->string (normalize-path -target)))
     (define kind (and (valid-typed-untyped-target? target) kind:typed-untyped))
     (define target+kind (cons target kind))
     (define task (init-task (list target+kind) config))
-    (define benchmark (last-dir target))
-    (init-untyped-typed-subtasks task target)
-    (for* ([pre-subtask (in-list (in-pre-subtasks task))]
-           [subtask (in-list (pre-subtask->subtask* pre-subtask
-                                                    config
-                                                    benchmark))])
-      (subtask-run! subtask))))
+    (init-untyped-typed-subtasks! task target)
+    (parameterize ([current-benchmark (last-dir target)]
+                   [current-analyses analyses]
+                   [current-runtimes runtimes])
+      (for* ([pre-subtask (in-list (in-pre-subtasks task))]
+             [subtask (in-list (pre-subtask->subtask* pre-subtask config))])
+        (subtask-run! subtask))))
+  (displayln (queue->list analyses))
+  (displayln (queue->list runtimes)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; private
-
-;; → Config
-;; Creates a configuration from the command line argument parameters.
-(define (make-config)
-  (init-config (hash key:iterations (current-iterations)
-                     key:cutoff (current-cutoff)
-                     key:sample-factor (current-sample-factor)
-                     key:num-samples (current-num-samples))))
+;; subtasks
 
 ;; Task Path-String → Any
 ;; TODO
-(define (init-untyped-typed-subtasks task target)
+(define (init-untyped-typed-subtasks! task target)
   (define task-dir (gtp-measure-task-dir task))
   (define base-filename (build-path task-dir (format-target-tag target 0)))
   (define num-components (typed-untyped->num-components target))
@@ -143,7 +143,7 @@
 
 ;; Pre-Subtask Config → [Listof Subtask]
 ;; TODO
-(define (pre-subtask->subtask* pst config benchmark)
+(define (pre-subtask->subtask* pst config)
   (define tu-dir (pre-typed-untyped-subtask-tu-dir pst))
   (define config-dir (pre-typed-untyped-subtask-config-dir pst))
   (define/for/lists (in-files out-files)
@@ -151,13 +151,11 @@
      [out-file (in-list (pre-typed-untyped-subtask-out-file* pst))]
      #:when (not (file-exists? out-file)))
     (values in-file out-file))
-  (typed-untyped->subtask* tu-dir config-dir
-                           in-files out-files
-                           config benchmark))
+  (typed-untyped->subtask* tu-dir config-dir in-files out-files config))
 
 ;;
 ;; TODO
-(define (typed-untyped->subtask* tu-dir config-dir ins outs config benchmark)
+(define (typed-untyped->subtask* tu-dir config-dir ins outs config)
   (define entry
     (path->string (build-path config-dir (config-ref config key:entry-point))))
   (for/list ([in (in-list ins)]
@@ -171,28 +169,34 @@
             (copy-configuration! config-id tu-dir config-dir)
             (define-values (config-in config-out) (make-pipe))
             (define-values (analysis-times base-running-times)
-              (typed-untyped-run! entry config config-out config-id benchmark))
+              (typed-untyped-run! entry config config-out config-id))
             (close-output-port config-out)
             (define raw-running-times (port->lines config-in))
             (writeln (list config-id raw-running-times) out-port)
             (define running-times
               (map (λ~> time-string->list times->hash) raw-running-times))
-            (define running-rows
-              (for/list ([time (in-list running-times)])
-                (hash-union time
-                            base-running-times
-                            #:combine (λ (x _) x))))
-            (writeln analysis-times)
-            (writeln (if (empty? running-rows) base-running-times running-rows))
+            (for ([time (in-list running-times)])
+              (enqueue! (current-runtimes)
+                        (hash-union time
+                                    base-running-times
+                                    #:combine (λ (x _) x))))
+            (enqueue! (current-analyses) analysis-times)
+            (when (empty? running-times)
+              (enqueue! (current-runtimes) base-running-times))
             (close-input-port config-in)))))
     (make-gtp-measure-subtask out thunk config)))
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; typed-untyped-run!
+
 ;; → Hash Hash
 ;; TODO
-(define (typed-untyped-run! entry config config-out config-id benchmark)
+(define (typed-untyped-run! entry config config-out config-id)
   (define dir (path-only entry))
   (define targets (filter relevant-target? (directory-list dir #:build? dir)))
-  (define base `((benchmark . ,benchmark) (config . ,config-id) (error . #f)))
+  (define base `((benchmark . ,(current-benchmark))
+                 (config . ,config-id)
+                 (error . #f)))
   (define analysis-times (make-hash base))
   (define running-times
     (make-hash (append base '((real . 0) (cpu . 0) (gc . 0)))))
@@ -232,6 +236,14 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; util
+
+;; → Config
+;; Creates a configuration from the command line argument parameters.
+(define (make-config)
+  (init-config (hash key:iterations (current-iterations)
+                     key:cutoff (current-cutoff)
+                     key:sample-factor (current-sample-factor)
+                     key:num-samples (current-num-samples))))
 
 ;;
 ;; TODO
