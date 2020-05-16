@@ -1,8 +1,0 @@
-#!/usr/bin/env racket
-#lang racket/base
-(require corpse-reviver
-         corpse-reviver/private/logging
-         racket/path
-         racket/function
-         racket/string
-         "logging.rkt")
