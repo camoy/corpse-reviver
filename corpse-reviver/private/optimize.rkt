@@ -54,7 +54,7 @@
     (values (mod-target mod) (mod-syntax mod)))
   (debug "targets: ~a" targets)
   (define -blms
-    (measure 'analyze #f
+    (measure 'analyze
       (with-continuation-mark 'scv? #t
         (with-patched-typed-racket
           (verify-modules targets stxs)))))

@@ -32,10 +32,10 @@
   (log-scv-cr-warning "~s" (list 'warning #f str)))
 
 (define-syntax-rule (info key datum)
-  (log-scv-cr-info "~s" (list key #f datum)))
+  (log-scv-cr-info "~s" (cons key datum)))
 
-(define-syntax-rule (measure key tgt x ...)
+(define-syntax-rule (measure key x ...)
   (let-values ([(results cpu-time real-time gc-time)
                 (time-apply (λ () (begin x ...)) '())])
-    (log-scv-cr-info "~s" (list key tgt (list cpu-time real-time gc-time)))
+    (log-scv-cr-info "~s" (cons key (list cpu-time real-time gc-time)))
     (apply values results)))

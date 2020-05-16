@@ -46,7 +46,7 @@
 ;; Path-String ... → Any
 ;; Compiles files at the given paths with SCV-CR.
 (define (compile-files/scv-cr . -targets)
-  (measure 'total #f
+  (measure 'total
     (define targets (map canonicalize-path -targets))
     (for-each delete-bytecode targets)
     (define mods (sort-by-dep (map make-mod targets)))
