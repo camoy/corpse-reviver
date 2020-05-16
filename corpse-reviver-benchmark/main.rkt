@@ -146,8 +146,14 @@
 (define (pre-subtask->subtask* pst config benchmark)
   (define tu-dir (pre-typed-untyped-subtask-tu-dir pst))
   (define config-dir (pre-typed-untyped-subtask-config-dir pst))
-  (define in-files (pre-typed-untyped-subtask-in-file* pst))
-  (typed-untyped->subtask* tu-dir config-dir in-files config benchmark))
+  (define/for/lists (in-files out-files)
+    ([in-file (in-list (pre-typed-untyped-subtask-in-file* pst))]
+     [out-file (in-list (pre-typed-untyped-subtask-out-file* pst))]
+     #:when (not (file-exists? out-file)))
+    (values in-file out-file))
+  (typed-untyped->subtask* tu-dir config-dir
+                           in-files out-files
+                           config benchmark))
 
 ;;
 ;; TODO
@@ -158,7 +164,6 @@
              [out (in-list outs)])
     (define (thunk [out-port (current-output-port)])
       (write-lang! out-port "typed-untyped")
-      (define total-configs (count-configurations in))
       (with-input-from-file in
         (λ ()
           (for ([config-id (in-lines)]
@@ -274,8 +279,8 @@
 ;;
 ;; TODO
 (define (last-dir path)
-  (define-values (_ name must-be-dir?) (split-path path))
-  name)
+  (define-values (_ name __) (split-path path))
+  (string->symbol (path->string name)))
 
 ;;
 ;; TODO
