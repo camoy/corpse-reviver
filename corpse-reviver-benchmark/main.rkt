@@ -1,4 +1,4 @@
-#lang racket/base
+#lang errortrace racket/base
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; provide
@@ -26,9 +26,11 @@
          racket/exn
          racket/hash
          racket/list
+         racket/match
          racket/path
          racket/port
          racket/string
+         racket/syntax
          threading)
 
 (require/expose gtp-measure/private/task
@@ -104,9 +106,12 @@
     (define kind (and (valid-typed-untyped-target? target) kind:typed-untyped))
     (define target+kind (cons target kind))
     (define task (init-task (list target+kind) config))
+    (define benchmark (last-dir target))
     (init-untyped-typed-subtasks task target)
     (for* ([pre-subtask (in-list (in-pre-subtasks task))]
-           [subtask (in-list (pre-subtask->subtask* pre-subtask config))])
+           [subtask (in-list (pre-subtask->subtask* pre-subtask
+                                                    config
+                                                    benchmark))])
       (subtask-run! subtask))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -138,19 +143,15 @@
 
 ;; Pre-Subtask Config → [Listof Subtask]
 ;; TODO
-(define (pre-subtask->subtask* pst config)
+(define (pre-subtask->subtask* pst config benchmark)
   (define tu-dir (pre-typed-untyped-subtask-tu-dir pst))
   (define config-dir (pre-typed-untyped-subtask-config-dir pst))
-  (define/for/lists (in-file* out-file*)
-    ([in-file (in-list (pre-typed-untyped-subtask-in-file* pst))]
-     [out-file (in-list (pre-typed-untyped-subtask-out-file* pst))]
-     #:when (not (file-exists? out-file)))
-      (values in-file out-file))
-  (typed-untyped->subtask* tu-dir config-dir in-file* out-file* config))
+  (define in-files (pre-typed-untyped-subtask-in-file* pst))
+  (typed-untyped->subtask* tu-dir config-dir in-files config benchmark))
 
 ;;
 ;; TODO
-(define (typed-untyped->subtask* tu-dir config-dir ins outs config)
+(define (typed-untyped->subtask* tu-dir config-dir ins outs config benchmark)
   (define entry
     (path->string (build-path config-dir (config-ref config key:entry-point))))
   (for/list ([in (in-list ins)]
@@ -164,33 +165,37 @@
                 [cfg-i (in-naturals 1)])
             (copy-configuration! config-id tu-dir config-dir)
             (define-values (config-in config-out) (make-pipe))
-            (define-values (analysis-times running-times)
-              (typed-untyped-run! entry config config-out))
+            (define-values (analysis-times base-running-times)
+              (typed-untyped-run! entry config config-out config-id benchmark))
             (close-output-port config-out)
-            (define config-running-times (port->lines config-in))
-            (writeln (list config-id config-running-times) out-port)
-            (hash-set! running-times 'times
-                       (map time-string->list config-running-times))
+            (define raw-running-times (port->lines config-in))
+            (writeln (list config-id raw-running-times) out-port)
+            (define running-times
+              (map (λ~> time-string->list times->hash) raw-running-times))
+            (define running-rows
+              (for/list ([time (in-list running-times)])
+                (hash-union time
+                            base-running-times
+                            #:combine (λ (x _) x))))
             (writeln analysis-times)
-            (writeln running-times)
+            (writeln (if (empty? running-rows) base-running-times running-rows))
             (close-input-port config-in)))))
     (make-gtp-measure-subtask out thunk config)))
 
 ;; → Hash Hash
 ;; TODO
-(define (typed-untyped-run! entry config config-out)
+(define (typed-untyped-run! entry config config-out config-id benchmark)
   (define dir (path-only entry))
   (define targets (filter relevant-target? (directory-list dir #:build? dir)))
-  (define analysis-times (make-hash))
-  (define running-times (make-hash))
+  (define base `((benchmark . ,benchmark) (config . ,config-id) (error . #f)))
+  (define analysis-times (make-hash base))
+  (define running-times
+    (make-hash (append base '((real . 0) (cpu . 0) (gc . 0)))))
   (parameterize ([current-output-port config-out]
                  [current-directory dir])
     (when (typed-untyped-compile! targets analysis-times)
       (typed-untyped-execute! entry config running-times)))
   (values analysis-times running-times))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; compile
 
 ;; → Boolean
 ;; TODO
@@ -203,10 +208,12 @@
          (apply compile-files/scv-cr (map path->string targets))))))
   (define times (map read-message (hash-ref logs 'info)))
   (hash-union! analysis-times
-               (hash 'compile (reduce-by 'compile times)
-                     'expand (reduce-by 'expand times)
-                     'analyze (reduce-by 'analyze times)
-                     'blame (findf (has-tag? 'blame) times))))
+               (reduce-by 'compile times)
+               (reduce-by 'expand times)
+               (reduce-by 'analyze times)
+               (hash 'blame (and~>> times (findf (has-tag? 'blame)) cdr))
+               #:combine (λ (_ x) x))
+  (not (hash-ref analysis-times 'error)))
 
 ;;
 ;; TODO
@@ -232,12 +239,23 @@
 ;; TODO
 (define (reduce-by tag times)
   (define match? (has-tag? tag))
-  (for/fold ([acc (list 0 0 0)])
-            ([time (in-list times)])
-    (if (match? time)
-        (map + acc (cdr time))
-        acc)))
+  (define reduced-times
+    (for/fold ([acc (list 0 0 0)])
+              ([time (in-list times)])
+      (if (match? time)
+          (map + acc (cdr time))
+          acc)))
+  (times->hash reduced-times tag))
 
+;;
+;; TODO
+(define (times->hash times [key-prefix #f])
+  (define (symbol->key sym)
+    (if key-prefix (format-symbol "~a-~a" key-prefix sym) sym))
+  (match-define (list real cpu gc) times)
+  (hash (symbol->key 'real) real
+        (symbol->key 'cpu) cpu
+        (symbol->key 'gc) gc))
 ;;
 ;; TODO
 (define ((has-tag? tag) datum)
@@ -252,6 +270,12 @@
        second
        open-input-string
        read))
+
+;;
+;; TODO
+(define (last-dir path)
+  (define-values (_ name must-be-dir?) (split-path path))
+  name)
 
 ;;
 ;; TODO
