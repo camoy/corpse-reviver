@@ -12,6 +12,7 @@
 ;; require
 
 (require (only-in rackunit require/expose)
+         csv-writing
          corpse-reviver
          corpse-reviver/private/logging
          data/queue
@@ -19,10 +20,12 @@
          gtp-measure/private/parse
          gtp-measure/private/task
          gtp-util
+         json
          make-log-interceptor
          mischief/for
          racket/bool
          racket/cmdline
+         racket/date
          racket/exn
          racket/hash
          racket/list
@@ -48,6 +51,11 @@
                  INPUT-EXTENSION
                  make-gtp-measure-subtask
                  write-lang!))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; consts
+
+(define CSV-HEADER-PRIORITY '(benchmark config))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; parameters
@@ -105,22 +113,23 @@
 ;; Path-String ... → Any
 (define (benchmark/scv-cr . targets)
   (define config (make-config))
-  (define analyses (make-queue))
-  (define runtimes (make-queue))
   (for ([-target (in-list targets)])
     (define target (path->string (normalize-path -target)))
     (define kind (and (valid-typed-untyped-target? target) kind:typed-untyped))
     (define target+kind (cons target kind))
     (define task (init-task (list target+kind) config))
+    (define benchmark (last-dir target))
+    (define analyses (make-queue))
+    (define runtimes (make-queue))
     (init-untyped-typed-subtasks! task target)
-    (parameterize ([current-benchmark (last-dir target)]
+    (parameterize ([current-benchmark benchmark]
                    [current-analyses analyses]
                    [current-runtimes runtimes])
       (for* ([pre-subtask (in-list (in-pre-subtasks task))]
              [subtask (in-list (pre-subtask->subtask* pre-subtask config))])
-        (subtask-run! subtask))))
-  (displayln (queue->list analyses))
-  (displayln (queue->list runtimes)))
+        (subtask-run! subtask))
+      (output-csv! benchmark 'analysis analyses)
+      (output-csv! benchmark 'runtime runtimes))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; subtasks
@@ -233,6 +242,40 @@
     (parameterize ([current-namespace (make-base-namespace)])
       (with-handlers ([exn:fail? (make-error-handler running-times)])
         (dynamic-require resolved-entry #f)))))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; CSV
+
+;;
+;; TODO
+(define (output-csv! benchmark key queue)
+  (define timestamp
+    (parameterize ([date-display-format 'iso-8601])
+      (date->string (current-date) #t)))
+  (with-output-to-file (format "~a_~a_~a.csv" timestamp benchmark key)
+    (λ ()
+      (display-table (list->table (queue->list queue))))))
+
+;;
+;; TODO
+(define (list->table xs)
+  (define header (sort-header (hash-keys (first xs))))
+  (cons header
+        (for/list ([x (in-list xs)])
+          (map (λ~>> (hash-ref x) ->js-string) header))))
+
+;;
+;; TODO
+(define (->js-string x)
+  (cond
+    [(or (string? x) (number? x) (boolean? x) (symbol? x)) x]
+    [else (jsexpr->string x)]))
+
+;;
+;; TODO
+(define (sort-header header)
+  (define header* (remove* CSV-HEADER-PRIORITY header))
+  (append CSV-HEADER-PRIORITY (sort header* symbol<?)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; util
