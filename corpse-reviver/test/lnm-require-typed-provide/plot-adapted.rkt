@@ -2,5 +2,5 @@
 
 (require corpse-reviver/opaque)
 
-(require/typed/provide/opaque "fake-plot.rkt"
+(require/typed/provide/opaque "_plot.rkt"
   [line-width (-> Nonnegative-Real)])

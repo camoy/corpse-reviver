@@ -19,9 +19,11 @@ jobs:
           version: '7.4'
       # Install Z3 for SCV.
       - run: sudo apt-get install -y z3
-      # Typed Racket Hacks prints to STDOUT causing exit code 1.
-      # Let's just force success :)
+      # Typed Racket Hacks prints to STDOUT causing exit code 1. Let's just force success.
       - run: raco pkg install --deps search-auto || true
+      # If we have a cache hit, the above will link the current working directory as the
+      # package. But that will not be compiled. Therefore we have to setup just in case.
+      - run: raco pkg setup corpse-reviver
       - uses: GabrielBB/xvfb-action@v1.0
         with:
           # Stop the tests after 30 minutes.

@@ -11,7 +11,7 @@
 
 (provide Plot-Pen-Style)
 
-(require/typed/provide/opaque "fake-plot.rkt"
+(require/typed/provide/opaque "_plot.rkt"
   [#:struct pre-tick ([value : Real] [major? : Boolean])]
   [#:struct (tick pre-tick) ([label : String])]
   [#:struct ticks ([layout : (-> Real Real (Listof pre-tick))]

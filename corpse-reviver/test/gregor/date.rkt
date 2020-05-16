@@ -37,7 +37,7 @@
     [iso-weeks-in-year (-> Natural (U 52 53))]
     )
 
-(require/typed/opaque "fake-format.rkt"
+(require/typed/opaque "_format.rkt"
   [~r (-> Exact-Rational
           Nonnegative-Integer
           String

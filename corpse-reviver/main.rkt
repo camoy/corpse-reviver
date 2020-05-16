@@ -80,9 +80,9 @@
 
   ;; String {[List-of String]} → Void
   ;; Takes benchmark name and runs all files with test-optimize.
-  (define (test-benchmark benchmark #:omit [omit null])
+  (define (test-benchmark benchmark)
     (let* ([benchmark-files (directory-list benchmark #:build? benchmark)]
-           [benchmark-files* (filter (benchmark-relevant? omit) benchmark-files)]
+           [benchmark-files* (filter benchmark-relevant? benchmark-files)]
            [main (findf is-main? benchmark-files*)])
       (test-case
         benchmark
@@ -91,11 +91,10 @@
   ;; [List-of String] Path → Boolean
   ;; Returns if this file is relevant to the benchmark. To be relevant, a path
   ;; must be a Racket file and not be a "fake" file or in the omission list.
-  (define ((benchmark-relevant? omit) path)
+  (define (benchmark-relevant? path)
     (define name (file-name-string path))
     (and (path-has-extension? path #".rkt")
-         (not (string-prefix? name "fake"))
-         (not (member name omit))))
+         (not (string-prefix? name "_"))))
 
   ;; Path → String
   ;; Returns the file name of a path as a string.
@@ -232,7 +231,7 @@
                      "main.rkt"
                      '("main.rkt")))
     (test-benchmark "sieve")
-    (test-benchmark "fsm" #:omit '("benchmark-util.rkt"))
+    (test-benchmark "fsm")
     (test-benchmark "morsecode")
     (test-benchmark "zombie")
     (test-benchmark "zordoz")

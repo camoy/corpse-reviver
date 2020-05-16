@@ -14,7 +14,7 @@
  corpse-reviver/opaque
  (only-in racket/list remove-duplicates))
 
-(require/typed/opaque "fake-format.rkt"
+(require/typed/opaque "_format.rkt"
   [~r (-> Exact-Rational
           Positive-Integer
           Nonnegative-Integer
