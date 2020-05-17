@@ -35,6 +35,7 @@
          racket/port
          racket/string
          racket/syntax
+         racket/system
          threading)
 
 (require/expose gtp-measure/private/task
@@ -146,6 +147,7 @@
     (define analyses (make-queue))
     (define runtimes (make-queue))
     (init-untyped-typed-subtasks! task target)
+    (output-specs!)
     (parameterize ([current-benchmark benchmark]
                    [current-analyses analyses]
                    [current-runtimes runtimes])
@@ -268,15 +270,20 @@
         (dynamic-require resolved-entry #f)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; CSV
+;; output
+
+;;
+;; TODO
+(define (output-specs!)
+  (define filename (format "~a_specs.txt" (timestamp)))
+  (with-output-to-file (build-path (current-output-dir) filename)
+    (λ ()
+      (system "cat /proc/cpuinfo /proc/meminfo"))))
 
 ;;
 ;; TODO
 (define (output-csv! benchmark key queue)
-  (define timestamp
-    (parameterize ([date-display-format 'iso-8601])
-      (date->string (current-date) #t)))
-  (define filename (format "~a_~a_~a.csv" timestamp benchmark key))
+  (define filename (format "~a_~a_~a.csv" (timestamp) benchmark key))
   (with-output-to-file (build-path (current-output-dir) filename)
     (λ ()
       (display-table (list->table (queue->list queue))))))
@@ -287,14 +294,22 @@
   (define header (sort-header (hash-keys (first xs))))
   (cons header
         (for/list ([x (in-list xs)])
-          (map (λ~>> (hash-ref x) ->js-string) header))))
+          (map (λ~>> (hash-ref x) ->js) header))))
 
 ;;
 ;; TODO
-(define (->js-string x)
+(define (->js x)
   (cond
+    ;; simple
     [(or (string? x) (number? x) (boolean? x) (symbol? x)) x]
-    [else (jsexpr->string x)]))
+    ;; complex
+    [else
+     (jsexpr->string
+      (let go ([x x])
+        (cond
+          [(symbol? x) (symbol->string x)]
+          [(list? x) (map go x)]
+          [else x])))]))
 
 ;;
 ;; TODO
@@ -304,6 +319,10 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; util
+
+(define (timestamp)
+  (parameterize ([date-display-format 'iso-8601])
+    (date->string (current-date) #t)))
 
 ;; → Config
 ;; Creates a configuration from the command line argument parameters.
