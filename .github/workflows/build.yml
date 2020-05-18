@@ -8,7 +8,7 @@ jobs:
       - uses: actions/cache@v1
         with:
           path: ~/.racket
-          key: ${{ runner.os }}-raco-${{ hashFiles('**/info.rkt') }}
+          key: ${{ runner.os }}-raco-${{ hashFiles('{,**/}info.rkt') }}
           restore-keys: |
             ${{ runner.os }}-raco-
       - uses: Bogdanp/setup-racket@v0.6
