@@ -21,7 +21,7 @@ jobs:
       - run: raco pkg install --auto corpse-reviver-lib/ corpse-reviver-benchmark/ || true
       # If we have a cache hit, the above will link the current working directory as the
       # package. But that will not be compiled. Therefore we have to setup just in case.
-      - run: raco setup corpse-reviver-lib corpse-reviver-benchmark
+      - run: raco setup corpse-reviver
       - uses: GabrielBB/xvfb-action@v1.0
         with:
           # Stop the tests after 30 minutes.
