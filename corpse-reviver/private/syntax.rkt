@@ -28,7 +28,6 @@
 
 (require (for-syntax racket/base
                      syntax/parse)
-         fancy-app
          lang-file/read-lang-file
          racket/function
          racket/list
@@ -191,7 +190,7 @@
 (define (contains-id? stx given-id)
   (syntax-parse stx
     [(x ...)
-     (ormap (contains-id? _ given-id) (attribute x))]
+     (ormap (λ~> (contains-id? given-id)) (attribute x))]
     [x:id
      (free-identifier=? #'x given-id)]
     [_ #f]))

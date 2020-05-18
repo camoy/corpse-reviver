@@ -21,8 +21,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; require
 
-(require fancy-app
-         mischief/dict
+(require mischief/dict
          mischief/sort
          racket/function
          racket/list
@@ -44,7 +43,7 @@
     (topological-sort
      nodes*
      (dict->procedure #:failure (const empty) dag)))
-  (filter (member _ nodes*) sorted))
+  (filter (λ~> (member nodes*)) sorted))
 
 ;; [Hash K V] [Listof K] → [Hash K V]
 ;; Removes every key in keys from the hash.
@@ -122,7 +121,7 @@
 (define (make-struct-names name fields)
   (define-values (name* fields*)
     (values (datum->syntax #f name)
-            (map (datum->syntax #f _) fields)))
+            (map (λ~>> (datum->syntax #f)) fields)))
   (define struct-names
     (build-struct-names name* fields* #:constructor-name name* #f #f))
   (map syntax->datum struct-names))

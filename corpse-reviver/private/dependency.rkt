@@ -10,12 +10,12 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(require fancy-app
-         graph
+(require graph
          racket/function
          racket/hash
          racket/list
-         syntax/parse)
+         syntax/parse
+         threading)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -29,7 +29,7 @@
       (syntax-parse stx
         [(x ...)
          (define parent* (or (syntax-property stx 'parent-identifier) parent))
-         (define rest (append-map (go parent* _) (attribute x)))
+         (define rest (append-map (λ~>> (go parent*)) (attribute x)))
          (if parent*
              `(((,(syntax-line stx) . ,(syntax-column stx)) . ,parent*) . ,rest)
              rest)]
