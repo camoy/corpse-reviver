@@ -22,6 +22,8 @@
     "make-log-interceptor"
     "mischief"
     "rackunit"
-    "threading"))
+    "threading"
+    ("typed-racket-lib" #:version "1.10")
+    ("typed-racket-more" #:version "1.10")))
 
 (define build-deps '())
