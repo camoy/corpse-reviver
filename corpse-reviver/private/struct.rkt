@@ -105,7 +105,6 @@
 (module+ test
   (require chk
            racket/set
-           rackunit
            "../test/expand.rkt")
 
   (define-values (i? r?)
@@ -140,17 +139,17 @@
       struct:parent parent parent?
       parent-p set-parent-p!))
 
-  (test-case "structs"
+  (with-chk (['name "structs"])
     (chk
      structs-provide expected-structs
      structs-require expected-structs))
 
-  (test-case "structs-exports"
+  (with-chk (['name "structs-exports"])
     (chk
      #:eq set=? (structs-exports structs-provide) expected-exports
      #:eq set=? (structs-exports structs-require) expected-exports))
 
-  (test-case "struct-local-fields"
+  (with-chk (['name "struct-local-fields"])
     (chk
      local-fields
      (hash 'child
@@ -160,12 +159,12 @@
      names
      '(parent child)))
 
-  (test-case "struct-all-fields"
+  (with-chk (['name "struct-all-fields"])
     (chk
      (struct-all-fields local-fields names)
      expected-structs))
 
-  (test-case "field-name"
+  (with-chk (['name "field-name"])
     (chk
      (field-name 'stream #'stream-first) 'first
      #:! #:t (field-name 'stream #'foo-first)))

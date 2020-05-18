@@ -109,15 +109,6 @@
          #:when (void? (syntax-e #'y))
          #'(void)]
 
-        ;; Remove non-recursive recursive-contract forms (SCV)
-        #;[(letrec ([a (recursive-contract b args ...)] [c d]) body)
-         (if (contains-id? #'d #'a)
-             #`(letrec ([a (recursive-contract #,ctc-id args ...)]
-                        [c #,(go #'d)])
-                 body)
-             #'(let ([a d])
-                 body))]
-
         ;; Distribute munge-contract to all list elements
         [(x ...) (datum->syntax #f (map go (attribute x)))]
 
@@ -172,7 +163,6 @@
 
 (module+ test
   (require chk
-           rackunit
            "compile.rkt")
 
   (define CWD (path->complete-path "."))
@@ -190,7 +180,7 @@
     (syntax-parse x-mod-stx
       [(m _ _ (mb _ _ (app _ (lam _ x) _))) #'lam]))
 
-  (test-case "munge"
+  (with-chk (['name "munge"])
     (define munge-e (λ~>> (munge #'_) syntax->datum))
     (chk
      (munge-e #'lifted/1) 'l1
@@ -218,27 +208,27 @@
      (munge-e #'(flat-contract-predicate integer?)) 'integer?
      (munge-e #`(quote #,(void))) '(void)))
 
-  (test-case "adjust-scopes"
+  (with-chk (['name "adjust-scopes"])
     (chk
      #:t (syntax-property (adjust-scopes #'blah) 'protect-scope)
      #:t (syntax-property (adjust-scopes lam-stx) 'protect-scope)
      #:! #:t (syntax-property (adjust-scopes x-stx) 'protect-scope)
      #:! #:t (syntax-property (adjust-scopes any/c-stx) 'protect-scope)))
 
-  (test-case "locally-defined-id?"
+  (with-chk (['name "locally-defined-id?"])
     (chk
      #:t (locally-defined-id? #'g5)
      #:t (locally-defined-id? #'generated-contract5)
      #:t (locally-defined-id? #'l17)
      #:! #:t (locally-defined-id? #'blah)))
 
-  (test-case "expanded-or-contract-id?"
+  (with-chk (['name "expanded-or-contract-id?"])
     (chk
      #:t (expanded-or-contract-id? any/c-stx)
      #:t (expanded-or-contract-id? x-stx)
      #:! #:t (expanded-or-contract-id? lam-stx)))
 
-  (test-case "module-path-index-root"
+  (with-chk (['name "module-path-index-root"])
     (define mpi (and~> any/c-stx identifier-binding third))
     (chk
      (module-path-index-root mpi) 'racket/contract))

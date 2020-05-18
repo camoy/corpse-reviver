@@ -161,7 +161,7 @@
                      "lnm-plot.rkt"
                      '("lnm-plot.rkt"
                        "plot-adapted.rkt")))
-    #;(test-case
+    (test-case
       "Define and make-predicate."
       (test-optimize "predicate"
                      "main.rkt"

@@ -235,10 +235,9 @@
 (module+ test
   (require chk
            racket/runtime-path
-           rackunit
            "../test/path.rkt")
 
-  (test-case "normalize-srcloc"
+  (with-chk (['name "normalize-srcloc"])
     (define stx (normalize-srcloc (datum->syntax #f '(1 2 3)) ""))
     (match-define (list x y z) (syntax-e stx))
     (chk
@@ -247,21 +246,21 @@
      (syntax-column y) 3
      (syntax-column z) 5))
 
-  (test-case "syntax-property-values"
+  (with-chk (['name "syntax-property-values"])
     (define apple (syntax-property #'apple 'key 'apple))
     (define banana (syntax-property #'banana 'key 'banana))
     (define fruits (datum->syntax #f (list apple banana)))
-    (check set=? (syntax-property-values fruits 'key) '(apple banana)))
+    (chk #:eq set=? (syntax-property-values fruits 'key) '(apple banana)))
 
 
-  (test-case "syntax-fetch"
+  (with-chk (['name "syntax-fetch"])
     (define stx
       (syntax-fetch untyped))
     (chk (syntax->datum stx)
          '(module untyped racket/base
             (#%module-begin "hello world"))))
 
-  (test-case "syntax-deps"
+  (with-chk (['name "syntax-deps"])
     (define deps
       (syntax-deps
        (expand-syntax
@@ -271,34 +270,34 @@
     (chk
      #:t (member '(lib "racket/math.rkt") deps)))
 
-  (test-case "typed?"
+  (with-chk (['name "typed?"])
     (chk
      #:! #:t (typed? untyped)
      #:t (typed? typed)
      #:t (typed? also-typed)))
 
-  (test-case "lifted->l"
+  (with-chk (['name "lifted->l"])
     (chk
      (syntax->datum (lifted->l #'lifted/1)) 'l1
      #:! #:t (lifted->l #'blah)))
 
-  (test-case "strip-context*"
-    (check (negate bound-identifier=?) (strip-context* #'x) #'x)
-    (check bound-identifier=?
-           (strip-context* (syntax-property #'x 'protect-scope #t))
-           #'x))
+  (with-chk (['name "strip-context*"])
+    (chk #:eq (negate bound-identifier=?) (strip-context* #'x) #'x)
+    (chk #:eq bound-identifier=?
+         (strip-context* (syntax-property #'x 'protect-scope #t))
+         #'x))
 
-  (test-case "contains-id?"
+  (with-chk (['name "contains-id?"])
     (chk
      #:t (contains-id? #'(+ 3 (add1 7)) #'add1)
      #:t (contains-id? #'(+ 3 (add1 x y)) #'x)
      #:! #:t (contains-id? #'(+ 3 (add1 7)) #'foo)))
 
-  (test-case "chase-codomain"
-    (check free-identifier=?
-           (chase-codomain (hash 'a #'b
-                                 'b #'c
-                                 'c #'(-> x y z w))
-                           #'a)
-           #'w))
+  (with-chk (['name "chase-codomain"])
+    (chk #:eq free-identifier=?
+         (chase-codomain (hash 'a #'b
+                               'b #'c
+                               'c #'(-> x y z w))
+                         #'a)
+         #'w))
   )

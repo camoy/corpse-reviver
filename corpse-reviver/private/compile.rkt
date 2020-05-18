@@ -192,7 +192,7 @@
   (define (make-mod target [stx #'_])
     (mod target #'_ stx #f #f (imports target) #f #f))
 
-  (test-case "compile-modules"
+  (with-chk (['name "compile-modules"])
     (after
      (compile-modules (list (make-mod hello-world goodbye-stx)))
      (chk
@@ -200,7 +200,7 @@
       "goodbye world")
      (delete-bytecode hello-world)))
 
-  (test-case "compile+write/dir"
+  (with-chk (['name "compile+write/dir"])
     (after
      (compile+write/dir hello-world goodbye-stx)
      (chk
@@ -208,7 +208,7 @@
       "goodbye world")
      (delete-bytecode hello-world)))
 
-  (test-case "expand/dir"
+  (with-chk (['name "expand/dir"])
     (define stx
       #'(module foo typed/racket/base
           (provide x)
@@ -229,19 +229,19 @@
             #t]
            [_ #f])))
 
-  (test-case "sort-by-dep"
+  (with-chk (['name "sort-by-dep"])
     (define-values (a-mod b-mod c-mod)
       (values (make-mod a) (make-mod b) (make-mod c)))
     (chk
      (sort-by-dep (list a-mod c-mod b-mod))
      (list c-mod b-mod a-mod)))
 
-  (test-case "imports"
+  (with-chk (['name "imports"])
     (chk
      #:t (member (path->symbol (resolve-module-path 'racket/string))
                  (imports hello-world))))
 
-  (test-case "delete-bytecode"
+  (with-chk (['name "delete-bytecode"])
     (define zo (get-bytecode-file hello-world))
     (make-parent-directory* zo)
     (with-output-to-file zo

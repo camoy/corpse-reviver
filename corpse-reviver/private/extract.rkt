@@ -132,7 +132,6 @@
   (require chk
            racket/function
            racket/hash
-           rackunit
            "util.rkt"
            "../test/expand.rkt")
 
@@ -202,7 +201,7 @@
     (define ctc-equal? (contract-equal? ctc-hash))
     (for ([(k v) (in-hash defns1)])
       (define v* (hash-ref defns2 (hash-ref ctc-hash k)))
-      (chk #:t (ctc-equal? v v*))))
+      (chk #:eq ctc-equal? v v*)))
 
   ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -273,13 +272,13 @@
   (match-define (bundle req-defns req-exports req-structs)
     (make-bundle sieve-main-expand 'require))
 
-  (test-case "make-bundle"
+  (with-chk (['name "make-bundle"])
     (define stream-data (hash-ref prov-structs 'stream))
     (define main-data (hash-ref req-structs 'stream))
     (chk (struct-data-fields stream-data) '(first rest))
     (chk (struct-data-fields main-data) '(first rest)))
 
-  (test-case "make-definitions"
+  (with-chk (['name "make-definitions"])
     (define-values (prov-defns* prov-exports*)
       (values (hash-values-syntax->datum prov-defns)
               (hash-values-syntax->datum prov-exports)))
@@ -289,16 +288,16 @@
     (chk-defns streams-defns streams-exports prov-defns* prov-exports*)
     (chk-defns main-defns main-exports req-defns* req-exports*))
 
-  (test-case "make-exports"
+  (with-chk (['name "make-exports"])
     (chk (hash-keys streams-exports) (hash-keys prov-exports)))
 
-  (test-case "make-predicates"
+  (with-chk (['name "make-predicates"])
     (define predicate-hash (make-predicates predicate-server-expand))
     (chk
      #:t (hash-has-key? predicate-hash '(define-predicate is-number*? Integer))
      #:t (hash-has-key? predicate-hash '(make-predicate Number))))
 
-  (test-case "make-opaques"
+  (with-chk (['name "make-opaques"])
     (define x (syntax-property #'x 'opaque #'(define foo "foo")))
     (define y (syntax-property #'y 'opaque #'(define bar "bar")))
     (define z #`(begin #,(syntax-property #'1 'lib x)

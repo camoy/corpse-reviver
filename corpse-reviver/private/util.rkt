@@ -130,56 +130,55 @@
 ;; tests
 
 (module+ test
-  (require chk
-           rackunit)
+  (require chk)
 
-  (test-case "topological sort"
+  (with-chk (['name "topological sort"])
     (chk
      (-topological-sort (hash 'a '(b) 'b '(c)) '(a b c))
      '(c b a)
      (-topological-sort (hash 'a '(b) 'b '(c)) '(a b))
      '(b a)))
 
-  (test-case "hash-remove*"
+  (with-chk (['name "hash-remove*"])
     (chk
      (hash-remove* (hash 'a 1 'b 2 'c 3) '(a b))
      (hash 'c 3)))
 
-  (test-case "on"
+  (with-chk (['name "on"])
     (chk
      (sort '(1 2 3 4 5 6) (- . on . <))
      '(6 5 4 3 2 1)))
 
-  (test-case "satisfies"
+  (with-chk (['name "satisfies"])
     (chk
      #:! #:t (satisfies even? 1)
      (satisfies even? 2) 2))
 
-  (test-case "symbol->path, path->symbol"
+  (with-chk (['name "symbol->path, path->symbol"])
     (chk
      (~> "." string->path path->symbol symbol->path) (current-directory)
      (~> '|.| symbol->path path->symbol symbol->path) (current-directory)))
 
-  (test-case "proper-list?"
+  (with-chk (['name "proper-list?"])
     (chk
      #:! #:t (proper-list? '())
      #:t (proper-list? '(a))))
 
-  (test-case "flatten-cons"
+  (with-chk (['name "flatten-cons"])
     (chk
      (flatten-cons #f) (set)
      (flatten-cons (cons 1 2)) (set 1 2)
      (flatten-cons (cons (cons 1 2) 3)) (set 1 2 3)
      (flatten-cons 1) (set 1)))
 
-  (test-case "symbol->number"
+  (with-chk (['name "symbol->number"])
     (chk
      #:t (symbol->number 'g5)
      #:t (symbol->number 'generated-contract5)
      #:t (symbol->number 'l17)
      #:! #:t (symbol->number 'blah)))
 
-  (test-case "</id"
+  (with-chk (['name "</id"])
     (chk
      #:t (</id 'g5 'g55)
      #:t (</id 'g55 'l7)
@@ -188,11 +187,11 @@
      #:! #:t (</id 'generated-contract7 'generated-contract5)
      #:t (</id 'generated-contract1 'generated-contract13)))
 
-  (test-case "1/n"
+  (with-chk (['name "1/n"])
     (chk
      (1/n "5") 1/5))
 
-  (test-case "make-struct-names"
+  (with-chk (['name "make-struct-names"])
     (chk
      (make-struct-names 'stream '(first rest))
      '(struct:stream

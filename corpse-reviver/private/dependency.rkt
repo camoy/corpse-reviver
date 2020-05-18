@@ -48,7 +48,7 @@
       (syntax-parse stx
         [(x ...)
          (define parent* (or (syntax-property stx 'parent-identifier) parent))
-         (append-map (go parent* _) (attribute x))]
+         (append-map (λ~>> (go parent* )) (attribute x))]
         [x:id (if parent (list (list (syntax-e #'x) parent)) null)]
         [_ null]))))
 
