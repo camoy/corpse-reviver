@@ -41,13 +41,10 @@
 
 (require/expose gtp-measure/private/task
                 (copy-configuration!
-                 count-configurations
                  pre-typed-untyped-subtask-tu-dir
                  pre-typed-untyped-subtask-config-dir
                  pre-typed-untyped-subtask-in-file*
                  pre-typed-untyped-subtask-out-file*
-                 gtp-measure-subtask-out
-                 gtp-measure-subtask-config
                  gtp-measure-task-dir
                  format-target-tag
                  in-pre-subtasks
@@ -58,6 +55,9 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; consts
 
+;; [Listof String]
+;; The names of the benchmarks that are run without command-line files. These
+;; should all be present in this directory's `benchmarks/`.
 (define DEFAULT-BENCHMARKS
   '("sieve"
     "fsm"
@@ -71,9 +71,19 @@
     "tetris"
     "synth"
     "gregor"))
+
+;; [Listof Symbol]
+;; Columns that come first in the CSV output.
 (define CSV-HEADER-PRIORITY '(benchmark config))
+
+;; Path
+;; Useful local paths.
 (define-runtime-path BENCHMARK-DIR "benchmarks")
 (define-runtime-path TYPED-RACKET-DIR "private/typed-racket")
+
+;; [Hash Path Complete-Path]
+;; Proxy hash for patching Typed Racket. This is needed because running the
+;; benchmarks require some changes to Typed Racket.
 (define PROXY-HASH
   (make-proxy-hash
    #hash((typed-racket/base-env/prims-contract . "prims-contract.rkt")
@@ -140,9 +150,10 @@
    targets))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; public
+;; benchmark/scv-cr
 
 ;; Path-String ... → Any
+;; Benchmarks the given GTP typed/untyped targets.
 (define (benchmark/scv-cr . targets)
   (define config (make-config))
   (for ([-target (in-list targets)])
@@ -168,7 +179,9 @@
 ;; subtasks
 
 ;; Task Path-String → Any
-;; TODO
+;; Generates two new subtasks for the given task for a fully untyped and fully
+;; typed configuration. This is baseline information needed for plotting that
+;; may be otherwise unavailable (if sampling).
 (define (init-untyped-typed-subtasks! task target)
   (define task-dir (gtp-measure-task-dir task))
   (define base-filename (build-path task-dir (format-target-tag target 0)))
@@ -184,7 +197,8 @@
   (in-file "typed" #\1))
 
 ;; Pre-Subtask Config → [Listof Subtask]
-;; TODO
+;; Generates subtasks from a pre-subtask. Taken directly out of the `gtp-measure`
+;; package.
 (define (pre-subtask->subtask* pst config)
   (define tu-dir (pre-typed-untyped-subtask-tu-dir pst))
   (define config-dir (pre-typed-untyped-subtask-config-dir pst))
@@ -195,11 +209,17 @@
     (values in-file out-file))
   (typed-untyped->subtask* tu-dir config-dir in-files out-files config))
 
-;;
-;; TODO
+;; Path Path [Listof Path] [Listof Path] Config → [Listof Subtask]
+;; Given some task information, generates a list of runnable subtasks. This is a
+;; modified version from `gtp-measure` that uses our custom runner thunk that
+;; keeps track of analysis and runtime information independently of the out
+;; files.
 (define (typed-untyped->subtask* tu-dir config-dir ins outs config)
   (define entry
-    (path->string (build-path config-dir (config-ref config key:entry-point))))
+    (~> config
+        (config-ref key:entry-point)
+        (build-path config-dir _)
+        path->string))
   (for/list ([in (in-list ins)]
              [out (in-list outs)])
     (define (thunk [out-port (current-output-port)])
@@ -231,8 +251,9 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; typed-untyped-run!
 
-;; → Hash Hash
-;; TODO
+;; Path Config Path Natural → [Hash Symbol Any] [Hash Symbol Any]
+;; Given subtask information, populates hashs containing information from running
+;; that subtask. This is for both analysis and run-time.
 (define (typed-untyped-run! entry config config-out config-id)
   (define dir (path-only entry))
   (define targets (filter relevant-target? (directory-list dir #:build? dir)))
@@ -248,8 +269,9 @@
       (typed-untyped-execute! entry config running-times)))
   (values analysis-times running-times))
 
-;; → Boolean
-;; TODO
+;; [Listof Path] [Hash Symbol Any] → Boolean
+;; Compiles the given targets and populates the analysis time hash. It returns
+;; whether the compilation was successful.
 (define (typed-untyped-compile! targets analysis-times)
   (define interceptor (make-log-interceptor scv-cr-logger))
   (define-values (_ logs)
@@ -259,15 +281,17 @@
          (apply compile-files/scv-cr (map path->string targets))))))
   (define times (map read-message (hash-ref logs 'info)))
   (hash-union! analysis-times
-               (reduce-by 'compile times)
-               (reduce-by 'expand times)
-               (reduce-by 'analyze times)
+               (sum-times 'compile times)
+               (sum-times 'expand times)
+               (sum-times 'analyze times)
                (hash 'blame (and~>> times (findf (has-tag? 'blame)) cdr))
                #:combine (λ (_ x) x))
   (not (hash-ref analysis-times 'error)))
 
-;;
-;; TODO
+;; Path Config → Any
+;; Runs the program and populates the run-time hash with failure information.
+;; Notice that the run-time hash has no performance data yet. This happens in
+;; `typed-untyped->subtask*` instead.
 (define (typed-untyped-execute! entry config running-times)
   (define resolved-entry (make-resolved-module-path (string->path entry)))
   (define iterations (config-ref config key:iterations))
@@ -281,32 +305,35 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; output
 
-;;
-;; TODO
+;; → Any
+;; Outputs machine specification information (Unix only). Specifically data about
+;; CPU and memory.
 (define (output-specs!)
   (define filename (format "~a_specs.txt" (timestamp)))
   (with-output-to-file (build-path (current-output-dir) filename)
     (λ ()
       (system "cat /proc/cpuinfo /proc/meminfo"))))
 
-;;
-;; TODO
+;; String Symbol Queue → Any
+;; Given a queue of data, output this to a timestamped CSV file.
 (define (output-csv! benchmark key queue)
   (define filename (format "~a_~a_~a.csv" (timestamp) benchmark key))
   (with-output-to-file (build-path (current-output-dir) filename)
     (λ ()
       (display-table (list->table (queue->list queue))))))
 
-;;
-;; TODO
+;; [Listof Any] → Table
+;; Given a list of values, convert this to a writable table.
 (define (list->table xs)
   (define header (sort-header (hash-keys (first xs))))
   (cons header
         (for/list ([x (in-list xs)])
           (map (λ~>> (hash-ref x) ->js) header))))
 
-;;
-;; TODO
+;; Any → Any
+;; Returns a representation suitable for output to CSV. If CSV can handle it
+;; natively, don't do anything. Otherwise, serialize to JSON (usually for blame
+;; results).
 (define (->js x)
   (cond
     ;; simple
@@ -320,8 +347,8 @@
           [(list? x) (map go x)]
           [else x])))]))
 
-;;
-;; TODO
+;; [Listof Symbol] → [Listof Symbol]
+;; Sort the CSV header according to the priority constant.
 (define (sort-header header)
   (define header* (remove* CSV-HEADER-PRIORITY header))
   (append CSV-HEADER-PRIORITY (sort header* symbol<?)))
@@ -329,6 +356,8 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; util
 
+;; → String
+;; Get the current time in ISO-8601 format.
 (define (timestamp)
   (parameterize ([date-display-format 'iso-8601])
     (date->string (current-date) #t)))
@@ -341,16 +370,17 @@
                      key:sample-factor (current-sample-factor)
                      key:num-samples (current-num-samples))))
 
-;;
-;; TODO
+;; String → [List Natural Natural Natural]
+;; Parse a `time` string into a list of naturals.
 (define (time-string->list str)
   (call-with-values
    (λ () (time-string->values str))
    list))
 
-;;
-;; TODO
-(define (reduce-by tag times)
+;; Symbol [Listof [Cons Symbol Any]] → [Hash String Natural]
+;; Reduces down time lists that are tagged with `tag` by adding them together.
+;; Returns a hash containing the result.
+(define (sum-times tag times)
   (define match? (has-tag? tag))
   (define reduced-times
     (for/fold ([acc (list 0 0 0)])
@@ -360,8 +390,8 @@
           acc)))
   (times->hash reduced-times tag))
 
-;;
-;; TODO
+;; [Listof [Cons Symbol Any]] {Symbol} → [Hash String Natural]
+;; Given a `time` list, returns a hash with that data.
 (define (times->hash times [key-prefix #f])
   (define (symbol->key sym)
     (if key-prefix (format-symbol "~a-~a" key-prefix sym) sym))
@@ -369,13 +399,13 @@
   (hash (symbol->key 'real) real
         (symbol->key 'cpu) cpu
         (symbol->key 'gc) gc))
-;;
-;; TODO
+;; Symbol → ([Cons Symbol Any] → Boolean)
+;; Returns if a cons cell has a certain tag.
 (define ((has-tag? tag) datum)
   (eq? (car datum) tag))
 
-;;
-;; TODO
+;; String → Any
+;; Returns the datum out of an SCV-CR logger message string.
 (define (read-message str)
   (define log-rx #rx"^scv-cr: (.+)$")
   (~>> str
@@ -384,25 +414,26 @@
        open-input-string
        read))
 
-;;
-;; TODO
+;; Path → Symbol
+;; Returns the last directory of a path as a symbol.
 (define (last-dir path)
   (define-values (_ name __) (split-path path))
   (string->symbol (path->string name)))
 
-;;
-;; TODO
+;; [Hash Symbol Any] → (Exception → Any)
+;; Make an exception handler that sets up an error entry in a hash.
 (define ((make-error-handler hash) e)
   (hash-set! hash 'error (exn->string e)))
 
-;;
-;; TODO
+;; Path → Boolean
+;; Returns if a target is relevant (i.e. is a Racket file and if `current-skip`?
+;; is set, ignores _ prefixed files).
 (define (relevant-target? target)
   (and (path-has-extension? target #".rkt")
        (implies (current-skip?) (not (underscore-prefixed? target)))))
 
-;;
-;; TODO
+;; Path → Boolean
+;; Returns if the filename at the given path has an underscore prefix.
 (define (underscore-prefixed? target)
   (~> target file-name-from-path path->string (string-prefix? "_")))
 

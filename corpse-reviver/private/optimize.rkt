@@ -56,7 +56,9 @@
   (define -blms
     (measure 'analyze
       (with-continuation-mark 'scv? #t
-        (verify-modules targets stxs))))
+        ;; HACK: We need this only for the benchmark-dependent patches.
+        (with-patched-typed-racket
+          (λ () (verify-modules targets stxs))))))
   (info 'blame -blms)
   (define blms (filter (untyped-blame? mods) -blms))
   (debug "filtered analysis: ~a" -blms)
