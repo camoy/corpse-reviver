@@ -80,7 +80,7 @@
 
 ;; Path
 ;; Path for Typed Racket patches.
-(define-runtime-path typed-racket-dir "typed-racket")
+(define-runtime-path typed-racket-dir "lib-typed-racket")
 
 ;; Compiled-Load-Handler
 ;; Cache the old compiled-load handler for proxying.

@@ -79,7 +79,7 @@
 ;; Path
 ;; Useful local paths.
 (define-runtime-path BENCHMARK-DIR "benchmarks")
-(define-runtime-path TYPED-RACKET-DIR "private/typed-racket")
+(define-runtime-path TYPED-RACKET-DIR "private/benchmark-typed-racket")
 
 ;; [Hash Path Complete-Path]
 ;; Proxy hash for patching Typed Racket. This is needed because running the
@@ -436,12 +436,3 @@
 ;; Returns if the filename at the given path has an underscore prefix.
 (define (underscore-prefixed? target)
   (~> target file-name-from-path path->string (string-prefix? "_")))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; test
-
-(module+ test
-  (require chk
-           rackunit)
-
-  )

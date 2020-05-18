@@ -1,11 +1,23 @@
 #lang info
 
-(define scribblings
-  '(("scribblings/corpse-reviver.scrbl" ())))
+;; General
 
-(define raco-commands
-  '(("scv-cr" (submod corpse-reviver main)
-              "Optimize a Typed Racket program with SCV."
-              #f)))
+(define collection 'multi)
+(define version "0.0")
+(define pkg-desc "Sound and efficient gradual typing via contract verification.")
+(define pkg-authors '(camoy))
 
-(define compile-omit-paths '("test"))
+;; Dependencies
+
+(define deps
+  '(("base" #:version "7.4")
+    "corpse-reviver-benchmark"
+    "corpse-reviver-lib"
+    "corpse-reviver-paper"))
+
+(define implies
+  '("corpse-reviver-benchmark"
+    "corpse-reviver-lib"
+    "corpse-reviver-paper"))
+
+(define build-deps '())
