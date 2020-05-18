@@ -12,10 +12,9 @@
 (define deps
   '(("base" #:version "7.4")
     "csv-writing"
-    "fancy-app"
-    "gcstats"
     "graph"
     "lang-file"
+    "make-log-interceptor"
     "mischief"
     "git://github.com/camoy/soft-contract.git#scv-cr"
     "threading"))

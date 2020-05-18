@@ -1,4 +1,4 @@
-#lang errortrace racket/base
+#lang racket/base
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; provide
@@ -14,6 +14,7 @@
 (require (only-in rackunit require/expose)
          csv-writing
          corpse-reviver
+         corpse-reviver/private/compile
          corpse-reviver/private/logging
          data/queue
          gtp-measure/private/configure
@@ -72,6 +73,12 @@
     "gregor"))
 (define CSV-HEADER-PRIORITY '(benchmark config))
 (define-runtime-path BENCHMARK-DIR "benchmarks")
+(define-runtime-path TYPED-RACKET-DIR "private/typed-racket")
+(define PROXY-HASH
+  (make-proxy-hash
+   #hash((typed-racket/base-env/prims-contract . "prims-contract.rkt")
+         (typed-racket/base-env/prims . "prims.rkt"))
+   TYPED-RACKET-DIR))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; parameters
@@ -265,9 +272,11 @@
   (define resolved-entry (make-resolved-module-path (string->path entry)))
   (define iterations (config-ref config key:iterations))
   (for ([_ (in-range iterations)])
-    (parameterize ([current-namespace (make-base-namespace)])
-      (with-handlers ([exn:fail? (make-error-handler running-times)])
-        (dynamic-require resolved-entry #f)))))
+    (with-patched-typed-racket
+      (λ ()
+        (with-handlers ([exn:fail? (make-error-handler running-times)])
+          (dynamic-require resolved-entry #f)))
+      PROXY-HASH)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; output

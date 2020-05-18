@@ -56,8 +56,7 @@
   (define -blms
     (measure 'analyze
       (with-continuation-mark 'scv? #t
-        (with-patched-typed-racket
-          (verify-modules targets stxs)))))
+        (verify-modules targets stxs))))
   (info 'blame -blms)
   (define blms (filter (untyped-blame? mods) -blms))
   (debug "filtered analysis: ~a" -blms)

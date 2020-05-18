@@ -9,14 +9,16 @@
   [compile-modules (-> (listof mod?) any)]
   [compile+write/dir (-> path-string? syntax? any)]
   [expand/dir (-> path-string? syntax? syntax?)]
-
+  [make-proxy-hash (-> (hash/c symbol? string?) path?
+                       (hash/c path? complete-path?))]
+  [with-patched-typed-racket (->* ((-> any))
+                                  ((hash/c path? complete-path?))
+                                  any)]
   [sort-by-dep (-> (listof mod?) (listof mod?))]
-
   [imports (-> path-string? (listof symbol?))]
   [delete-bytecode (-> path-string? any)])
 
- in-dir
- with-patched-typed-racket)
+ in-dir)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; require
@@ -71,57 +73,50 @@
 (define (expand/dir target stx)
   (measure 'expand
     (in-dir target
-      (with-patched-typed-racket
-        (expand stx)))))
-
-;; Executes the given expressions with an environment that has a patched Typed
-;; Racket.
-(define-syntax-rule (with-patched-typed-racket ?x ...)
-  (parameterize ([current-namespace (make-base-namespace)]
-                 [current-load/use-compiled expand-load])
-    ?x ...))
+      (with-patched-typed-racket (λ () (expand stx))))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; compiled-load handler
 
-;; Path to local Typed Racket patches.
-(define-runtime-path CWD ".")
-(define local-typed-racket (build-path CWD "typed-racket"))
+;; Path
+;; Path for Typed Racket patches.
+(define-runtime-path typed-racket-dir "typed-racket")
 
 ;; Compiled-Load-Handler
 ;; Cache the old compiled-load handler for proxying.
 (define old-load (current-load/use-compiled))
 
-;; [Hash Symbol String] → [Hash Path Complete-Path]
+;; [Hash Symbol String] Path → [Hash Path Complete-Path]
 ;; Take the proxy hash and resolve paths as needed.
-(define (resolve-proxy proxy-hash)
+(define (make-proxy-hash proxy-hash base-path)
   (for/hash ([(k v) (in-hash proxy-hash)])
     (values (resolve-module-path k)
-            (simple-form-path (build-path local-typed-racket v)))))
+            (simple-form-path (build-path base-path v)))))
 
 ;; [Hash Symbol String]
 ;; Maps Typed Racket modules to locally patched modules for loading during
 ;; expansion.
-(define proxy-hash
-  #hash((typed-racket/base-env/prims-contract . "prims-contract.rkt")
-        (typed-racket/base-env/prims . "prims.rkt")
-        (typed-racket/private/type-contract . "type-contract.rkt")
-        (typed-racket/static-contracts/combinators/function . "function.rkt")
-        (typed-racket/static-contracts/instantiate . "instantiate.rkt")
-        (typed-racket/typecheck/provide-handling . "provide-handling.rkt")
-        (typed-racket/utils/require-contract . "require-contract.rkt")))
+(define default-proxy-hash
+  (make-proxy-hash
+   #hash((typed-racket/base-env/prims-contract . "prims-contract.rkt")
+         (typed-racket/base-env/prims . "prims.rkt")
+         (typed-racket/private/type-contract . "type-contract.rkt")
+         (typed-racket/static-contracts/combinators/function . "function.rkt")
+         (typed-racket/static-contracts/instantiate . "instantiate.rkt")
+         (typed-racket/typecheck/provide-handling . "provide-handling.rkt")
+         (typed-racket/utils/require-contract . "require-contract.rkt"))
+   typed-racket-dir))
 
-;; [Hash Path Path]
-;; Prepare the proxy hash for use in the compiled-load handler by resolving
-;; modules and completing paths.
-(define resolved-proxy-hash (resolve-proxy proxy-hash))
-
-;; Path Path → Any
-;; The proxy compiled-load handler that uses the proxy hash to redirect
-;; instantiations of Typed Racket modules to our local implementation.
-(define (expand-load path name)
-  (define path* (hash-ref resolved-proxy-hash path (const path)))
-  (old-load path* name))
+;; (→ Any) {[Hash Symbol String]} → Any
+;; Executes the given expressions with an environment that has a patched Typed
+;; Racket, modified by the given proxy hash.
+(define (with-patched-typed-racket f [proxy-hash default-proxy-hash])
+  (define (expand-load path name)
+    (define path* (hash-ref proxy-hash path (const path)))
+    (old-load path* name))
+  (parameterize ([current-namespace (make-base-namespace)]
+                 [current-load/use-compiled expand-load])
+    (f)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; sort by dependency
