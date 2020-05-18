@@ -25,7 +25,7 @@ jobs:
       - uses: GabrielBB/xvfb-action@v1.0
         with:
           # Stop the tests after 30 minutes.
-          run: raco test -x --drdr --timeout 1800 corpse-reviver-lib/corpse-reviver/private corpse-reviver-lib/corpse-reviver/main.rkt
+          run: raco test -x --drdr --timeout 1800 corpse-reviver-lib/private corpse-reviver-lib/main.rkt
         env:
           # So SCV can identify Z3.
           Z3_LIB: /usr/lib/
