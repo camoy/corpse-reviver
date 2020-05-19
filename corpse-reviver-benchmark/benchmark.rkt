@@ -112,7 +112,8 @@
     (if (empty? -args)
         (map (λ~>> (build-path BENCHMARK-DIR)) DEFAULT-BENCHMARKS)
         -args))
-  (apply benchmark/scv-cr args))
+  (define normalized-args (map (λ~> normalize-path path->string) args))
+  (apply benchmark/scv-cr normalized-args))
 
 ;; [Vector String] → List
 ;; Converts command line arguments into arguments suitable for a call to
@@ -153,13 +154,11 @@
 
 ;; Path-String ... → Any
 ;; Benchmarks the given GTP typed/untyped targets.
-(define (benchmark/scv-cr . targets)
+(define/contract (benchmark/scv-cr . targets)
+  (->* () #:rest (listof valid-typed-untyped-target?) any)
   (define config (make-config))
-  (for ([-target (in-list targets)])
-    (define target (path->string (normalize-path -target)))
-    (define kind (and (valid-typed-untyped-target? target) kind:typed-untyped))
-    (define target+kind (cons target kind))
-    (define task (init-task (list target+kind) config))
+  (for ([target (in-list targets)])
+    (define task (init-task `((,target . ,kind:typed-untyped)) config))
     (define benchmark (last-dir target))
     (define analyses (make-queue))
     (define runtimes (make-queue))
