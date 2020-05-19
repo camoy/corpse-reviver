@@ -11,7 +11,7 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(define MAIN "main.scrbl")
+(define MAIN "corpse-reviver.scrbl")
 
 (define (post-installer _ collect-dir)
   (define doc (dynamic-require (build-path collect-dir MAIN) 'doc))
