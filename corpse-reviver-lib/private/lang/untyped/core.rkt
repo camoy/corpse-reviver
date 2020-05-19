@@ -38,8 +38,6 @@
      #'(void)]))
 
 ;; Rewrite require to import safe bindings from the uncontracted submodule.
-;; (We steal the trick of faking a typed module from an untyped from the
-;; live-free-or-die package).
 (define-syntax (-require stx)
   (syntax-parse stx
     [(_ mods ...)

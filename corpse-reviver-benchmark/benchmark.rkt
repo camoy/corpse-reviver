@@ -25,7 +25,6 @@
          make-log-interceptor
          mischief/for
          racket/runtime-path
-         racket/bool
          racket/cmdline
          racket/date
          racket/exn
@@ -95,7 +94,7 @@
 
 (define current-iterations (make-parameter 10))
 (define current-cutoff (make-parameter 10))
-(define current-skip? (make-parameter #f))
+(define current-no-skip? (make-parameter #f))
 (define current-num-samples (make-parameter 4))
 (define current-sample-factor (make-parameter 10))
 (define current-output-dir (make-parameter "."))
@@ -131,8 +130,8 @@
                       "Maximum number of components to measure exhaustively"
                       (current-cutoff (string->number cutoff))]
 
-   [("-s" "--skip") "Skip analysis of modules prefixed with _"
-                    (current-skip? #t)]
+   [("-n" "--no-skip") "Don't skip analysis of modules prefixed with _"
+                       (current-no-skip? #t)]
 
    [("-S" "--sample-factor") sample-factor
                              "Sample factor for calculating the sample size"
@@ -426,11 +425,11 @@
   (hash-set! hash 'error (exn->string e)))
 
 ;; Path → Boolean
-;; Returns if a target is relevant (i.e. is a Racket file and if `current-skip`?
-;; is set, ignores _ prefixed files).
+;; Returns if a target is relevant (i.e. is a Racket file and unless
+;; `current-no-skip?` is `#t`, ignores _ prefixed files).
 (define (relevant-target? target)
   (and (path-has-extension? target #".rkt")
-       (implies (current-skip?) (not (underscore-prefixed? target)))))
+       (or (current-no-skip?) (not (underscore-prefixed? target)))))
 
 ;; Path → Boolean
 ;; Returns if the filename at the given path has an underscore prefix.
