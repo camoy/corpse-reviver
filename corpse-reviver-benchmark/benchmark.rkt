@@ -73,7 +73,7 @@
 
 ;; [Listof Symbol]
 ;; Columns that come first in the CSV output.
-(define CSV-HEADER-PRIORITY '(benchmark config))
+(define CSV-HEADER-PRIORITY '(benchmark config sample))
 
 ;; Path
 ;; Useful local paths.
@@ -99,6 +99,7 @@
 (define current-sample-factor (make-parameter 10))
 (define current-output-dir (make-parameter "."))
 
+(define current-sample (make-parameter 0))
 (define current-benchmark (make-parameter #f))
 (define current-analyses (make-parameter #f))
 (define current-runtimes (make-parameter #f))
@@ -164,14 +165,18 @@
     (define runtimes (make-queue))
     (init-untyped-typed-subtasks! task target)
     (output-specs!)
-    (parameterize ([current-benchmark benchmark]
-                   [current-analyses analyses]
-                   [current-runtimes runtimes])
-      (for* ([pre-subtask (in-list (in-pre-subtasks task))]
-             [subtask (in-list (pre-subtask->subtask* pre-subtask config))])
-        (subtask-run! subtask))
-      (output-csv! benchmark 'analysis analyses)
-      (output-csv! benchmark 'runtime runtimes))))
+    (for*/fold ([n 0])
+               ([pre-subtask (in-list (in-pre-subtasks task))]
+                #:when #t
+                [subtask (in-list (pre-subtask->subtask* pre-subtask config))])
+      (parameterize ([current-sample n]
+                     [current-benchmark benchmark]
+                     [current-analyses analyses]
+                     [current-runtimes runtimes])
+        (subtask-run! subtask)
+        (add1 n)))
+    (output-csv! benchmark 'analysis analyses)
+    (output-csv! benchmark 'runtime runtimes)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; subtasks
@@ -257,6 +262,7 @@
   (define targets (filter relevant-target? (directory-list dir #:build? dir)))
   (define base `((benchmark . ,(current-benchmark))
                  (config . ,config-id)
+                 (sample . ,(current-sample))
                  (error . #f)))
   (define analysis-times (make-hash base))
   (define running-times
