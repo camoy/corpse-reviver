@@ -1,6 +1,6 @@
 #lang scribble/acmart @acmsmall
 
-@title{Conclusion: a path to revival}
+@title{A path to revival}
 
 The landmark study on the empirical performance of run-time
 enforcement of sound gradual types by~\citet{local:takikawa2016} paints

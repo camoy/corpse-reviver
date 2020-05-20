@@ -1,0 +1,7 @@
+benchmark,config,sample,analyze-cpu,analyze-gc,analyze-real,blame,compile-cpu,compile-gc,compile-real,error,expand-cpu,expand-gc,expand-real
+sieve,11,0,2843,447,2839,[],5973,2163,5964,FALSE,2453,543,2451
+sieve,00,1,568,79,568,[],1955,996,1952,FALSE,0,0,0
+sieve,00,2,546,62,545,[],1097,236,1093,FALSE,0,0,0
+sieve,01,2,2995,450,2980,[],4863,906,4836,FALSE,1713,1026,1704
+sieve,10,2,1782,260,1774,[],3889,1433,3871,FALSE,1202,229,1196
+sieve,11,2,3721,1227,3698,[],5461,1154,5430,FALSE,2396,456,2379

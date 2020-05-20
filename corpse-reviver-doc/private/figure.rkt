@@ -3,7 +3,8 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; provide
 
-(provide)
+(provide overhead-grid
+         exact-grid)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; require
@@ -25,20 +26,45 @@
 
 (define DATA-FILENAME-RX #rx".*_(.*)_(.*)\\.csv")
 
+(*GRID-X* #f)
+(*GRID-Y* #f)
+(*OVERHEAD-PLOT-HEIGHT* 200)
+(*OVERHEAD-PLOT-WIDTH* 400)
+(*GRID-NUM-COLUMNS* 2)
+
+;(define analysis (make-paths->hash "analysis" paths))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; public
 
-(define (main paths)
-  (define analysis (make-paths->hash "analysis" paths))
+;;
+;;
+(define (overhead-grid paths)
   (define runtimes (make-paths->hash "runtime" paths))
-  (for/list ([(benchmark paths) (in-hash runtimes)])
-    (displayln benchmark)
-    (samples-plot (runtime-paths->sample-info benchmark paths))
-    #;(overhead-plot (runtime-paths->performance-info benchmark paths))))
+  (define (overhead-or-samples pi)
+    (if (sample-info? pi)
+        (samples-plot pi)
+        (overhead-plot pi)))
+  (define pis
+    (for/list ([(benchmark paths) (in-hash runtimes)])
+      (define pi (runtime-paths->performance-info benchmark paths))
+      (if (exhaustive? pi) pi (runtime-paths->sample-info pi paths))))
+  (grid-plot overhead-or-samples pis))
 
-(define (runtime-paths->sample-info benchmark paths)
-  (make-sample-info (runtime-paths->performance-info benchmark paths)
-                    (runtime-paths->samples paths)))
+;;
+;;
+(define (exact-grid paths)
+  (define runtimes (make-paths->hash "runtime" paths))
+  (define pis
+    (for/list ([(benchmark paths) (in-hash runtimes)])
+      (runtime-paths->performance-info benchmark paths)))
+  (grid-plot exact-runtime-plot pis))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; private
+
+(define (runtime-paths->sample-info pi paths)
+  (make-sample-info pi (runtime-paths->samples paths)))
 
 (define (runtime-paths->performance-info benchmark paths)
   (define h (runtime-paths->hash paths))
@@ -55,6 +81,13 @@
    #:untyped-runtime* baseline-runtimes
    #:typed-runtime* typed-runtimes
    #:make-in-configurations (λ _ config-infos)))
+
+;;
+;;
+(define (exhaustive? pi)
+  (define num-units (performance-info->num-units pi))
+  (define num-configs (performance-info->num-configurations pi))
+  (= num-configs (expt 2 (performance-info->num-units pi))))
 
 ;; String → Natural
 ;;
@@ -146,9 +179,6 @@
   (define matches
     (~>> path file-name-from-path path->string (regexp-match DATA-FILENAME-RX)))
   (and matches (cdr matches)))
-
-(main '("/home/camoy/wrk/corpse-reviver/corpse-reviver-doc/data/2020-05-19T18:26:42_sieve_runtime.csv"))
-#;(main '("/home/camoy/wrk/corpse-reviver/corpse-reviver-doc/data/2020-05-19T11:10:54_fsm_runtime.csv"))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; test

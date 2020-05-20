@@ -4,7 +4,8 @@
           scribble/html-properties)
 
 @(define style
-   (make-style "style" (list (make-css-addition "style.css"))))
+   (make-style "style" (list (make-css-addition "style.css")
+                             (render-convertible-as '(svg-bytes png-bytes)))))
 
 @title[#:style style]{
   Corpse Reviver: Sound and Efficient

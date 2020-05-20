@@ -1,5 +1,11 @@
 #lang scribble/acmart @acmsmall
 
+@(require racket/runtime-path
+          "private/figure.rkt")
+
+@(define-runtime-path DATA "data")
+@(define paths (directory-list DATA #:build? DATA))
+
 @title{Evaluation}
 
 We claim that
@@ -190,6 +196,11 @@ When sampling,
 we used the same configurations
 for the baseline and \tool measurements
 and did not resample.
+
+@overhead-grid[paths]
+
+@exact-grid[paths]
+
 
 @;\begin{figure*}
 @;  {\renewcommand{\arraystretch}{5}
