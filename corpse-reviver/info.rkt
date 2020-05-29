@@ -10,7 +10,7 @@
 ;; Dependencies
 
 (define deps
-  '(("base" #:version "7.4")
+  '("base"
     "corpse-reviver-benchmark"
     "corpse-reviver-lib"
     "corpse-reviver-paper"))

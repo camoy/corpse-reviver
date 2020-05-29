@@ -14,14 +14,14 @@
 ;; Dependencies
 
 (define deps
-  '(("base" #:version "7.4")
+  '("base"
     "graph"
     "lang-file"
     "mischief"
     "git://github.com/camoy/soft-contract.git#scv-cr"
     "threading"
-    ("typed-racket-lib" #:version "1.10")
-    ("typed-racket-more" #:version "1.10")))
+    "typed-racket-lib"
+    "typed-racket-more"))
 
 (define build-deps
   '("rackunit-lib"

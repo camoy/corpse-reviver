@@ -14,9 +14,7 @@ jobs:
           architecture: 'x64'
           distribution: 'full'
           variant: 'regular'
-          version: '7.4'
-      # Install Z3 for SCV.
-      - run: sudo apt-get install -y z3
+          version: 'latest'
       # Typed Racket Hacks prints to STDOUT causing exit code 1. Let's just force success.
       - run: raco pkg install --auto corpse-reviver-lib/ corpse-reviver-benchmark/ || true
       # If we have a cache hit, the above will link the current working directory as the
@@ -26,6 +24,3 @@ jobs:
         with:
           # Stop the tests after 30 minutes.
           run: raco test -x --drdr --timeout 1800 corpse-reviver-lib/private corpse-reviver-lib/main.rkt
-        env:
-          # So SCV can identify Z3.
-          Z3_LIB: /usr/lib/

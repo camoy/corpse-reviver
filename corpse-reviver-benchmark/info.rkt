@@ -14,7 +14,7 @@
 ;; Dependencies
 
 (define deps
-  '(("base" #:version "7.4")
+  '("base"
     "corpse-reviver-lib"
     "csv-writing"
     "gtp-measure"
@@ -23,7 +23,7 @@
     "mischief"
     "rackunit"
     "threading"
-    ("typed-racket-lib" #:version "1.10")
-    ("typed-racket-more" #:version "1.10")))
+    "typed-racket-lib"
+    "typed-racket-more"))
 
 (define build-deps '())
