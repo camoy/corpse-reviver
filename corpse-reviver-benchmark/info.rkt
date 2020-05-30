@@ -22,8 +22,7 @@
     "mischief"
     "rackunit"
     "threading"
-    "git://github.com/racket/typed-racket"
-    #;"typed-racket-lib"
-    #;"typed-racket-more"))
+    "typed-racket-lib"
+    "typed-racket-more"))
 
 (define build-deps '())
