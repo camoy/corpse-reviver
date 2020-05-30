@@ -20,8 +20,9 @@
     "mischief"
     "git://github.com/camoy/soft-contract.git#scv-cr"
     "threading"
-    "typed-racket-lib"
-    "typed-racket-more"))
+    "git://github.com/racket/typed-racket"
+    #;"typed-racket-lib"
+    #;"typed-racket-more"))
 
 (define build-deps
   '("rackunit-lib"
