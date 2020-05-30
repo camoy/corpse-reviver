@@ -11,13 +11,13 @@
 
 (define deps
   '("base"
-    "corpse-reviver-benchmark"
-    "corpse-reviver-lib"
-    "corpse-reviver-paper"))
+    "corpse-reviver-benchmark/"
+    "corpse-reviver-lib/"
+    "corpse-reviver-doc/"))
 
 (define implies
   '("corpse-reviver-benchmark"
     "corpse-reviver-lib"
-    "corpse-reviver-paper"))
+    "corpse-reviver-doc"))
 
 (define build-deps '())

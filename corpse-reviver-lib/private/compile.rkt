@@ -99,7 +99,6 @@
 (define default-proxy-hash
   (make-proxy-hash
    #hash((typed-racket/base-env/prims-contract . "prims-contract.rkt")
-         (typed-racket/base-env/prims . "prims.rkt")
          (typed-racket/private/type-contract . "type-contract.rkt")
          (typed-racket/static-contracts/combinators/function . "function.rkt")
          (typed-racket/static-contracts/instantiate . "instantiate.rkt")

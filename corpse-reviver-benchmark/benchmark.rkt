@@ -85,8 +85,7 @@
 ;; benchmarks require some changes to Typed Racket.
 (define PROXY-HASH
   (make-proxy-hash
-   #hash((typed-racket/base-env/prims-contract . "prims-contract.rkt")
-         (typed-racket/base-env/prims . "prims.rkt"))
+   #hash((typed-racket/base-env/prims-contract . "prims-contract.rkt"))
    TYPED-RACKET-DIR))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

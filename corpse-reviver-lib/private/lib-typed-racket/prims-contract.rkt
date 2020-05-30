@@ -179,7 +179,7 @@
                              #,@(if unsafe? #'(unsafe-kw) #'())
                              #,lib))
    (pattern sig:signature-clause #:attr spec
-     #`(require-typed-signature sig.sig-name (sig.var ...) (sig.type ...) #,lib))
+     (quasisyntax/loc #'sig (require-typed-signature sig.sig-name (sig.var ...) (sig.type ...) #,lib)))
    (pattern sc:simple-clause #:attr spec
      #`(require/typed #:internal sc.nm sc.ty #,lib
                       #,@(if unsafe? #'(unsafe-kw) #'()))))
@@ -307,11 +307,11 @@
          #,(ignore
             (quasisyntax/loc stx
               (define name
-                (let ([pred #,(make-predicate #'(make-predicate ty)
-                                              #:source stx)])
+                (let ([pred #,(make-predicate #'(make-predicate ty) #:source stx)])
                   (lambda (x) (pred x))))))
          ;; not a require, this is just the unchecked declaration syntax
          #,(internal (syntax/loc stx (require/typed-internal name (Any -> Boolean : ty)))))]))
+
 
 (define (make-predicate stx #:source [src #f])
   (syntax-parse stx
