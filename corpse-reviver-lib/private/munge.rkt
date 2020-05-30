@@ -64,10 +64,10 @@
         [typed-racket-hash/c #'hash/c]
 
         ;; TR vectors
-        [(mutable-vector/c x ...) #'(vector/c x ...)]
-        [(immutable-vector/c x ...) #'(vector/c x ...)]
-        [(mutable-vectorof/c x) #'(vectorof x)]
-        [(immutable-vectorof/c x) #'(vectorof x)]
+        [(mutable-vector/c x ...) (go #'(vector/c x ...))]
+        [(immutable-vector/c x ...) (go #'(vector/c x ...))]
+        [(mutable-vectorof/c x) (go #'(vectorof x))]
+        [(immutable-vectorof/c x) (go #'(vectorof x))]
 
         ;; Inline simple-result->, cannot require (SCV)
         [(simple-result-> ran arity)
@@ -187,6 +187,7 @@
      (munge-e #'any-wrap/c) 'any/c
      (munge-e #'pred-cnt) '(-> any/c boolean?)
      (munge-e #'typed-racket-hash/c) 'hash/c
+     (munge-e #'(mutable-vector/c any-wrap/c)) '(vector/c any/c)
      (munge-e #'(mutable-vector/c any/c)) '(vector/c any/c)
      (munge-e #'(immutable-vector/c any/c)) '(vector/c any/c)
      (munge-e #'(mutable-vectorof/c any/c)) '(vectorof any/c)
