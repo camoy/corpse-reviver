@@ -16,7 +16,6 @@
 (define deps
   '("base"
     "corpse-reviver-lib"
-    "csv-writing"
     "gtp-measure"
     "gtp-util"
     "make-log-interceptor"

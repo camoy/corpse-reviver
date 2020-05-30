@@ -12,7 +12,6 @@
 ;; require
 
 (require (only-in rackunit require/expose)
-         csv-writing
          corpse-reviver
          corpse-reviver/private/compile
          corpse-reviver/private/logging
@@ -70,10 +69,6 @@
     "tetris"
     "synth"
     "gregor"))
-
-;; [Listof Symbol]
-;; Columns that come first in the CSV output.
-(define CSV-HEADER-PRIORITY '(benchmark config sample))
 
 ;; Path
 ;; Useful local paths.
@@ -174,8 +169,8 @@
                      [current-runtimes runtimes])
         (subtask-run! subtask)
         (add1 n)))
-    (output-csv! benchmark 'analysis analyses)
-    (output-csv! benchmark 'runtime runtimes)))
+    (output-json! benchmark 'analysis analyses)
+    (output-json! benchmark 'runtime runtimes)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; subtasks
@@ -319,42 +314,28 @@
 
 ;; String Symbol Queue → Any
 ;; Given a queue of data, output this to a timestamped CSV file.
-(define (output-csv! benchmark key queue)
-  (define filename (format "~a_~a_~a.csv" (timestamp) benchmark key))
+(define (output-json! benchmark key queue)
+  (define filename (format "~a_~a_~a.json" (timestamp) benchmark key))
   (with-output-to-file (build-path (current-output-dir) filename)
     (λ ()
-      (display-table (list->table (queue->list queue))))))
+      (~> queue queue->list list->jsexpr write-json))))
 
-;; [Listof Any] → Table
-;; Given a list of values, convert this to a writable table.
-(define (list->table xs)
-  (define header (sort-header (hash-keys (first xs))))
-  (cons header
-        (for/list ([x (in-list xs)])
-          (map (λ~>> (hash-ref x) ->js) header))))
+;; [Listof Any] → JSExpr
+;; Given a list of values, convert this to a JSON convertible value.
+(define (list->jsexpr xs)
+  (define keys (hash-keys (first xs)))
+  (for/list ([x (in-list xs)])
+    (for/hash ([(k v) (in-hash x)])
+      (values k (->js v)))))
 
 ;; Any → Any
-;; Returns a representation suitable for output to CSV. If CSV can handle it
-;; natively, don't do anything. Otherwise, serialize to JSON (usually for blame
-;; results).
+;; Returns a representation suitable for output to JSON. This requires mapping
+;; some symbols to strings.
 (define (->js x)
   (cond
-    ;; simple
-    [(or (string? x) (number? x) (boolean? x) (symbol? x)) x]
-    ;; complex
-    [else
-     (jsexpr->string
-      (let go ([x x])
-        (cond
-          [(symbol? x) (symbol->string x)]
-          [(list? x) (map go x)]
-          [else x])))]))
-
-;; [Listof Symbol] → [Listof Symbol]
-;; Sort the CSV header according to the priority constant.
-(define (sort-header header)
-  (define header* (remove* CSV-HEADER-PRIORITY header))
-  (append CSV-HEADER-PRIORITY (sort header* symbol<?)))
+    [(symbol? x) (symbol->string x)]
+    [(list? x) (map ->js x)]
+    [else x]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; util
