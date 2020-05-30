@@ -152,13 +152,13 @@
 (define/contract (benchmark/scv-cr . targets)
   (->* () #:rest (listof valid-typed-untyped-target?) any)
   (define config (make-config))
+  (output-specs!)
   (for ([target (in-list targets)])
     (define task (init-task `((,target . ,kind:typed-untyped)) config))
     (define benchmark (last-dir target))
     (define analyses (make-queue))
     (define runtimes (make-queue))
     (init-untyped-typed-subtasks! task target)
-    (output-specs!)
     (for*/fold ([n 0])
                ([pre-subtask (in-list (in-pre-subtasks task))]
                 #:when #t

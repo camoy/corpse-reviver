@@ -9,11 +9,11 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; require
 
-(require csv-reading
-         gtp-plot/configuration-info
+(require gtp-plot/configuration-info
          gtp-plot/performance-info
          gtp-plot/plot
          gtp-plot/sample-info
+         json
          racket/hash
          racket/path
          racket/list
@@ -24,7 +24,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; const
 
-(define DATA-FILENAME-RX #rx".*_(.*)_(.*)\\.csv")
+(define DATA-FILENAME-RX #rx".*_(.*)_(.*)\\.json")
 
 (*GRID-X* #f)
 (*GRID-Y* #f)
@@ -99,11 +99,11 @@
 ;; [Listof Path] → [Listof [Listof Configuration-Info]]
 ;; TODO
 (define (runtime-paths->samples paths)
-  (define run-hashes (append-map csv->hashes paths))
+  (define run-hashes (append-map json->hashes paths))
   (define -hashes
     (for/fold ([acc (hash)])
               ([run-hash (in-list run-hashes)])
-      (define sample (string->number (hash-ref run-hash "sample")))
+      (define sample (hash-ref run-hash 'sample))
       (hash-update acc sample (λ~>> (cons run-hash)) null)))
   (define hashes (remove-baseline -hashes))
   (for/list ([(k v) (in-hash hashes)])
@@ -119,7 +119,7 @@
 ;;
 ;;
 (define (baseline? h)
-  (define str (hash-ref h "config"))
+  (define str (hash-ref h 'config))
   (define n (string-length str))
   (define hi (count-hi-bits str))
   (or (= hi 0) (= hi n)))
@@ -127,7 +127,7 @@
 ;; [Listof Path] → [Hash String [Listof Natural]]
 ;;
 (define (runtime-paths->hash paths)
-  (define run-hashes (append-map csv->hashes paths))
+  (define run-hashes (append-map json->hashes paths))
   (hash-collapse run-hashes))
 
 ;;
@@ -136,9 +136,9 @@
   (define hashes
     (for/list ([run-hash (in-list run-hashes)])
       (match-define
-        (hash-table ["config" config] ["real" real] _ ...)
+        (hash-table ['config config] ['real real] _ ...)
         run-hash)
-      (hash config (list (string->number real)))))
+      (hash config (list real))))
   (apply hash-union #:combine append hashes))
 
 ;;
@@ -148,15 +148,9 @@
     (configuration-info config (count-hi-bits config) runtimes)))
 
 ;; Path → [Listof [Hash Any Any]]
-;; Convert a CSV file to a list of hashes with keys based on the header.
-(define (csv->hashes path)
-  (define in (open-input-file path))
-  (match-define `(*TOP* (row ,header ...) ,rows ...) (csv->sxml in))
-  (close-input-port in)
-  (for/list ([row (in-list (cdr rows))])
-    (for/hash ([k+v (in-list (cdr row))])
-      (match-define (list k v) k+v)
-      (values (second (assoc k header)) v))))
+;; Convert a JSON file to a list of hashes with keys based on the header.
+(define (json->hashes path)
+  (with-input-from-file path read-json))
 
 ;; String [Listof Path] → [Hash String [List Path]]
 ;; Given the kind of data we're interested, creates a hash mapping benchmark
@@ -187,11 +181,11 @@
   (require chk)
 
   (define eg-data
-    (string->path "somewhere/2020-05-19T11:05:10_sieve_analysis.csv"))
+    (string->path "somewhere/2020-05-19T11:05:10_sieve_analysis.json"))
   (define eg-runtime-0
-    (string->path "somewhere/2020-05-19T11:05:10_sieve_runtime.csv"))
+    (string->path "somewhere/2020-05-19T11:05:10_sieve_runtime.json"))
   (define eg-runtime-1
-    (string->path "somewhere/2020-05-19T11:05:15_sieve_runtime.csv"))
+    (string->path "somewhere/2020-05-19T11:05:15_sieve_runtime.json"))
   (define eg-all (list eg-data eg-runtime-0 eg-runtime-1))
 
   (with-chk (['name "path->benchmark"])
