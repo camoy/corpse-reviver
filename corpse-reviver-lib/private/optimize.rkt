@@ -107,7 +107,9 @@
 (define (unsafe mods blms)
   (define (server-module blm)
     (define path (blame-server blm))
-    (define result (findf (λ (x) (equal? (mod-target x) path)) mods))
+    (define result (findf (λ~> mod-target (equal? path)) mods))
+    (when (not result)
+      (warn (format "cannot locate contract for blame: ~a" (pretty-format blm))))
     result)
   (define unsafe
     (for/list ([blm (in-list blms)]
@@ -116,12 +118,6 @@
       (define bundle (contracts-provide (mod-contracts mod)))
       (define residuals (residual-contracts mod blm))
       (hash (blame-server blm) (bundle->unsafe-exports bundle residuals))))
-
-  ;; HACK: Needed to avoid #3168. Move into `server-module` for Racket >=7.8
-  (for ([blm (in-list blms)]
-        #:when (not (server-module blm)))
-    (warn (format "cannot locate contract for blame: ~a" (pretty-format blm))))
-
   (define default-hash
     (for/hash ([mod (in-list mods)])
       (values (mod-target mod) null)))

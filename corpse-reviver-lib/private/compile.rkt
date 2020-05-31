@@ -219,10 +219,9 @@
       (car (syntax-property-values expanded-stx 'provide)))
     (chk
      #:t (syntax-case provide-prop
-             (begin exact-integer? or/c flat-named-contract
-              define-module-boundary-contract define define-values)
-           [(begin (define _ (flat-named-contract _ exact-integer?))
-                   (define _ (or/c _))
+             (begin exact-integer? or/c define-module-boundary-contract
+              define define-values)
+           [(begin (define _ (or/c exact-integer?))
                    (define-values (_) _)
                    (define-module-boundary-contract _ ...))
             #t]
