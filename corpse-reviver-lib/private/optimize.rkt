@@ -204,44 +204,43 @@
            "../test/path.rkt"
            "../test/mod.rkt")
 
-  (around
-   cleanup-bytecode
+  (cleanup-bytecode)
 
-   (with-chk (['name "optimize (slow sieve)"])
-     (define mods (optimize (list sieve-slow-streams-mod
-                                  sieve-slow-main-mod)))
-     (define old-times
-       (with-output-to-string
-         (λ ()
-           (parameterize ([current-namespace (make-base-namespace)])
-             (dynamic-require (string->path sieve-slow-main) #f)))))
+  (with-chk (['name "optimize (slow sieve)"])
+    (define mods (optimize (list sieve-slow-streams-mod
+                                 sieve-slow-main-mod)))
+    (define old-times
+      (parameterize ([current-namespace (make-base-namespace)])
+        (with-output-to-string
+          (λ ()
+            (dynamic-require (string->path sieve-slow-main) #f)))))
 
-     (compile-modules mods)
+    (compile-modules mods)
 
-     (define new-times
-       (with-output-to-string
-         (λ ()
-           (parameterize ([current-namespace (make-base-namespace)])
-             (dynamic-require (string->path sieve-slow-main) #f)))))
+    (define new-times
+      (parameterize ([current-namespace (make-base-namespace)])
+        (with-output-to-string
+          (λ ()
+            (dynamic-require (string->path sieve-slow-main) #f)))))
 
-     (define (real-time x)
-       (string->number (second (regexp-match #px"real time: (\\d+)" x))))
+    (define (real-time x)
+      (string->number (second (regexp-match #px"real time: (\\d+)" x))))
 
-     ;; Conservatively, the speedup from optimization should be at least 5x.
-     (define speedup (/ (real-time old-times) (real-time new-times)))
-     (chk
-      #:t (> speedup 5)))
+    ;; Conservatively, the speedup from optimization should be at least 5x.
+    (define speedup (/ (real-time old-times) (real-time new-times)))
+    (chk
+     #:t (> speedup 5)))
 
    (with-chk (['name "optimize (client and server)"])
      (define (chk-optimize server client)
        (define mods (optimize (list server client)))
        (compile-modules mods)
-       (define g (dynamic-require (string->path (mod-target client)) 'g))
+       (define g
+         (parameterize ([current-namespace (make-base-namespace)])
+           (dynamic-require (string->path (mod-target client)) 'g)))
        (chk (unsafe-struct-ref (g 42) 0) 42))
      (chk-optimize ty-ty-server-mod ty-ty-client-mod)
      (chk-optimize ty-ut-server-mod ty-ut-client-mod)
      (chk-optimize ut-ty-server-mod ut-ty-client-mod)
      (chk-optimize ut-ut-server-mod ut-ut-client-mod))
-
-    cleanup-bytecode)
   )

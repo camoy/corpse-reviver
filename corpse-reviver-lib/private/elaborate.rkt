@@ -220,13 +220,11 @@
       [(contract-out x) (syntax->datum #'x)]
       [_ (raise-result-error 'uncontract "did not get a contract-out form")]))
 
-  (define streams-mod (make-mod streams))
-  (define streams-ctcs (make-contracts streams-expand))
-  (define streams-provide (contracts-provide streams-ctcs))
-  (define sieve-main-mod (make-mod sieve-main))
-
-  (around
-   cleanup-bytecode
+   (cleanup-bytecode)
+   (define streams-mod (make-mod streams))
+   (define streams-ctcs (make-contracts streams-expand))
+   (define streams-provide (contracts-provide streams-ctcs))
+   (define sieve-main-mod (make-mod sieve-main))
 
    (with-chk (['name "elaborate (sieve)"])
      (define 0-10
@@ -239,9 +237,10 @@
                    (stream-take ((f 0)) 10)))))
      (compile-modules (list streams-mod sieve-main-mod))
      (define sieve-output
-       (with-output-to-string
-         (λ ()
-           (dynamic-require (string->path sieve-main) #f))))
+       (parameterize ([current-namespace (make-base-namespace)])
+         (with-output-to-string
+           (λ ()
+             (dynamic-require (string->path sieve-main) #f)))))
      (chk
       0-10 '(0 1 2 3 4 5 6 7 8 9)
       #:t (regexp-match? #rx"cpu time:" sieve-output)
@@ -298,6 +297,4 @@
       deps
       (map syntax->datum (bundle-deps streams-provide))
       ))
-
-   cleanup-bytecode)
   )
