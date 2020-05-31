@@ -12,7 +12,6 @@
 
 (define deps
   '("base"
-    "csv-reading"
     "gtp-plot"
     "scribble-lib"
     "threading-lib"))
