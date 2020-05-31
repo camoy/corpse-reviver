@@ -12,7 +12,8 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; require
 
-(require racket/cmdline
+(require compiler/cm
+         racket/cmdline
          racket/contract
          soft-contract/main
          threading
@@ -48,7 +49,7 @@
 (define (compile-files/scv-cr . -targets)
   (measure 'total
     (define targets (map canonicalize-path -targets))
-    (for-each delete-bytecode targets)
+    (for-each managed-compile-zo targets)
     (define mods (sort-by-dep (map make-mod targets)))
     (define opt-mods (optimize mods))
     (compile-modules opt-mods)))

@@ -294,6 +294,8 @@
   (define resolved-entry (make-resolved-module-path (string->path entry)))
   (define iterations (config-ref config key:iterations))
   (for ([_ (in-range iterations)])
+    ;; HACK: Remove this (and all of private/benchmark-typed-racket) once TR
+    ;; #837 is resolved.
     (with-patched-typed-racket
       (λ ()
         (with-handlers ([exn:fail? (make-error-handler running-times)])

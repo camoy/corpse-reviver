@@ -57,6 +57,7 @@
     (measure 'analyze
       (with-continuation-mark 'scv? #t
         ;; HACK: We need this only for the benchmark-dependent patches.
+        ;; Remove this once TR #837 is resolved.
         (with-patched-typed-racket
           (λ () (verify-modules targets stxs))))))
   (info 'blame -blms)

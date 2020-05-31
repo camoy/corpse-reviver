@@ -46,7 +46,6 @@
   (define ctcs (make-contracts expanded-stx))
   (define elaborated (elaborate raw-stx ctcs target))
   (debug "elaborated (~a):\n~a." target elaborated)
-  (compile+write/dir target expanded-stx)
   (mod target
        raw-stx elaborated ctcs #t (imports target)
        (contract-positions elaborated)
@@ -56,7 +55,6 @@
 ;; Returns module for an untyped file from raw syntax. This does nothing since
 ;; untyped code needs no elaboration.
 (define (untyped->mod target raw-stx)
-  (compile+write/dir target raw-stx)
   (mod target raw-stx raw-stx #f #f (imports target) #f #f))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
