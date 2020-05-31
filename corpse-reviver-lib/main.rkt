@@ -12,9 +12,9 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; require
 
-(require compiler/cm
-         racket/cmdline
+(require racket/cmdline
          racket/contract
+         setup/parallel-build
          soft-contract/main
          threading
          "private/compile.rkt"
@@ -49,7 +49,7 @@
 (define (compile-files/scv-cr . -targets)
   (measure 'total
     (define targets (map canonicalize-path -targets))
-    (for-each managed-compile-zo targets)
+    (parallel-compile-files targets)
     (define mods (sort-by-dep (map make-mod targets)))
     (define opt-mods (optimize mods))
     (compile-modules opt-mods)))
@@ -231,7 +231,7 @@
       (test-optimize "rest-args"
                      "main.rkt"
                      '("main.rkt")))
-    (test-benchmark "sieve")
+    (test-benchmark "sieve-benchmark")
     (test-benchmark "fsm")
     (test-benchmark "morsecode")
     (test-benchmark "zombie")
