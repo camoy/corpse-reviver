@@ -35,7 +35,8 @@
          racket/string
          racket/syntax
          racket/system
-         threading)
+         threading
+         "util.rkt")
 
 (require/expose gtp-measure/private/task
                 (copy-configuration!
@@ -84,19 +85,21 @@
    TYPED-RACKET-DIR))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; parameters
+;; config
 
-(define current-iterations (make-parameter 10))
-(define current-cutoff (make-parameter 10))
-(define current-no-skip? (make-parameter #f))
-(define current-num-samples (make-parameter 4))
-(define current-sample-factor (make-parameter 10))
-(define current-output-dir (make-parameter "."))
-
-(define current-sample (make-parameter 0))
-(define current-benchmark (make-parameter #f))
-(define current-analyses (make-parameter #f))
-(define current-runtimes (make-parameter #f))
+(define cfg
+  (config
+   10  ; iterations
+   10  ; cutoff
+   #f  ; no-skip?
+   4   ; num-samples
+   10  ; sample-factor
+   "." ; output-dir
+   0   ; sample
+   #f  ; benchmark
+   #f  ; analyses
+   #f  ; runtimes
+   ))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; main
@@ -118,29 +121,35 @@
    #:program "scv-cr-benchmark"
    #:argv argv
    #:once-each
-   [("-i" "--iterations") iters
-                          "Number of iterations"
-                          (current-iterations (string->number iters))]
+   [("-i" "--iterations")
+    iters
+    "Number of iterations"
+    (set-config-iterations! cfg (string->number iters))]
 
-   [("-c" "--cutoff") cutoff
-                      "Maximum number of components to measure exhaustively"
-                      (current-cutoff (string->number cutoff))]
+   [("-c" "--cutoff")
+    cutoff
+    "Maximum number of components to measure exhaustively"
+    (set-config-cutoff! cfg (string->number cutoff))]
 
-   [("-n" "--no-skip") "Don't skip analysis of modules prefixed with _"
-                       (current-no-skip? #t)]
+   [("-n" "--no-skip")
+    "Don't skip analysis of modules prefixed with _"
+    (set-config-no-skip?! cfg #t)]
 
-   [("-S" "--sample-factor") sample-factor
-                             "Sample factor for calculating the sample size"
-                             (current-sample-factor
-                              (string->number sample-factor))]
+   [("-S" "--sample-factor")
+    sample-factor
+    "Sample factor for calculating the sample size"
+    (set-config-sample-factor! cfg (string->number sample-factor))]
 
-   [("-R" "--num-samples") num-samples
-                           "Number of samples"
-                           (current-num-samples (string->number num-samples))]
+   [("-R" "--num-samples")
+    num-samples
+    "Number of samples"
+    (set-config-num-samples! cfg (string->number num-samples))]
 
-   [("-o" "--output") output-dir
-                      "Result output directory"
-                      (current-output-dir output-dir)]
+   [("-o" "--output")
+    output-dir
+    "Result output directory"
+    (set-config-output-dir! cfg output-dir)]
+
    #:args targets
    targets))
 
@@ -163,12 +172,12 @@
                ([pre-subtask (in-list (in-pre-subtasks task))]
                 #:when #t
                 [subtask (in-list (pre-subtask->subtask* pre-subtask config))])
-      (parameterize ([current-sample n]
-                     [current-benchmark benchmark]
-                     [current-analyses analyses]
-                     [current-runtimes runtimes])
-        (subtask-run! subtask)
-        (add1 n)))
+      (set-config-sample! cfg n)
+      (set-config-benchmark! cfg benchmark)
+      (set-config-analyses! cfg analyses)
+      (set-config-runtimes! cfg runtimes)
+      (subtask-run! subtask)
+      (add1 n))
     (output-json! benchmark 'analysis analyses)
     (output-json! benchmark 'runtime runtimes)))
 
@@ -235,13 +244,13 @@
             (define running-times
               (map (λ~> time-string->list times->hash) raw-running-times))
             (for ([time (in-list running-times)])
-              (enqueue! (current-runtimes)
+              (enqueue! (config-runtimes cfg)
                         (hash-union time
                                     base-running-times
                                     #:combine (λ (x _) x))))
-            (enqueue! (current-analyses) analysis-times)
+            (enqueue! (config-analyses cfg) analysis-times)
             (when (empty? running-times)
-              (enqueue! (current-runtimes) base-running-times))
+              (enqueue! (config-runtimes cfg) base-running-times))
             (close-input-port config-in)))))
     (make-gtp-measure-subtask out thunk config)))
 
@@ -254,9 +263,9 @@
 (define (typed-untyped-run! entry config config-out config-id)
   (define dir (path-only entry))
   (define targets (filter relevant-target? (directory-list dir #:build? dir)))
-  (define base `((benchmark . ,(current-benchmark))
+  (define base `((benchmark . ,(config-benchmark cfg))
                  (config . ,config-id)
-                 (sample . ,(current-sample))
+                 (sample . ,(config-sample cfg))
                  (error . #f)))
   (define analysis-times (make-hash base))
   (define running-times
@@ -309,16 +318,16 @@
 ;; Outputs machine specification information (Unix only). Specifically data about
 ;; CPU and memory.
 (define (output-specs!)
-  (define filename (format "~a_specs.txt" (timestamp)))
-  (with-output-to-file (build-path (current-output-dir) filename)
+  (define filename (format "~a_specs.txt" (iso-timestamp)))
+  (with-output-to-file (build-path (config-output-dir cfg) filename)
     (λ ()
       (system "cat /proc/cpuinfo /proc/meminfo"))))
 
 ;; String Symbol Queue → Any
 ;; Given a queue of data, output this to a timestamped CSV file.
 (define (output-json! benchmark key queue)
-  (define filename (format "~a_~a_~a.json" (timestamp) benchmark key))
-  (with-output-to-file (build-path (current-output-dir) filename)
+  (define filename (format "~a_~a_~a.json" (iso-timestamp) benchmark key))
+  (with-output-to-file (build-path (config-output-dir cfg) filename)
     (λ ()
       (~> queue queue->list list->jsexpr write-json))))
 
@@ -342,19 +351,13 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; util
 
-;; → String
-;; Get the current time in ISO-8601 format.
-(define (timestamp)
-  (parameterize ([date-display-format 'iso-8601])
-    (date->string (current-date) #t)))
-
 ;; → Config
 ;; Creates a configuration from the command line argument parameters.
 (define (make-config)
-  (init-config (hash key:iterations (current-iterations)
-                     key:cutoff (current-cutoff)
-                     key:sample-factor (current-sample-factor)
-                     key:num-samples (current-num-samples))))
+  (init-config (hash key:iterations (config-iterations cfg)
+                     key:cutoff (config-cutoff cfg)
+                     key:sample-factor (config-sample-factor cfg)
+                     key:num-samples (config-num-samples cfg))))
 
 ;; String → [List Natural Natural Natural]
 ;; Parse a `time` string into a list of naturals.
@@ -385,6 +388,7 @@
   (hash (symbol->key 'real) real
         (symbol->key 'cpu) cpu
         (symbol->key 'gc) gc))
+
 ;; Symbol → ([Cons Symbol Any] → Boolean)
 ;; Returns if a cons cell has a certain tag.
 (define ((has-tag? tag) datum)
@@ -416,7 +420,7 @@
 ;; `current-no-skip?` is `#t`, ignores _ prefixed files).
 (define (relevant-target? target)
   (and (path-has-extension? target #".rkt")
-       (or (current-no-skip?) (not (underscore-prefixed? target)))))
+       (or (config-no-skip? cfg) (not (underscore-prefixed? target)))))
 
 ;; Path → Boolean
 ;; Returns if the filename at the given path has an underscore prefix.
