@@ -107,7 +107,7 @@
   (define is-main?
     (λ~>> file-name-string (string=? "main.rkt")))
 
-  (parameterize ([current-directory TEST-DIR])
+  #;(parameterize ([current-directory TEST-DIR])
     (test-case
       "Adapter imports reprovides a module as opaque (with an opaque type)."
       (test-optimize "double-opaque"
@@ -231,7 +231,7 @@
       (test-optimize "rest-args"
                      "main.rkt"
                      '("main.rkt")))
-    (test-benchmark "sieve-benchmark")
+    (test-benchmark "sieve")
     (test-benchmark "fsm")
     (test-benchmark "morsecode")
     (test-benchmark "zombie")

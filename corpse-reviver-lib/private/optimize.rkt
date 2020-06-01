@@ -231,7 +231,7 @@
     (chk
      #:t (> speedup 5)))
 
-   (with-chk (['name "optimize (client and server)"])
+   #;(with-chk (['name "optimize (client and server)"])
      (define (chk-optimize server client)
        (define mods (optimize (list server client)))
        (compile-modules mods)
