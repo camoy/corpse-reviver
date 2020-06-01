@@ -25,4 +25,5 @@ jobs:
           # Stop the tests after 30 minutes.
           run: raco test -x --drdr --timeout 1800 corpse-reviver-lib/private corpse-reviver-lib/main.rkt
       - name: Setup tmate session
+        if: ${{ always() }}
         uses: mxschmitt/action-tmate@v2
