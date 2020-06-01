@@ -8,8 +8,7 @@ SCV-CR is not available on the Racket package server, so you must install it fro
 
 ```
 git clone https://github.com/camoy/corpse-reviver
-cd corpse-reviver
-raco pkg install corpse-reviver/
+raco pkg install corpse-reviver/*/
 ```
 
 ## Run

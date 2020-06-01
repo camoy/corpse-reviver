@@ -246,6 +246,7 @@
       #:t (regexp-match? #rx"cpu time:" sieve-output)
       ))
 
+   ;; FIXME: This can possibly contend with a test in `optimize` under certain conditions.
    (with-chk (['name "elaborate (client and server)"])
      (define (chk-elaborate server-path client-path)
        (define server (make-mod server-path))
