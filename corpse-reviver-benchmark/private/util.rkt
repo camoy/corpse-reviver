@@ -20,6 +20,7 @@
    no-skip?
    num-samples
    sample-factor
+   worker-count
    output-dir
    sample
    benchmark

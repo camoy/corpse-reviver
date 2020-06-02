@@ -43,6 +43,10 @@
     "synth"
     "gregor"))
 
+;; Natural
+;; Number of parallel computation units.
+(define CPU (processor-count))
+
 ;; Path
 ;; Useful local paths.
 (define-runtime-path BENCHMARK-DIR "benchmarks")
@@ -58,6 +62,7 @@
    #f  ; no-skip?
    4   ; num-samples
    10  ; sample-factor
+   CPU ; worker-count
    "." ; output-dir
    0   ; sample
    #f  ; benchmark
@@ -114,6 +119,11 @@
     "Result output directory"
     (set-config-output-dir! cfg output-dir)]
 
+   [("-w" "--worker-count")
+    worker-count
+    "Number of parallel workers"
+    (set-config-worker-count! cfg (string->number worker-count))]
+
    #:args targets
    targets))
 
@@ -134,7 +144,7 @@
 
   ;; run consumer threads
   (define thds
-    (for/list ([_ (in-range (processor-count))])
+    (for/list ([_ (in-range (config-worker-count cfg))])
       (thread
        (λ ()
          (let go ()
@@ -150,7 +160,7 @@
              (place-wait pl)
              (go)))))))
   (for ([thd (in-list thds)])
-    (thread-wait thds)))
+    (thread-wait thd)))
 
 ;; → Any
 ;; Outputs machine specification information (Unix only). Specifically data about
