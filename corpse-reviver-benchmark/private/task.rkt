@@ -35,8 +35,8 @@
          racket/system
          setup/parallel-build
          threading
-         "gc.rkt"
-         "util.rkt")
+         "config.rkt"
+         "gc.rkt")
 
 (require/expose gtp-measure/private/task
                 (copy-configuration!

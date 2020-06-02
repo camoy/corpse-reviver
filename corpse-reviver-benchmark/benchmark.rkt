@@ -20,8 +20,8 @@
          racket/system
          racket/path
          threading
-         "private/task.rkt"
-         "private/util.rkt")
+         "private/config.rkt"
+         "private/task.rkt")
 
 (require/expose gtp-measure/private/configure (gtp-measure-data-dir))
 
