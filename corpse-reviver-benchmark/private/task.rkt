@@ -34,6 +34,7 @@
          racket/syntax
          racket/system
          threading
+         "gc.rkt"
          "util.rkt")
 
 (require/expose gtp-measure/private/task
@@ -200,17 +201,22 @@
 ;; whether the compilation was successful.
 (define (typed-untyped-compile! targets analysis-times)
   (define interceptor (make-log-interceptor scv-cr-logger))
-  (define-values (_ logs)
-    (interceptor
+  (define-values (logs gc-hash)
+    (measure-gc
      (λ ()
-       (with-handlers ([exn:fail? (make-error-handler analysis-times)])
-         (apply compile-files/scv-cr (map path->string targets))))))
+       (define-values (_ logs)
+         (interceptor
+          (λ ()
+            (with-handlers ([exn:fail? (make-error-handler analysis-times)])
+              (apply compile-files/scv-cr (map path->string targets))))))
+       logs)))
   (define times (map read-message (hash-ref logs 'info)))
   (hash-union! analysis-times
                (sum-times 'compile times)
                (sum-times 'expand times)
                (sum-times 'analyze times)
                (hash 'blame (and~>> times (findf (has-tag? 'blame)) cdr))
+               gc-hash
                #:combine (λ (_ x) x))
   (not (hash-ref analysis-times 'error)))
 
