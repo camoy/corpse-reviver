@@ -1,5 +1,7 @@
 #lang info
 
+;; HACK: Invalidate cache (27).
+
 ;; General
 
 (define name "corpse-reviver-lib")
