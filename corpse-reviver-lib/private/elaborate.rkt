@@ -246,27 +246,6 @@
       #:t (regexp-match? #rx"cpu time:" sieve-output)
       ))
 
-   ;; FIXME: This can contend with a test in `optimize` under certain conditions.
-   ;; This has plagued me on Github Actions. It's disable until I can fix that.
-   #;(with-chk (['name "elaborate (client and server)"])
-     (define (chk-elaborate server-path client-path)
-       (define server (make-mod server-path))
-       (define client (make-mod client-path))
-       (compile-modules (filter mod-typed? (list server client)))
-       (chk
-        (verify-modules (list server-path client-path)
-                        (list (mod-syntax server) (mod-syntax client)))
-        '())
-       (parameterize ([current-namespace (make-base-namespace)]
-                      [current-directory (path-only server-path)])
-         (eval (mod-syntax client))
-         (namespace-require ''client)
-         (chk (unsafe-struct-ref (eval #'(g 42)) 0) 42)))
-     (chk-elaborate ty-ty-server ty-ty-client)
-     (chk-elaborate ty-ut-server ty-ut-client)
-     (chk-elaborate ut-ty-server ut-ty-client)
-     (chk-elaborate ut-ut-server ut-ut-client))
-
    (with-chk (['name "mangle-provides"])
      (chk
       (syntax->datum
