@@ -33,6 +33,7 @@
          racket/string
          racket/syntax
          racket/system
+         setup/parallel-build
          threading
          "gc.rkt"
          "util.rkt")
@@ -66,6 +67,7 @@
    TYPED-RACKET-DIR))
 
 ;; [Or #f Config]
+;; Global configuration for the current task.
 (define cfg #f)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -199,16 +201,19 @@
 ;; [Listof Path] [Hash Symbol Any] → Boolean
 ;; Compiles the given targets and populates the analysis time hash. It returns
 ;; whether the compilation was successful.
-(define (typed-untyped-compile! targets analysis-times)
+(define (typed-untyped-compile! -targets analysis-times)
+  (define targets (map path->string -targets))
+  (define (execute-thunk)
+    (with-handlers ([exn:fail? (make-error-handler analysis-times)])
+      (if (config-baseline? cfg)
+          (parallel-compile-files targets)
+          (compile-files/scv-cr targets))))
   (define interceptor (make-log-interceptor scv-cr-logger))
   (define-values (logs gc-hash)
     (measure-gc
      (λ ()
        (define-values (_ logs)
-         (interceptor
-          (λ ()
-            (with-handlers ([exn:fail? (make-error-handler analysis-times)])
-              (apply compile-files/scv-cr (map path->string targets))))))
+         (interceptor execute-thunk))
        logs)))
   (define times (map read-message (hash-ref logs 'info)))
   (hash-union! analysis-times

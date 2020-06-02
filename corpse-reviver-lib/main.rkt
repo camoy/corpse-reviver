@@ -6,8 +6,7 @@
 (require racket/contract)
 (provide
  (contract-out
-  [compile-files/scv-cr
-   (->* () #:rest (listof path-string?) any)]))
+  [compile-files/scv-cr (-> (listof path-string?) any)]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; require
@@ -29,7 +28,7 @@
 
 (module+ main
   (define args (parse (current-command-line-arguments)))
-  (apply compile-files/scv-cr args))
+  (compile-files/scv-cr args))
 
 ;; [Vector String] → List
 ;; Converts command line arguments into arguments suitable for a call to
@@ -44,9 +43,9 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; functions
 
-;; Path-String ... → Any
+;; [Listof Path-String] → Any
 ;; Compiles files at the given paths with SCV-CR.
-(define (compile-files/scv-cr . -targets)
+(define (compile-files/scv-cr -targets)
   (measure 'total
     (define targets (map canonicalize-path -targets))
     (parallel-compile-files targets)
@@ -72,7 +71,7 @@
   (define (test-optimize root main targets)
     (define at-root (λ~>> (build-path root) simplify-path path->complete-path))
     (define main* (at-root main))
-    (apply compile-files/scv-cr (map at-root targets))
+    (compile-files/scv-cr (map at-root targets))
     (check-not-exn
      (λ ()
       (in-dir main*

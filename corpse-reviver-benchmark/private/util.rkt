@@ -15,7 +15,8 @@
 ;; configuration
 
 (struct config
-  (iterations
+  (baseline?
+   iterations
    cutoff
    no-skip?
    num-samples

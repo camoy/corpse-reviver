@@ -4,9 +4,7 @@
 ;; provide
 
 (require racket/contract)
-(provide
- (contract-out
-  [benchmark/scv-cr (-> any)]))
+(provide benchmark/scv-cr)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; require
@@ -57,6 +55,7 @@
 
 (define cfg
   (config
+   #f  ; baseline?
    10  ; iterations
    10  ; cutoff
    #f  ; no-skip?
@@ -80,7 +79,7 @@
         (map (λ~>> (build-path BENCHMARK-DIR)) DEFAULT-BENCHMARKS)
         -args))
   (define normalized-args (map (λ~> normalize-path path->string) args))
-  (apply benchmark/scv-cr normalized-args))
+  (benchmark/scv-cr normalized-args))
 
 ;; [Vector String] → List
 ;; Converts command line arguments into arguments suitable for a call to
@@ -90,6 +89,10 @@
    #:program "scv-cr-benchmark"
    #:argv argv
    #:once-each
+   [("-b" "--baseline")
+    "Don't optimize with SCV-CR"
+    (set-config-baseline?! cfg #t)]
+
    [("-i" "--iterations")
     iters
     "Number of iterations"
@@ -130,10 +133,10 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; benchmark/scv-cr
 
-;; Path-String ... → Any
+;; [Listof Path-String] → Any
 ;; Benchmarks the given GTP typed/untyped targets.
-(define/contract (benchmark/scv-cr . targets)
-  (->* () #:rest (listof valid-typed-untyped-target?) any)
+(define/contract (benchmark/scv-cr targets)
+  (-> (listof valid-typed-untyped-target?) any)
   (output-specs!)
 
   ;; setup queue
