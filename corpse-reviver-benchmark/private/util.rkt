@@ -16,6 +16,7 @@
 
 (struct config
   (baseline?
+   resume?
    iterations
    cutoff
    no-skip?

@@ -9,8 +9,10 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; require
 
-(require data/queue
+(require (only-in rackunit require/expose)
+         data/queue
          gtp-measure/private/parse
+         racket/file
          racket/place
          racket/runtime-path
          racket/cmdline
@@ -20,6 +22,8 @@
          threading
          "private/task.rkt"
          "private/util.rkt")
+
+(require/expose gtp-measure/private/configure (gtp-measure-data-dir))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; consts
@@ -56,6 +60,7 @@
 (define cfg
   (config
    #f  ; baseline?
+   #f  ; resume?
    10  ; iterations
    10  ; cutoff
    #f  ; no-skip?
@@ -92,6 +97,10 @@
    [("-b" "--baseline")
     "Don't optimize with SCV-CR"
     (set-config-baseline?! cfg #t)]
+
+   [("-r" "--resume")
+    "Run an existing setup"
+    (set-config-resume?! cfg #t)]
 
    [("-i" "--iterations")
     iters
@@ -142,8 +151,17 @@
   ;; setup queue
   (define queue-semaphore (make-semaphore 1))
   (define target-queue (make-queue))
-  (for ([target (in-list targets)])
+  (define target-seq
+    (if (config-resume? cfg)
+        (let ([n (length (directory-list (gtp-measure-data-dir)))])
+          (in-range 1 (add1 n)))
+        (in-list targets)))
+  (for ([target target-seq])
     (enqueue! target-queue target))
+
+  ;; delete stale results
+  (unless (config-resume? cfg)
+    (delete-directory/files (gtp-measure-data-dir) #:must-exist? #f))
 
   ;; run consumer threads
   (define thds

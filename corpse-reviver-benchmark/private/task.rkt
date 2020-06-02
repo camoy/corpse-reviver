@@ -51,6 +51,8 @@
                  make-gtp-measure-subtask
                  write-lang!))
 
+(require/expose gtp-measure/private/configure (gtp-measure-data-dir))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; globals
 
@@ -83,12 +85,12 @@
                  vector->list
                  cdr ; drop prefab struct key
                  (apply config)))
-  (define gtp-config (make-config))
-  (define task (init-task `((,target . ,kind:typed-untyped)) gtp-config))
-  (define benchmark (last-dir target))
-  (define analyses (make-queue))
-  (define runtimes (make-queue))
-  (init-untyped-typed-subtasks! task target)
+  (define-values (gtp-config task benchmark)
+    (if (config-resume? cfg)
+        (target->params/resume target)
+        (target->params/init target)))
+  (define-values (analyses runtimes)
+    (values (make-queue) (make-queue)))
   (for*/fold
       ([n 0])
       ([pre-subtask (in-list (in-pre-subtasks task))]
@@ -102,6 +104,30 @@
     (add1 n))
   (output-json! benchmark 'analysis analyses)
   (output-json! benchmark 'runtime runtimes))
+
+;; String → Config Task String
+;; Returns the parameters needed to run a target for a newly initialized
+;; benchmark.
+(define (target->params/init target)
+  (define gtp-config (make-config))
+  (define task (init-task `((,target . ,kind:typed-untyped)) gtp-config))
+  (init-untyped-typed-subtasks! task target)
+  (values gtp-config task (last-dir target)))
+
+;; Natural → Config Task String
+;; Returns the parameters needed to run a target for an already existing
+;; benchmark for resuming.
+(define (target->params/resume target)
+  (define resume-dir
+    (build-path (gtp-measure-data-dir) (format "~a/" target)))
+  (values (directory->config resume-dir)
+          (resume-task resume-dir)
+          (~> resume-dir
+              (build-path "manifest.rkt")
+              manifest->targets
+              first
+              car
+              last-dir)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; subtasks
@@ -132,8 +158,9 @@
   (define config-dir (pre-typed-untyped-subtask-config-dir pst))
   (define/for/lists (in-files out-files)
     ([in-file (in-list (pre-typed-untyped-subtask-in-file* pst))]
-     [out-file (in-list (pre-typed-untyped-subtask-out-file* pst))]
-     #:when (not (file-exists? out-file)))
+     [out-file (in-list (pre-typed-untyped-subtask-out-file* pst))])
+    (when (file-exists? out-file)
+      (delete-file out-file))
     (values in-file out-file))
   (typed-untyped->subtask* tu-dir config-dir in-files out-files config))
 
