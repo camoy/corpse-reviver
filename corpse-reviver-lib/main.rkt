@@ -37,6 +37,10 @@
   (command-line
    #:program "scv-cr"
    #:argv argv
+   #:once-each
+   [("-w" "--write-contracts")
+    "Write contracted modules to a file"
+    (current-write-contracts? #t)]
    #:args targets
    targets))
 

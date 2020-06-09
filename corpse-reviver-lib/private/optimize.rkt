@@ -6,7 +6,8 @@
 (require racket/contract)
 (provide
  (contract-out
-  [optimize (-> (listof mod?) (listof mod?))]))
+  [optimize (-> (listof mod?) (listof mod?))]
+  [current-write-contracts? (parameter/c boolean?)]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; require
@@ -35,6 +36,10 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; optimize
 
+;; [Parameter Boolean]
+;; Whether to write the contracted version of the files.
+(define current-write-contracts? (make-parameter #f))
+
 ;; [Listof Mod] → [Listof Mod]
 ;; Optimizes the given modules by bypassing contracts on require/typed forms that
 ;; are proven safe and by creating an unsafe submodule that untyped modules
@@ -51,7 +56,13 @@
   ;; Run SCV
   (define/for/lists (targets stxs)
     ([mod (in-list mods)])
-    (values (mod-target mod) (mod-syntax mod)))
+    (define target (mod-target mod))
+    (define stx (mod-syntax mod))
+    (when (current-write-contracts?)
+      (with-output-to-file (path-replace-extension target #".ctc.rkt")
+        (λ ()
+          (pretty-print (syntax->datum stx)))))
+    (values target stx))
   (debug "targets: ~a" targets)
   (define -blms
     (measure 'analyze
