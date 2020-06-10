@@ -221,8 +221,10 @@
     (make-hash (append base '((real . 0) (cpu . 0) (gc . 0)))))
   (parameterize ([current-output-port config-out]
                  [current-directory dir])
-    (when (typed-untyped-compile! targets analysis-times)
-      (typed-untyped-execute! entry config running-times)))
+    (cond
+      [(typed-untyped-compile! targets analysis-times)
+       (typed-untyped-execute! entry config running-times)]
+      [else (hash-set! running-times 'error "compile-time error")]))
   (values analysis-times running-times))
 
 ;; [Listof Path] [Hash Symbol Any] → Boolean
