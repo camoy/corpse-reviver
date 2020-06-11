@@ -45,10 +45,6 @@
     "synth"
     "gregor"))
 
-;; Natural
-;; Number of parallel computation units.
-(define CPU (processor-count))
-
 ;; Path
 ;; Useful local paths.
 (define-runtime-path BENCHMARK-DIR "benchmarks")
@@ -66,7 +62,7 @@
    #f  ; no-skip?
    4   ; num-samples
    10  ; sample-factor
-   CPU ; worker-count
+   1   ; worker-count
    "." ; output-dir
    0   ; sample
    #f  ; benchmark
