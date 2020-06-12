@@ -6,8 +6,7 @@
 (require racket/contract)
 (provide
  (contract-out
-  [optimize (-> (listof mod?) (listof mod?))]
-  [current-write-contracts? (parameter/c boolean?)]))
+  [optimize (-> (listof mod?) (listof mod?))]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; require

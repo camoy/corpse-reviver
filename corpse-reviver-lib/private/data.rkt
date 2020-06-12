@@ -33,6 +33,8 @@
      [fields (listof symbol?)]
      [contracts (listof syntax?)]))
 
+  [current-write-contracts? (parameter/c boolean?)]
+
   [definitions/c contract?]
   [exports/c contract?]
   [structs/c contract?])
@@ -81,6 +83,13 @@
 ;;   fields is a list of fields,
 ;;   contracts is a list of field contracts.
 (struct struct-data (parent fields contracts) #:prefab)
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; parameters
+
+;; [Parameter Boolean]
+;; Whether to write the contracted version of the files.
+(define current-write-contracts? (make-parameter #f))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; etc
