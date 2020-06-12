@@ -6,7 +6,8 @@
 (require racket/contract)
 (provide
  (contract-out
-  [make-mod (-> path-string? mod?)]))
+  [make-mod (-> path-string? mod?)]
+  [mods->hash (-> (listof mod?) (hash/c path-string? mod?))]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; require
@@ -56,6 +57,12 @@
 ;; untyped code needs no elaboration.
 (define (untyped->mod target raw-stx)
   (mod target raw-stx raw-stx #f #f (imports target) #f #f))
+
+;; [Listof Mod] → [Hash String Mod]
+;; Returns a mapping from module paths to its module struct.
+(define (mods->hash mods)
+  (for/hash ([mod (in-list mods)])
+    (values (mod-target mod) mod)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; elaborate
@@ -223,17 +230,21 @@
    (define streams-ctcs (make-contracts streams-expand))
    (define streams-provide (contracts-provide streams-ctcs))
    (define sieve-main-mod (make-mod sieve-main))
+   (define mods (list streams-mod sieve-main-mod))
+   (define mod-hash (mods->hash mods))
 
    (with-chk (['name "elaborate (sieve)"])
      (define 0-10
-       (parameterize ([current-namespace (make-base-namespace)])
-         (eval (mod-syntax streams-mod))
-         (namespace-require ''streams)
-         (eval #'(letrec ([f (λ (n)
-                               (λ ()
-                                 (make-stream n (f (add1 n)))))])
-                   (stream-take ((f 0)) 10)))))
-     (compile-modules (list streams-mod sieve-main-mod))
+       (with-continuation-mark 'mod-hash (mods->hash mods)
+         (parameterize ([current-namespace (make-base-namespace)])
+           (eval (mod-syntax streams-mod))
+           (namespace-require ''streams)
+           (eval #'(letrec ([f (λ (n)
+                                 (λ ()
+                                   (make-stream n (f (add1 n)))))])
+                     (stream-take ((f 0)) 10))))))
+     (with-continuation-mark 'mod-hash (mods->hash mods)
+       (compile-modules mods))
      (define sieve-output
        (parameterize ([current-namespace (make-base-namespace)])
          (with-output-to-string

@@ -81,12 +81,6 @@
     (define unsafe-hash (unsafe mods blms-mod))
     (optimize+unsafe mod unsafe-hash)))
 
-;; [Listof Mod] → [Hash String Mod]
-;; Returns a mapping from module paths to its module struct.
-(define (mods->hash mods)
-  (for/hash ([mod (in-list mods)])
-    (values (mod-target mod) mod)))
-
 ;; Mod [Hash Complete-Path Symbol] → Mod
 ;; Optimize a module by attaching metadata to direct bypassing contracts on safe
 ;; imports.
