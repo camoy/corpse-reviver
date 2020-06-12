@@ -61,7 +61,7 @@
 (struct
  mod
  (target raw syntax contracts typed? imports positions deps)
- #:transparent)
+ #:prefab)
 
 ;; Contracts is a struct where
 ;;   provide contains information for contracts on exports,

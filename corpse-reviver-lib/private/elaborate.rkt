@@ -69,13 +69,11 @@
       #:datum-literals (module)
       [(module ?name ?lang (?mb ?body ...))
        #:with ?lang/nc (no-check #'?lang)
-       #:with ?sneak (syntax-property #''sneak 'payload ctcs)
        #:with ?prov (provide-inject prov-bundle #f)
        #:with ?req  (require-inject ctcs #'?lang/nc)
        #:with ?bodies (mangle-provides #'(begin ?body ...))
        #`(module ?name ?lang/nc
            (module #%type-decl racket/base)
-           (register-contracts! ?sneak)
            ?req ?bodies ?prov)]))
   (~> stx
       strip-context*

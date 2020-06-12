@@ -35,22 +35,20 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; optimize
 
-;; [Parameter Boolean]
-;; Whether to write the contracted version of the files.
-(define current-write-contracts? (make-parameter #f))
-
 ;; [Listof Mod] → [Listof Mod]
 ;; Optimizes the given modules by bypassing contracts on require/typed forms that
 ;; are proven safe and by creating an unsafe submodule that untyped modules
 ;; which are proven safe can use. We ignore all blame of a typed module (these
 ;; are known false positives by Typed Racket's soundness).
 (define (optimize mods)
+  (define mod-hash (mods->hash mods))
   (debug "optimize: ~a" (pretty-format mods))
 
   ;; STOP! This is always needed (and I've wasted many hours debugging by
   ;; forgetting it). Without compiling modules with the elaborated source, SCV
   ;; will give mysterious missing identifier errors.
-  (compile-modules mods)
+  (with-continuation-mark 'mod-hash mod-hash
+    (compile-modules mods))
 
   ;; Run SCV
   (define/for/lists (targets stxs)
@@ -65,11 +63,12 @@
   (debug "targets: ~a" targets)
   (define -blms
     (measure 'analyze
-      (with-continuation-mark 'scv? #t
-        ;; HACK: We need this only for the benchmark-dependent patches.
-        ;; Remove this once TR #837 is resolved.
-        (with-patched-typed-racket
-          (λ () (verify-modules targets stxs))))))
+      (with-continuation-mark 'mod-hash mod-hash
+        (with-continuation-mark 'scv? #t
+          ;; HACK: We need this only for the benchmark-dependent patches.
+          ;; Remove this once TR #837 is resolved.
+          (with-patched-typed-racket
+            (λ () (verify-modules targets stxs)))))))
   (info 'blame -blms)
   (define blms (filter (untyped-blame? mods) -blms))
   (debug "filtered analysis: ~a" -blms)
@@ -81,6 +80,12 @@
     (define blms-mod (filter blame-filter blms))
     (define unsafe-hash (unsafe mods blms-mod))
     (optimize+unsafe mod unsafe-hash)))
+
+;; [Listof Mod] → [Hash String Mod]
+;; Returns a mapping from module paths to its module struct.
+(define (mods->hash mods)
+  (for/hash ([mod (in-list mods)])
+    (values (mod-target mod) mod)))
 
 ;; Mod [Hash Complete-Path Symbol] → Mod
 ;; Optimize a module by attaching metadata to direct bypassing contracts on safe

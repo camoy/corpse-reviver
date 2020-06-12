@@ -3,8 +3,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; provide
 
-(provide register-contracts!
-         require/typed
+(provide require/typed
          require/typed/provide
          (rename-out [-provide provide])
          (rename-out [-provide scv-cr:provide])
@@ -33,14 +32,21 @@
 ;; utils
 
 (begin-for-syntax
-  ;; Contracts
-  (define contracts #f)
+  ;; Syntax → Contracts
+  ;; Given syntax from the currently expanding syntax, returns the contracts
+  ;; struct for that syntax.
+  (define (current-contracts stx)
+    (define path (syntax-source stx))
+    (define mod-hash
+      (continuation-mark-set-first (current-continuation-marks) 'mod-hash))
+    (define mod (hash-ref mod-hash path))
+    (mod-contracts mod))
 
-  ;; [Listof Syntax] → Boolean
+  ;; Syntax [Listof Syntax] → Boolean
   ;; Takes in the forms of a provide and determines if they should be excluded
   ;; (since they have already been exported by SCV-CR).
-  (define (exclude-outs xs)
-    (define bundle (contracts-provide contracts))
+  (define (exclude-outs stx xs)
+    (define bundle (contracts-provide (current-contracts stx)))
     (define exports (bundle-exports bundle))
     (define structs (bundle-structs bundle))
     (define struct-names (hash-keys structs))
@@ -60,18 +66,12 @@
   (define (get-predicate stx)
     (replace-context
      stx
-     (hash-ref (contracts-predicates contracts) (syntax->datum stx))))
+     (hash-ref (contracts-predicates (current-contracts stx))
+               (syntax->datum stx))))
   )
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; macros
-
-;; Registers the contracts for use in expansion.
-(define-syntax (register-contracts! stx)
-  (syntax-parse stx
-    [(_ ?ctcs)
-     (set! contracts (syntax-property #'?ctcs 'payload))
-     #'(void)]))
 
 ;; Disable require/typed within an analysis (since this will always be provided
 ;; by SCV-CR via a require/safe submodule). The only exception are clauses marked
@@ -94,7 +94,7 @@
 (define-syntax (-provide stx)
   (syntax-parse stx
     [(_ ?x ...)
-     #:with (?x* ...) (exclude-outs (attribute ?x))
+     #:with (?x* ...) (exclude-outs stx (attribute ?x))
      #'(scv:provide ?x* ...)]))
 
 ;; Defines a predicate based on a type.
