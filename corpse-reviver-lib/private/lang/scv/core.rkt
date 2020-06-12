@@ -21,6 +21,7 @@
                      racket/match
                      racket/struct-info
                      racket/syntax
+                     soft-contract/parse/utils
                      syntax/parse
                      syntax/strip-context
                      "../../syntax.rkt"
@@ -87,7 +88,8 @@
 (define-syntax (require/typed/provide stx)
   (syntax-parse stx
     [(_ ?m:expr ?x:clause ...)
-     (replace-context stx #'(begin ?x.define ... (provide ?x.out ... ...)))]))
+     (define provides (with-syntax-source stx #'(provide ?x.out ... ...)))
+     (replace-context stx #`(begin ?x.define ... #,provides))]))
 
 ;; Provide but excluding identifiers that were already exported by SCV-CR with
 ;; contracts.

@@ -13,6 +13,7 @@
 (require (for-syntax racket/base
                      syntax/parse
                      syntax/strip-context
+                     soft-contract/parse/utils
                      "private/syntax.rkt"))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -32,10 +33,12 @@
   (syntax-parse stx
     [(_ m x:clause ...)
      #:with m* (syntax-property #'m 'opaque #'(begin x.opaque ...))
-     (replace-context stx #'(require/typed m* x ...))]))
+     (with-syntax-source stx
+       (replace-context stx #'(require/typed m* x ...)))]))
 
 (define-syntax (require/typed/provide/opaque stx)
   (syntax-parse stx
     [(_ m x:clause ...)
      #:with m* (syntax-property #'m 'opaque #'(begin x.opaque ...))
-     (replace-context stx #'(require/typed/provide m* x ...))]))
+     (with-syntax-source stx
+       (replace-context stx #'(require/typed/provide m* x ...)))]))
