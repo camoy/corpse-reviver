@@ -9,8 +9,8 @@
 
          (rename-out [-provide provide])
          (rename-out [-provide scv-cr:provide])
-         (rename-out [provide racket:provide])
 
+         (rename-out [struct racket:struct])
          define-predicate
          make-predicate
          require/define)
@@ -70,7 +70,7 @@
   (define (subtract-opaques req-stx)
     #`(except-in #,req-stx #,@(opaque-import-ids req-stx)))
 
-  ;; Syntax → Syntax
+  ;; Syntax → [Listof Syntax]
   ;; Returns syntax that defines all the identifiers that came from opaque
   ;; modules.
   (define (opaque-defns req-stx)
@@ -80,7 +80,7 @@
       (opaque-structs imports))
     (define single-defns
       (opaque-single-defns (set-subtract import-ids struct-imports)))
-    #`(begin #,@struct-defns #,@single-defns))
+    (append struct-defns single-defns))
 
   ;; [Listof Identifier] → Syntax
   ;; Given a list of single import (i.e. non-struct) identifiers, returns syntax
@@ -131,7 +131,7 @@
                   (λ (x) (if mut? (append x (list '#:mutable)) x))
                   (λ (x) (append x (list flds)))
                   (λ (x) (if sup? (append x (list sup)) x)))
-         `(struct ,name)))
+         `(racket:struct ,name)))
       (datum->syntax #f decl)))
 
   ;; [Listof Import] → [Listof [Cons Symbol String]]
@@ -189,11 +189,12 @@
   (syntax-parse stx
     [(_ ?x ...)
      #:with (?x* ...) (map subtract-opaques (syntax->list #'(?x ...)))
-     #:with (?def ...) (map opaque-defns (syntax->list #'(?x ...)))
+     #:with (?def ...) (append-map (λ~>> opaque-defns
+                                        (replace-context stx))
+                                   (syntax->list #'(?x ...)))
      (log-warning (format "~a" #'(begin (require ?x* ...) ?def ...)))
-     #'(begin (require ?x ...)
-         #;(require ?x* ...)
-         #;?def #;...)]))
+     #;(replace-context stx #'(begin (racket:require ?x* ...) ?def ...))
+     #'(begin (require ?x* ...) ?def ...)]))
 
 ;; Disable require/typed within an analysis (since this will always be provided
 ;; by SCV-CR via a require/safe submodule). The only exception are clauses marked
