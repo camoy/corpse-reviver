@@ -65,10 +65,13 @@
   (define-values (targets stxs) (mods-unpack mods))
   (define -blms
     (let go ([opaques null])
-      (with-handlers ([exn:missing?
-                       (match-lambda
-                         [(exn:missing _ _ src id)
-                          (go (cons (canonicalize-path src) opaques))])])
+      (with-handlers
+        ([exn:missing?
+          (match-lambda
+            [(exn:missing _ _ src id)
+             (define mod-path (canonicalize-path src))
+             (debug "discovered opaque module: ~a" mod-path)
+             (go (cons mod-path opaques))])])
         (measure 'analyze
           (with-continuation-mark 'opaques opaques
             (with-continuation-mark 'scv? #t

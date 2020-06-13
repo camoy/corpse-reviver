@@ -100,20 +100,20 @@
         (define struct-names (map car structs))
         (define mod-name (cdr (car structs)))
         (dynamic-require-struct-infos mod-name struct-names)))
-    (values (struct-exports struct-infos)
+    (values (struct-imports struct-infos)
             (struct-defns struct-infos)))
 
-  ;;
-  ;; TODO
-  (define (struct-exports struct-infos)
+  ;; [Listof Struct-Info] → [Listof Symbol]
+  ;; Given struct infos, returns all symbols defined by that struct definition.
+  (define (struct-imports struct-infos)
     (for/append ([si (in-list struct-infos)])
       (match-define (list desc ctr pred accs muts _) si)
       (append (list desc ctr pred)
               accs
               (filter values muts))))
 
-  ;;
-  ;; TODO
+  ;; [Listof Struct-Info] → Syntax
+  ;; Given struct infos, returns the syntax for defining those structs.
   (define (struct-defns struct-infos)
     (for/list ([si (in-list struct-infos)])
       (match-define (list desc ctr pred accs muts sup) si)
@@ -169,8 +169,9 @@
                  (member opaque-mods))
             imports))
 
-  ;;
-  ;; TODO
+  ;; Any [Listof Symbol] → [Listof Struct-Info]
+  ;; Given a quoted raw require spec and a list of struct names, returns the
+  ;; (extracted as a list) struct infos for the structs.
   (define (dynamic-require-struct-infos module bindings)
     (define ns (make-base-namespace))
     (parameterize ([current-namespace ns])
@@ -192,8 +193,6 @@
      #:with (?def ...) (append-map (λ~>> opaque-defns
                                         (replace-context stx))
                                    (syntax->list #'(?x ...)))
-     (log-warning (format "~a" #'(begin (require ?x* ...) ?def ...)))
-     #;(replace-context stx #'(begin (racket:require ?x* ...) ?def ...))
      #'(begin (require ?x* ...) ?def ...)]))
 
 ;; Disable require/typed within an analysis (since this will always be provided
