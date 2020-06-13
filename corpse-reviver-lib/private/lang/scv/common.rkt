@@ -17,7 +17,8 @@
                      racket/set
                      racket/string
                      mischief/for
-                     mischief/module
+                     mischief/memoize
+                     syntax/modresolve
                      syntax/parse
                      syntax/strip-context
                      threading
@@ -142,17 +143,40 @@
     (map import-local-id (opaque-imports req-stx)))
 
   ;; Syntax → [Listof Import]
-  ;; Returns a list of imports that come from opaque modules.
+  ;; Returns a list of imports that come from opaque modules. We use the defining
+  ;; module and not the nominal module (i.e. the one from `import-src-mod-path`)
+  ;; since this is what SCV reports in its missing exception.
   (define (opaque-imports req-stx)
     (define opaque-mods (current-opaques))
     (define-values (imports _) (expand-import req-stx))
-    (filter (λ~> import-src-mod-path
-                 syntax-e
-                 resolve-module-path
-                 resolved-module-path-name
-                 path->string
+    (filter (λ~> import->defining-module
                  (member opaque-mods))
             imports))
+
+  ;; Import → [Or #f String]
+  ;; Given an import, returns the path where that import was originally defined
+  ;; and not the nominal module path. Returns false if it fails to do so.
+  (define (import->defining-module import)
+    (define src-mod (~> import import-src-mod-path syntax-e))
+    (define ns (make-namespace/memo src-mod))
+    (define id
+      (parameterize ([current-namespace ns])
+        (namespace-symbol->identifier (import-src-sym import))))
+    (define id-binding (identifier-binding id))
+    (cond
+      [id-binding
+       (match-define (list defining-mod _ _ _ _ _ _) id-binding)
+       (path->string (resolve-module-path-index defining-mod))]
+      [else #f]))
+
+  ;; Any → Namespace
+  ;; Constructs a namespace that uses makes the given require form's runtime
+  ;; available at phase 1.
+  (define/memoize (make-namespace/memo req)
+    (define ns (make-base-namespace))
+    (parameterize ([current-namespace ns])
+      (namespace-require `(for-template ,req))
+      ns))
 
   ;; Any [Listof Symbol] → [Listof Struct-Info]
   ;; Given a quoted raw require spec and a list of struct names, returns the
