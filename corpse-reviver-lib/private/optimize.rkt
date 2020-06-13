@@ -22,6 +22,7 @@
          racket/set
          racket/struct
          soft-contract/main
+         soft-contract/parse/signatures
          syntax/parse
          syntax/strip-context
          threading
@@ -41,45 +42,69 @@
 ;; which are proven safe can use. We ignore all blame of a typed module (these
 ;; are known false positives by Typed Racket's soundness).
 (define (optimize mods)
-  (define mod-hash (mods->hash mods))
   (debug "optimize: ~a" (pretty-format mods))
+  (define mod-hash (mods->hash mods))
 
-  ;; STOP! This is always needed (and I've wasted many hours debugging by
-  ;; forgetting it). Without compiling modules with the elaborated source, SCV
-  ;; will give mysterious missing identifier errors.
   (with-continuation-mark 'mod-hash mod-hash
-    (compile-modules mods))
+    (let ()
+      ;; Without compiling modules with the elaborated source, SCV will give
+      ;; mysterious missing identifier errors!
+      (compile-modules mods)
+      (define blms (make-blames mods))
+      (optimize-mods mods blms))))
 
-  ;; Run SCV
-  (define/for/lists (targets stxs)
-    ([mod (in-list mods)])
-    (define target (mod-target mod))
-    (define stx (mod-syntax mod))
-    (when (current-write-contracts?)
-      (with-output-to-file (path-replace-extension target #".ctc.rkt")
-        (λ ()
-          (pretty-print (syntax->datum stx)))))
-    (values target stx))
-  (debug "targets: ~a" targets)
+;; [Listof Mod] → [Hash String Mod]
+;; Returns a mapping from module paths to its module struct.
+(define (mods->hash mods)
+  (for/hash ([mod (in-list mods)])
+    (values (mod-target mod) mod)))
+
+;; [Listof Mod] → [Listof Blame]
+;; Given a list of modules, will return SCV blame information.
+(define (make-blames mods)
+  (define-values (targets stxs) (mods-unpack mods))
   (define -blms
-    (measure 'analyze
-      (with-continuation-mark 'mod-hash mod-hash
-        (with-continuation-mark 'scv? #t
-          ;; HACK: We need this only for the benchmark-dependent patches.
-          ;; Remove this once TR #837 is resolved.
-          (with-patched-typed-racket
-            (λ () (verify-modules targets stxs)))))))
+    (let go ([opaques null])
+      (with-handlers ([exn:missing?
+                       (match-lambda
+                         [(exn:missing _ _ src id)
+                          (go (cons (canonicalize-path src) opaques))])])
+        (measure 'analyze
+          (with-continuation-mark 'opaques opaques
+            (with-continuation-mark 'scv? #t
+              ;; HACK: We need this only for the benchmark-dependent patches.
+              ;; Remove this once TR #837 is resolved.
+              (with-patched-typed-racket
+                (λ () (verify-modules targets stxs)))))))))
   (info 'blame -blms)
   (define blms (filter (untyped-blame? mods) -blms))
-  (debug "filtered analysis: ~a" -blms)
+  (debug "blames (filtered): ~a" blms)
+  blms)
 
-  ;; Optimize with analysis results
+;; [Listof Mod] [Listof Blame] → [Listof Mod]
+;; Given a list of modules and blame information, will optimize the modules
+;; according to the blame information.
+(define (optimize-mods mods blms)
   (for/list ([mod (in-list mods)])
     (define blame-filter
       (if (mod-typed? mod) blame-violates-my-contract? blame-me?))
     (define blms-mod (filter blame-filter blms))
     (define unsafe-hash (unsafe mods blms-mod))
     (optimize+unsafe mod unsafe-hash)))
+
+;; [Listof Mod] → [Listof String] [Listof Syntax]
+;; Unpacks the modules to return the targets and syntaxes.
+(define (mods-unpack mods)
+  (define/for/lists (targets stxs)
+    ([mod (in-list mods)])
+    (define target (mod-target mod))
+    (define stx (mod-syntax mod))
+    (when (current-write-contracts?)
+      (with-output-to-file (path-replace-extension target #".ctc.rkt")
+        (λ () (pretty-print (syntax->datum stx)))))
+    (values target stx))
+  (debug "targets: ~a" targets)
+  (values targets stxs))
 
 ;; Mod [Hash Complete-Path Symbol] → Mod
 ;; Optimize a module by attaching metadata to direct bypassing contracts on safe
