@@ -137,7 +137,7 @@
                 [(?opaque ...) (contracts-opaques ctcs)]
                 [(?lib ...) (contracts-libs ctcs)])
     #`(begin
-        (module require/safe typed/racket/base/no-check
+        (module require/safe corpse-reviver/private/lang/scv/untyped/base
           (require soft-contract/fake-contract ?lib ...)
           ?opaque ... ?prov)
         (require/define 'require/safe
