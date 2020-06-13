@@ -70,8 +70,9 @@
           (match-lambda
             [(exn:missing _ _ src id)
              (define mod-path (canonicalize-path src))
+             (define opaques* (opaques-add mod-path opaques))
              (debug "discovered opaque module: ~a" mod-path)
-             (go (cons mod-path opaques))])])
+             (go opaques*)])])
         (measure 'analyze
           (with-continuation-mark 'opaques opaques
             (with-continuation-mark 'scv? #t
@@ -83,6 +84,14 @@
   (define blms (filter (untyped-blame? mods) -blms))
   (debug "blames (filtered): ~a" blms)
   blms)
+
+;; String [Listof String] → [Listof String]
+;; Adds the path to the list of opaques if it isn't already there. If it is
+;; then something went wrong.
+(define (opaques-add mod-path opaques)
+  (when (member mod-path opaques)
+    (error 'opaques-add "~a already marked as opaque" mod-path))
+  (cons mod-path opaques))
 
 ;; [Listof Mod] [Listof Blame] → [Listof Mod]
 ;; Given a list of modules and blame information, will optimize the modules

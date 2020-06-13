@@ -53,10 +53,16 @@
        (contract-dependency elaborated)))
 
 ;; Path-String Syntax → Module
-;; Returns module for an untyped file from raw syntax. This does nothing since
-;; untyped code needs no elaboration.
+;; Returns module for an untyped file from raw syntax. This does nothing except
+;; change the language since untyped code needs no elaboration.
 (define (untyped->mod target raw-stx)
-  (mod target raw-stx raw-stx #f #f (imports target) #f #f))
+  (define stx
+    (syntax-parse raw-stx
+      #:datum-literals (module)
+      [(module ?name ?lang (?mb ?body ...))
+       #:with ?lang/opt (opt-lang #'?lang)
+       #'(module ?name ?lang/opt ?body ...)]))
+  (mod target raw-stx (strip-context* stx) #f #f (imports target) #f #f))
 
 ;; [Listof Mod] → [Hash String Mod]
 ;; Returns a mapping from module paths to its module struct.
@@ -75,11 +81,11 @@
     (syntax-parse raw-stx
       #:datum-literals (module)
       [(module ?name ?lang (?mb ?body ...))
-       #:with ?lang/nc (no-check #'?lang)
+       #:with ?lang/opt (opt-lang #'?lang)
        #:with ?prov (provide-inject prov-bundle #f)
        #:with ?req  (require-inject ctcs #'?lang/nc)
        #:with ?bodies (mangle-provides #'(begin ?body ...))
-       #`(module ?name ?lang/nc
+       #`(module ?name ?lang/opt
            (module #%type-decl racket/base)
            ?req ?bodies ?prov)]))
   (~> stx
@@ -89,11 +95,13 @@
 
 ;; Syntax Boolean → Syntax
 ;; Returns the name of the no-check language for the new module.
-(define (no-check lang)
+(define (opt-lang lang)
   (match (syntax-e lang)
-    ['typed/racket/base #'corpse-reviver/private/lang/scv/base]
-    ['typed/racket #'corpse-reviver/private/lang/scv/full]
-    [else (error 'no-check "unknown language ~a" lang)]))
+    ['racket/base #'corpse-reviver/private/lang/scv/untyped/base]
+    ['racket #'corpse-reviver/private/lang/scv/untyped/full]
+    ['typed/racket/base #'corpse-reviver/private/lang/scv/typed/base]
+    ['typed/racket #'corpse-reviver/private/lang/scv/typed/full]
+    [else (error 'opt-lang "unknown language ~a" lang)]))
 
 ;; Syntax → Syntax
 ;; Hide provide forms and move them to the bottom of the module. This is
