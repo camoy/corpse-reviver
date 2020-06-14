@@ -148,7 +148,12 @@
   ;; since this is what SCV reports in its missing exception.
   (define (opaque-imports req-stx)
     (define opaque-mods (current-opaques))
-    (define-values (imports _) (expand-import req-stx))
+    (define-values (imports srcs) (expand-import req-stx))
+
+    ;; After `expand-import`, you must instantiate import sources
+    (for ([src (in-list srcs)])
+      (namespace-require/expansion-time (syntax-e (import-source-mod-path-stx src))))
+
     (filter (λ~> import->defining-module
                  (member opaque-mods))
             imports))
@@ -166,7 +171,8 @@
     (cond
       [id-binding
        (match-define (list defining-mod _ _ _ _ _ _) id-binding)
-       (path->string (resolve-module-path-index defining-mod))]
+       (define resolved-mod (resolve-module-path-index defining-mod))
+       (and (path? resolved-mod) (path->string resolved-mod))]
       [else #f]))
 
   ;; Any → Namespace
