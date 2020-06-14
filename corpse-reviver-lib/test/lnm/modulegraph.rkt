@@ -18,12 +18,11 @@
 
 (require
   racket/match
-  corpse-reviver/opaque
   (only-in racket/path file-name-from-path filename-extension)
   (only-in racket/sequence sequence->list)
   (only-in racket/string string-split string-trim))
 
-(require/typed/opaque "_list.rkt"
+(require/typed "_list.rkt"
   [sort* (All (a b)
            (-> (Listof a)
                (-> b b Boolean)

@@ -23,7 +23,6 @@
 (require
   corpse-reviver/require-typed-check
   (only-in racket/math exact-round)
-  corpse-reviver/opaque
   "core-adapter.rkt"
   "gregor-adapter.rkt"
   racket/match)
@@ -37,7 +36,7 @@
     [iso-weeks-in-year (-> Natural (U 52 53))]
     )
 
-(require/typed/opaque "_format.rkt"
+(require/typed "_format.rkt"
   [~r (-> Exact-Rational
           Nonnegative-Integer
           String

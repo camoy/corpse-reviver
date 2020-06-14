@@ -1,8 +1,6 @@
 #lang typed/racket/base
 
-(require corpse-reviver/opaque)
-
-(require/typed/opaque "abs.rkt"
+(require/typed "abs.rkt"
   [absz (-> Real Number)]
   [#:struct my-box ([x : Real])])
 

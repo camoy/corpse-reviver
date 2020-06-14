@@ -15,13 +15,12 @@
   corpse-reviver/require-typed-check
   racket/match
   "gregor-adapter.rkt"
-  corpse-reviver/opaque
 )
 (require/typed/check "datetime.rkt"
     [datetime->iso8601 (-> DateTime String)]
     )
 
-(require/typed/opaque "_format.rkt"
+(require/typed "_format.rkt"
   [~r** (-> Exact-Rational
             Nonnegative-Integer
             String

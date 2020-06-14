@@ -21,7 +21,6 @@
 
 (require
  corpse-reviver/require-typed-check
- corpse-reviver/opaque
   "core-adapter.rkt"
   "gregor-adapter.rkt"
   racket/match)
@@ -32,7 +31,7 @@
     [NS/SECOND Natural]
     )
 
-(require/typed/opaque "_format.rkt"
+(require/typed "_format.rkt"
   [~r (-> Exact-Rational
           Nonnegative-Integer
           String

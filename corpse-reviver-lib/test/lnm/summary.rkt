@@ -19,14 +19,11 @@
 (require
   corpse-reviver/require-typed-check
   racket/path
-  corpse-reviver/opaque
   (only-in racket/file file->value)
   (only-in racket/vector vector-append)
   "modulegraph-adapted.rkt")
 
-(require/opaque math/statistics
-  [mean (-> (Sequenceof Real)
-            Real)])
+(require (only-in math/statistics mean))
 
 (require/typed racket/stream
   [stream-map (-> (-> Index String) (Sequenceof Index) (Sequenceof String))]
