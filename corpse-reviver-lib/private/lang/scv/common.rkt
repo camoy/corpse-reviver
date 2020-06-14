@@ -34,10 +34,21 @@
   ;; struct for that syntax.
   (define (current-contracts stx)
     (define path (syntax-source stx))
-    (define mod-hash
-      (continuation-mark-set-first (current-continuation-marks) 'mod-hash))
-    (define mod (hash-ref mod-hash path))
+    (define mod (hash-ref (current-mod-hash stx) path))
     (mod-contracts mod))
+
+  ;; Syntax → Contracts
+  ;; Given syntax from the currently expanding syntax, returns the module
+  ;; paths under analysis.
+  (define (current-mod-paths stx)
+    (hash-keys (current-mod-hash stx)))
+
+  ;; Syntax → [Hash String Mod]
+  ;; Given syntax from the currently expanding syntax, returns a hash mapping
+  ;; module paths to that module struct.
+  (define (current-mod-hash stx)
+    (define path (syntax-source stx))
+    (continuation-mark-set-first (current-continuation-marks) 'mod-hash))
 
   ;; → [Listof String]
   ;; Returns the list of modules that should be treated as opaque.
@@ -146,17 +157,40 @@
   ;; Returns a list of imports that come from opaque modules. We use the defining
   ;; module and not the nominal module (i.e. the one from `import-src-mod-path`)
   ;; since this is what SCV reports in its missing exception.
-  (define (opaque-imports req-stx)
+  (define/memoize (opaque-imports req-stx)
     (define opaque-mods (current-opaques))
+    (define mod-paths (current-mod-paths req-stx))
     (define-values (imports srcs) (expand-import req-stx))
+    (cond
+      [(not-opaque? opaque-mods mod-paths imports) null]
+      [else
+       ;; After `expand-import`, you must instantiate import sources
+       (for ([src (in-list srcs)])
+         (~> src
+             import-source-mod-path-stx
+             syntax-e
+             namespace-require/expansion-time))
 
-    ;; After `expand-import`, you must instantiate import sources
-    (for ([src (in-list srcs)])
-      (namespace-require/expansion-time (syntax-e (import-source-mod-path-stx src))))
+       (filter (λ~> import->defining-module
+                    (member opaque-mods))
+               imports)]))
 
-    (filter (λ~> import->defining-module
-                 (member opaque-mods))
-            imports))
+  ;; [Listof String] [Listof String] [Listof Import] → Boolean
+  ;; Function that can shortcut checking if the given import is opaque. If there
+  ;; are not opaque modules or if the require spec only imports modules being
+  ;; analyzed so have no need to check.
+  (define (not-opaque? opaque-mods mod-paths imports)
+    (define srcs
+      (for/set ([import (in-list imports)])
+        (define path (import-src-mod-path import))
+        (define path* (if (syntax? path) (syntax-e path) path))
+        (and~> path*
+               resolve-module-path
+               (satisfies path? _)
+               path->string)))
+    (or (empty? opaque-mods)
+        (for/and ([src (in-set srcs)])
+          (member src mod-paths))))
 
   ;; Import → [Or #f String]
   ;; Given an import, returns the path where that import was originally defined
@@ -181,7 +215,7 @@
   (define/memoize (make-namespace/memo req)
     (define ns (make-base-namespace))
     (parameterize ([current-namespace ns])
-      (namespace-require `(for-template ,req))
+      (namespace-require/expansion-time `(for-template ,req))
       ns))
 
   ;; Any [Listof Symbol] → [Listof Struct-Info]
