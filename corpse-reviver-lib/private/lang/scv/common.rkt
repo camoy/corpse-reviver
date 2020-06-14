@@ -91,6 +91,7 @@
   ;; structs and also syntax defining the structs opaquely.
   (define (opaque-structs imports)
     (define structs (opaque-struct-names imports))
+    (define names (map car structs))
     (define grouped-names (group-by cdr structs))
     (define struct-infos
       (for/append ([group (in-list grouped-names)])
@@ -99,7 +100,7 @@
         (dynamic-require-struct-infos mod-name struct-names)))
     (define sorted-struct-infos (sort-by-ancestry struct-infos))
     (values (struct-imports sorted-struct-infos)
-            (struct-defns sorted-struct-infos)))
+            (struct-defns sorted-struct-infos names)))
 
   ;; [Listof Struct-Info] → [Listof Struct-Info]
   ;; Sort the list of struct infos based on struct ancestry.
@@ -124,9 +125,9 @@
               accs
               (filter values muts))))
 
-  ;; [Listof Struct-Info] → Syntax
+  ;; [Listof Struct-Info] [Listof Symbol] → Syntax
   ;; Given struct infos, returns the syntax for defining those structs.
-  (define (struct-defns struct-infos)
+  (define (struct-defns struct-infos names)
     (for/list ([si (in-list struct-infos)])
       (match-define (list desc ctr pred accs muts sup) si)
       (define name-string (substring (symbol->string desc) 7))
@@ -136,7 +137,7 @@
         (for/list ([acc (in-list (reverse (map symbol->string accs)))]
                    #:when (string-prefix? acc fld-prefix))
           (string->symbol (substring acc (string-length fld-prefix)))))
-      (define sup? (symbol? sup))
+      (define sup? (and (symbol? sup) (member sup names)))
       (define mut? (ormap values muts))
       (define decl
         ((compose (λ (x) (append x (list '#:constructor-name ctr)))
