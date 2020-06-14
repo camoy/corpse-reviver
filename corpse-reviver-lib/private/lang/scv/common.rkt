@@ -97,8 +97,23 @@
         (define struct-names (map car structs))
         (define mod-name (cdr (car structs)))
         (dynamic-require-struct-infos mod-name struct-names)))
-    (values (struct-imports struct-infos)
-            (struct-defns struct-infos)))
+    (define sorted-struct-infos (sort-by-ancestry struct-infos))
+    (values (struct-imports sorted-struct-infos)
+            (struct-defns sorted-struct-infos)))
+
+  ;; [Listof Struct-Info] → [Listof Struct-Info]
+  ;; Sort the list of struct infos based on struct ancestry.
+  (define (sort-by-ancestry struct-infos)
+    (define/for/fold ([struct-hash (hash)]
+                      [parent-hash (hash)])
+                     ([si (in-list struct-infos)])
+      (match-define (list desc _ _ _ _ sup) si)
+      (define name (descriptor->name desc))
+      (values (hash-set struct-hash name si)
+              (hash-set parent-hash name (list sup))))
+    (define sorted-names (topological-sort parent-hash))
+    (for/list ([name (in-list sorted-names)])
+      (hash-ref struct-hash name)))
 
   ;; [Listof Struct-Info] → [Listof Symbol]
   ;; Given struct infos, returns all symbols defined by that struct definition.
@@ -135,18 +150,22 @@
   ;; Given a list of imports, returns the struct names that can be inferred
   ;; from the imports and the module they came from.
   (define (opaque-struct-names imports)
-    (define (struct-name? x)
-      (string-prefix? x "struct:"))
     (for/filter ([import (in-list imports)])
       (define module-name (~> import import-src-mod-path syntax-e))
       (and~> import
              import-local-id
              syntax-e
-             symbol->string
-             (satisfies struct-name? _)
-             (substring 7)
-             string->symbol
+             descriptor->name
              (cons _ module-name))))
+
+  ;; Symbol → [Or #f Symbol]
+  ;; Given a symbol, returns the struct name associated with that descriptor or
+  ;; #f if it isn't a descriptor.
+  (define descriptor->name
+    (λ-and~> symbol->string
+             (satisfies (λ (x) (string-prefix? x "struct:")) _)
+             (substring 7)
+             string->symbol))
 
   ;; Syntax → [Listof Identifier]
   ;; Returns a list of opaque import identifiers.
