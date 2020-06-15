@@ -182,19 +182,24 @@
     (define mod-paths (current-mod-paths req-stx))
     (define-values (imports srcs) (expand-import req-stx))
     (cond
-      [(syntax-property req-stx 'opaque) imports]
+      [(syntax-property req-stx 'opaque)
+       (visit-import-sources! srcs)
+       imports]
       [(not-opaque? opaque-mods mod-paths imports) null]
       [else
-       ;; After `expand-import`, you must instantiate import sources
-       (for ([src (in-list srcs)])
-         (~> src
-             import-source-mod-path-stx
-             syntax-e
-             namespace-require/expansion-time))
-
+       (visit-import-sources! srcs)
        (filter (λ~> import->defining-module
                     (member opaque-mods))
                imports)]))
+
+  ;; [Listof Import-Source] → Any
+  ;; Visit the given import sources.
+  (define (visit-import-sources! srcs)
+    (for ([src (in-list srcs)])
+      (~> src
+          import-source-mod-path-stx
+          syntax-e
+          namespace-require/expansion-time)))
 
   ;; [Listof String] [Listof String] [Listof Import] → Boolean
   ;; Function that can shortcut checking if the given import is opaque. If there

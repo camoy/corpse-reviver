@@ -21,10 +21,10 @@
 
 (define-syntax (require/opaque stx)
   (syntax-parse stx
-    [(_ m x:clause ...)
+    [(_ m)
      #:with m* (syntax-property #'m 'opaque #t)
      (with-syntax-source stx
-       (replace-context stx #'(require/typed m* x ...)))]))
+       (replace-context stx #'(require m*)))]))
 
 (define-syntax (require/typed/opaque stx)
   (syntax-parse stx
