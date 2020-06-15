@@ -11,9 +11,10 @@
 
 (require
  (only-in racket/math exact-ceiling exact-truncate)
+ corpse-reviver/opaque
  (only-in racket/list remove-duplicates))
 
-(require/typed "_format.rkt"
+(require/typed/opaque "_format.rkt"
   [~r (-> Exact-Rational
           Positive-Integer
           Nonnegative-Integer

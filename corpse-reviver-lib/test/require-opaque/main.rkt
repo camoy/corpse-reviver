@@ -1,6 +1,10 @@
 #lang typed/racket/base
 
-(require "abs.rkt")
+(require corpse-reviver/opaque)
+
+(require/opaque "abs.rkt"
+  [absz (-> Real Number)]
+  [#:struct my-box ([x : Real])])
 
 (: boxed-x my-box)
 (define boxed-x (my-box -3))

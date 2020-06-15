@@ -1,4 +1,6 @@
 #lang typed/racket/base
 
-(require/typed/provide "_plot.rkt"
+(require corpse-reviver/opaque)
+
+(require/typed/provide/opaque "_plot.rkt"
   [line-width (-> Nonnegative-Real)])

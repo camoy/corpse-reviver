@@ -10,7 +10,8 @@
 (require corpse-reviver/require-typed-check
          (only-in racket/string string-split string-join string-trim)
          "typed-zo-structs.rkt"
-         racket/match)
+         racket/match
+         corpse-reviver/opaque)
 
 (require/typed/check "zo-string.rkt"
   [zo->spec (-> zo Spec)]
@@ -22,8 +23,8 @@
   [#:struct result ([zo : zo]
                     [path : (Listof zo)])])
 
-(require/typed "_compiler-zo-parse.rkt"
-               [zo-parse (->* () (Input-Port) zo)])
+(require/typed/opaque "_compiler-zo-parse.rkt"
+                      [zo-parse (->* () (Input-Port) zo)])
 
 ;; -----------------------------------------------------------------------------
 
