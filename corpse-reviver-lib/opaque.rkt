@@ -22,23 +22,20 @@
 (define-syntax (require/opaque stx)
   (syntax-parse stx
     [(_ m x:clause ...)
-     (replace-context
-      stx
-      (if (continuation-mark-set-first (current-continuation-marks) 'scv?)
-          #'(begin (require soft-contract/fake-contract)
-                   x.opaque ...)
-          #'(require m)))]))
+     #:with m* (syntax-property #'m 'opaque #t)
+     (with-syntax-source stx
+       (replace-context stx #'(require/typed m* x ...)))]))
 
 (define-syntax (require/typed/opaque stx)
   (syntax-parse stx
     [(_ m x:clause ...)
-     #:with m* (syntax-property #'m 'opaque #'(begin x.opaque ...))
+     #:with m* (syntax-property #'m 'opaque #t)
      (with-syntax-source stx
        (replace-context stx #'(require/typed m* x ...)))]))
 
 (define-syntax (require/typed/provide/opaque stx)
   (syntax-parse stx
     [(_ m x:clause ...)
-     #:with m* (syntax-property #'m 'opaque #'(begin x.opaque ...))
+     #:with m* (syntax-property #'m 'opaque #t)
      (with-syntax-source stx
        (replace-context stx #'(require/typed/provide m* x ...)))]))

@@ -134,16 +134,16 @@
 (define (require-inject ctcs lang)
   (define bundle (contracts-require ctcs))
   (with-syntax ([?prov (provide-inject bundle #t)]
-                [(?opaque ...) (contracts-opaques ctcs)]
                 [(?lib ...) (contracts-libs ctcs)])
     #`(begin
         (module require/safe corpse-reviver/private/lang/scv/untyped/base
           (require soft-contract/fake-contract ?lib ...)
-          ?opaque ... ?prov)
-        (require/define 'require/safe
-                        #,(set-subtract (hash-keys (bundle-exports bundle))
-                                        (structs-exports (bundle-structs bundle)))
-                        #,(hash-keys (bundle-structs bundle))))))
+          ?prov)
+        (require/define
+         'require/safe
+         #,(set-subtract (hash-keys (bundle-exports bundle))
+                         (structs-exports (bundle-structs bundle)))
+         #,(hash-keys (bundle-structs bundle))))))
 
 ;; Bundle Boolean → Syntax
 ;; Returns new provide syntax to be injected into a module according to the

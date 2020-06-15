@@ -16,7 +16,9 @@
          racket/match
          racket/sequence
          racket/set
+         racket/list
          syntax/parse
+         threading
          "data.rkt"
          "munge.rkt"
          "struct.rkt"
@@ -32,7 +34,6 @@
   (contracts (make-bundle stx 'provide)
              (make-bundle stx 'require)
              (make-libs stx)
-             (make-opaques stx)
              (make-predicates stx)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -82,13 +83,24 @@
 ;; Syntax → List
 ;; Returns a list of unique values from the syntax of the syntax property.
 (define (make-libs stx)
+  (define-values (opaques libs)
+    (partition (λ~> (syntax-property 'opaque))
+               (syntax-property-values stx 'lib)))
+  (append (libs-finalize libs #f) (libs-finalize opaques #t)))
+
+;; [Listof Syntax] Boolean → [Listof Syntax]
+;; Reduces the syntax to unique imports and also assigns the opaque syntax
+;; property as required.
+(define (libs-finalize xs opaque?)
   (define dont-import-lib (set 'racket/base))
-  (set->list
-   (set-subtract
-    (for/set ([x (in-set (syntax-property-values stx 'lib))]
-              #:unless (syntax-property x 'opaque))
-      (syntax-e x))
-    dont-import-lib)))
+  (define make-stx
+    (λ~> (datum->syntax #f _)
+         (syntax-property 'opaque opaque?)))
+  (~> xs
+      (map syntax-e _)
+      list->set
+      (set-subtract dont-import-lib)
+      (set-map make-stx)))
 
 ;; Syntax → [Listof Syntax]
 ;; Returns a list of syntax for defining opaque imports.

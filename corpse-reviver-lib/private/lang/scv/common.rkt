@@ -182,6 +182,7 @@
     (define mod-paths (current-mod-paths req-stx))
     (define-values (imports srcs) (expand-import req-stx))
     (cond
+      [(syntax-property req-stx 'opaque) imports]
       [(not-opaque? opaque-mods mod-paths imports) null]
       [else
        ;; After `expand-import`, you must instantiate import sources
@@ -199,6 +200,8 @@
   ;; Function that can shortcut checking if the given import is opaque. If there
   ;; are not opaque modules or if the require spec only imports modules being
   ;; analyzed so have no need to check.
+  ;;
+  ;; HACK: Remove when SCV #119 is resolved.
   (define (not-opaque? opaque-mods mod-paths imports)
     (define srcs
       (for/set ([import (in-list imports)])
