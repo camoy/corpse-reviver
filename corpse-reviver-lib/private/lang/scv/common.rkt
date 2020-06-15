@@ -271,16 +271,3 @@
                                         (replace-context stx))
                                    (syntax->list #'(?x ...)))
      #'(begin (require ?x* ...) ?def ...)]))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; test
-
-(begin-for-syntax
-  (module+ test
-    (require chk)
-
-    (with-chk (['name "opaque-struct-names"])
-      (chk
-       (map syntax-e
-            (opaque-struct-names (list #'struct:foo #'struct:bar #'hello?)))
-       '(foo bar)))))

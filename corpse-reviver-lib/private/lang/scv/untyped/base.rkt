@@ -14,5 +14,5 @@
          (subtract-in racket/base
                       soft-contract/fake-contract
                       "core.rkt")
-         (except-in soft-contract/fake-contract provide)
+         soft-contract/fake-contract
          "core.rkt")
