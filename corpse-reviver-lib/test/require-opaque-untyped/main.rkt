@@ -1,4 +1,8 @@
 #lang racket/base
 
-(require corpse-reviver/opaque)
-(require/opaque math/statistics mean)
+(provide foo)
+
+(require math/statistics)
+
+(define (foo x)
+  (mean x))
