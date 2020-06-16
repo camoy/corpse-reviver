@@ -70,8 +70,8 @@
           (match-lambda
             [(exn:missing _ _ src id)
              (define mod-path (canonicalize-path src))
+             (debug "discovered opaque module: ~a (for ~a)" mod-path id)
              (define opaques* (opaques-add mod-path opaques))
-             (debug "discovered opaque module: ~a" mod-path)
              (go opaques*)])])
         (measure 'analyze
           (with-continuation-mark 'opaques opaques
