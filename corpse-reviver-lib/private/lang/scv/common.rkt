@@ -121,7 +121,7 @@
   (define (struct-imports struct-infos)
     (for/append ([si (in-list struct-infos)])
       (match-define (list desc ctr pred accs muts _) si)
-      (append (list desc ctr pred)
+      (append (list desc (descriptor->name desc) ctr pred)
               accs
               (filter values muts))))
 
