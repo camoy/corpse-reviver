@@ -46,15 +46,16 @@
                     [exports (hash)]
                     [libs (hash)])
                    ([stx (syntax-property-values stx key)])
-    (define defns* (make-definitions stx defns))
     (define-values (exports* libs*) (make-exports stx exports libs))
-    (values defns* exports* (adjust-lib-scopes libs*)))
+    (define libs** (adjust-lib-scopes libs*))
+    (define defns* (make-definitions stx defns libs**))
+    (values defns* exports* libs**))
   (define this-structs (structs key stx defns exports))
   (bundle defns exports this-structs libs))
 
-;; Syntax Definitions → Definitions
+;; Syntax Definitions Libs → Definitions
 ;; Updates definitions to include those defined by the syntax.
-(define (make-definitions stx defns)
+(define (make-definitions stx defns libs)
   (syntax-parse stx
     #:literals (begin)
     [(begin ?d:definition ... (~optional _:export))
@@ -63,17 +64,17 @@
                 [defn (in-syntax #'(?d.defn ...))])
        (hash-set defns
                  (syntax-e (or (lifted->l name) name))
-                 (munge name defn)))]
+                 (munge name defn libs)))]
     [_ defns]))
 
-;; Syntax Exports → Exports
+;; Syntax Exports Libs → Exports
 ;; Updates the exports to include exports defined by the syntax.
 (define (make-exports stx exports libs)
   (syntax-parse stx
     #:literals (begin)
     [(~or (begin _:definition ... ?e:export) ?e:import)
      (define name (syntax-e #'?e.name))
-     (define ctc (munge #'?e.name #'?e.contract))
+     (define ctc (munge #'?e.name #'?e.contract libs))
      (values (hash-set exports name ctc)
              (if (syntax-e #'?e.lib)
                  (hash-set libs name #'?e.lib)

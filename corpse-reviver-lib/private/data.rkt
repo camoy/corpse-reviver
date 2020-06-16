@@ -38,7 +38,8 @@
   [exports/c contract?]
   [structs/c contract?])
 
- contract-sc)
+ contract-sc
+ libs/c)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; require

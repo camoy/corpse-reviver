@@ -3,10 +3,11 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; provide
 
-(require racket/contract)
+(require racket/contract
+         "data.rkt")
 (provide
  (contract-out
-  [munge (-> syntax? syntax? syntax?)]))
+  [munge (-> syntax? syntax? libs/c syntax?)]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; require
@@ -14,18 +15,18 @@
 (require racket/contract
          racket/list
          syntax/parse
+         syntax/strip-context
          threading
-         "data.rkt"
          "syntax.rkt"
          "util.rkt")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; munge
 
-;; Syntax Syntax → Syntax
+;; Syntax Syntax Libs → Syntax
 ;; Given an identifier of a contract definition, munges that contract for use in
 ;; verification.
-(define (munge ctc-id stx)
+(define (munge ctc-id stx libs)
   (define stx*
     (let go ([stx stx])
       (syntax-parse stx
@@ -115,17 +116,17 @@
         ;; Catch-all
         [other #'other])))
 
-  (syntax-property (adjust-scopes stx*)
+  (syntax-property (adjust-scopes stx* libs)
                    'parent-identifier
                    (syntax-e ctc-id)))
 
-;; Syntax → Syntax
+;; Syntax Libs → Syntax
 ;; Strips context from identifiers that should be locally defined (references to
 ;; defined contracts) and attaches a scope to everything else. This scope will be
 ;; flipped later so the original scopes are preserved.
-(define (adjust-scopes stx)
+(define (adjust-scopes stx libs)
   (syntax-parse stx
-    [(x ...) (datum->syntax #f (map adjust-scopes (attribute x)))]
+    [(x ...) (datum->syntax #f (map (λ~> (adjust-scopes libs)) (attribute x)))]
 
     ;; Protect scopes on foreign syntax. We don't consider contract identifiers
     ;; foreign syntax since their meaning should come from SCV (i.e.
@@ -133,6 +134,13 @@
     [x:id
      #:when (not (or (locally-defined-id? #'x) (expanded-or-contract-id? #'x)))
      (syntax-property (contract-sc #'x) 'protect-scope #t)]
+
+    ;; Identifier came from require/typed. We must attach that import-specific
+    ;; scope.
+    [x:id
+     #:when (hash-has-key? libs (syntax-e #'x))
+     (syntax-property
+      (replace-context (hash-ref libs (syntax-e #'x)) #'x) 'protect-scope #t)]
 
     ;; These scopes will be erased later.
     [x #'x]))
