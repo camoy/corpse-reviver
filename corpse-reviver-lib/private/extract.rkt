@@ -42,16 +42,20 @@
 ;; Syntax [Or 'require 'provide] → Bundle
 ;; Constructs a bundle from syntax and a syntax property key.
 (define (make-bundle stx key)
-  (define/for/fold ([defns   (hash)]
-                    [exports (hash)]
+  (define/for/fold ([exports (hash)]
                     [libs (hash)])
                    ([stx (syntax-property-values stx key)])
-    (define-values (exports* libs*) (make-exports stx exports libs))
-    (define libs** (adjust-lib-scopes libs*))
-    (define defns* (make-definitions stx defns libs**))
-    (values defns* exports* libs**))
-  (define this-structs (structs key stx defns exports))
-  (bundle defns exports this-structs libs))
+    (define-values (exports* libs*)
+      (make-exports stx exports libs))
+    (values exports* (adjust-lib-scopes libs*)))
+
+  (define/for/fold ([defns (hash)])
+                   ([stx (syntax-property-values stx key)])
+    (make-definitions stx defns libs))
+
+  (define exports* (munge-exports exports libs))
+  (define this-structs (structs key stx defns exports*))
+  (bundle defns exports* this-structs libs))
 
 ;; Syntax Definitions Libs → Definitions
 ;; Updates definitions to include those defined by the syntax.
@@ -64,7 +68,7 @@
                 [defn (in-syntax #'(?d.defn ...))])
        (hash-set defns
                  (syntax-e (or (lifted->l name) name))
-                 (munge name defn libs)))]
+                 (munge (syntax-e name) defn libs)))]
     [_ defns]))
 
 ;; Syntax Exports Libs → Exports
@@ -74,12 +78,17 @@
     #:literals (begin)
     [(~or (begin _:definition ... ?e:export) ?e:import)
      (define name (syntax-e #'?e.name))
-     (define ctc (munge #'?e.name #'?e.contract libs))
-     (values (hash-set exports name ctc)
+     (values (hash-set exports name #'?e.contract)
              (if (syntax-e #'?e.lib)
                  (hash-set libs name #'?e.lib)
                  libs))]
     [_ (values exports libs)]))
+
+;; Exports Libs → Exports
+;; TODO
+(define (munge-exports exports libs)
+  (for/hash ([(name ctc) exports])
+    (values name (munge name ctc libs))))
 
 ;; Syntax → [Hash Any Syntax]
 ;; Returns a mapping from predicate syntax (as an sexp) to their definition.

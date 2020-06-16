@@ -7,7 +7,7 @@
          "data.rkt")
 (provide
  (contract-out
-  [munge (-> syntax? syntax? libs/c syntax?)]))
+  [munge (-> symbol? syntax? libs/c syntax?)]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; require
@@ -23,10 +23,10 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; munge
 
-;; Syntax Syntax Libs → Syntax
+;; Symbol Syntax Libs → Syntax
 ;; Given an identifier of a contract definition, munges that contract for use in
 ;; verification.
-(define (munge ctc-id stx libs)
+(define (munge ctc-sym stx libs)
   (define stx*
     (let go ([stx stx])
       (syntax-parse stx
@@ -118,7 +118,7 @@
 
   (syntax-property (adjust-scopes stx* libs)
                    'parent-identifier
-                   (syntax-e ctc-id)))
+                   ctc-sym))
 
 ;; Syntax Libs → Syntax
 ;; Strips context from identifiers that should be locally defined (references to
@@ -189,7 +189,7 @@
       [(m _ _ (mb _ _ (app _ (lam _ x) _))) #'lam]))
 
   (with-chk (['name "munge"])
-    (define munge-e (λ~> (munge #'_ _ (hash)) syntax->datum))
+    (define munge-e (λ~> (munge '_ _ (hash)) syntax->datum))
     (chk
      (munge-e #'lifted/1) 'l1
      (munge-e #'any-wrap/c) 'any/c
