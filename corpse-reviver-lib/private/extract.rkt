@@ -18,6 +18,7 @@
          racket/set
          racket/list
          syntax/parse
+         syntax/strip-context
          threading
          "data.rkt"
          "munge.rkt"
@@ -33,7 +34,6 @@
 (define (make-contracts stx)
   (contracts (make-bundle stx 'provide)
              (make-bundle stx 'require)
-             (make-libs stx)
              (make-predicates stx)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -43,12 +43,14 @@
 ;; Constructs a bundle from syntax and a syntax property key.
 (define (make-bundle stx key)
   (define/for/fold ([defns   (hash)]
-                    [exports (hash)])
+                    [exports (hash)]
+                    [libs (hash)])
                    ([stx (syntax-property-values stx key)])
-    (values (make-definitions stx defns)
-            (make-exports stx exports)))
+    (define defns* (make-definitions stx defns))
+    (define-values (exports* libs*) (make-exports stx exports libs))
+    (values defns* exports* (adjust-lib-scopes libs*)))
   (define this-structs (structs key stx defns exports))
-  (bundle defns exports this-structs))
+  (bundle defns exports this-structs libs))
 
 ;; Syntax Definitions → Definitions
 ;; Updates definitions to include those defined by the syntax.
@@ -66,12 +68,17 @@
 
 ;; Syntax Exports → Exports
 ;; Updates the exports to include exports defined by the syntax.
-(define (make-exports stx exports)
+(define (make-exports stx exports libs)
   (syntax-parse stx
     #:literals (begin)
     [(~or (begin _:definition ... ?e:export) ?e:import)
-     (hash-set exports (syntax-e #'?e.name) (munge #'?e.name #'?e.contract))]
-    [_ exports]))
+     (define name (syntax-e #'?e.name))
+     (define ctc (munge #'?e.name #'?e.contract))
+     (values (hash-set exports name ctc)
+             (if (syntax-e #'?e.lib)
+                 (hash-set libs name #'?e.lib)
+                 libs))]
+    [_ (values exports libs)]))
 
 ;; Syntax → [Hash Any Syntax]
 ;; Returns a mapping from predicate syntax (as an sexp) to their definition.
@@ -80,37 +87,18 @@
     (match-define (vector x y) v)
     (values (syntax->datum x) (lifted->l y))))
 
-;; Syntax → List
-;; Returns a list of unique values from the syntax of the syntax property.
-(define (make-libs stx)
-  (define-values (opaques libs)
-    (partition (λ~> (syntax-property 'opaque))
-               (syntax-property-values stx 'lib)))
-  (append (libs-finalize libs #f) (libs-finalize opaques #t)))
-
-;; [Listof Syntax] Boolean → [Listof Syntax]
-;; Reduces the syntax to unique imports and also assigns the opaque syntax
-;; property as required.
-(define (libs-finalize xs opaque?)
-  (define dont-import-lib (set 'racket/base))
-  (define make-stx
-    (λ~> (datum->syntax #f _)
-         (syntax-property 'opaque opaque?)))
-  (~> xs
-      (map syntax-e _)
-      list->set
-      (set-subtract dont-import-lib)
-      (set-map make-stx)))
-
-;; Syntax → [Listof Syntax]
-;; Returns a list of syntax for defining opaque imports.
-(define (make-opaques stx)
-  (for/lists (done result #:result result)
-             ([x (in-set (syntax-property-values stx 'lib))]
-              #:when (syntax-property x 'opaque)
-              #:when (not (member (syntax-e x) done)))
-    (values (syntax-e x)
-            (syntax-property x 'opaque))))
+;; [Hash Symbol Syntax] → [Hash Symbol Syntax]
+;; Adjust scopes on the require forms to be unique per import. This prevents
+;; collisions from requires that provide the same name.
+(define (adjust-lib-scopes id-lib-hash)
+  (for/fold ([result (hash)]
+             [scope-hash (hash)]
+             #:result result)
+            ([(id lib) (in-hash id-lib-hash)])
+    (define lib* (syntax-e lib))
+    (define sc (hash-ref scope-hash lib* make-syntax-introducer))
+    (values (hash-set result id (sc (strip-context lib)))
+            (hash-set scope-hash lib* sc))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; syntax classes
@@ -126,14 +114,15 @@
 ;; Class for an export of a binding with a contract.
 (define-syntax-class export
   #:datum-literals (define-module-boundary-contract)
-  (pattern (define-module-boundary-contract name:id _ contract:expr _ ...)))
+  (pattern (define-module-boundary-contract name:id _ contract:expr _ ...)
+           #:with lib #f))
 
 ;; Syntax-Class
 ;; Class for an import of a binding with a contract.
 (define-syntax-class import
   #:datum-literals (begin require only-in define-ignored)
   (pattern (begin
-             (require (only-in _ (name:id _)))
+             (require (only-in lib:expr (name:id _)))
              _
              (define-ignored _ (_ contract:expr _ _ _ _ _)))))
 
@@ -272,10 +261,10 @@
           (stream-unfold . l34)
           (stream? . (or/c (λ (x) #f) (-> any/c boolean?)))))
 
-  (match-define (bundle prov-defns prov-exports prov-structs)
+  (match-define (bundle prov-defns prov-exports prov-structs prov-libs)
     (make-bundle streams-expand 'provide))
 
-  (match-define (bundle req-defns req-exports req-structs)
+  (match-define (bundle req-defns req-exports req-structs req-libs)
     (make-bundle sieve-main-expand 'require))
 
   (with-chk (['name "make-bundle"])
@@ -302,15 +291,4 @@
     (chk
      #:t (hash-has-key? predicate-hash '(define-predicate is-number*? Integer))
      #:t (hash-has-key? predicate-hash '(make-predicate Number))))
-
-  (with-chk (['name "make-opaques"])
-    (define x (syntax-property #'x 'opaque #'(define foo "foo")))
-    (define y (syntax-property #'y 'opaque #'(define bar "bar")))
-    (define z #`(begin #,(syntax-property #'1 'lib x)
-                       #,(syntax-property #'2 'lib x)
-                       #,(syntax-property #'3 'lib y)))
-    (chk
-     #:eq set=?
-     (map syntax->datum (make-opaques z))
-     '((define bar "bar") (define foo "foo"))))
   )

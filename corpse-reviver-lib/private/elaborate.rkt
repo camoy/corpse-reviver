@@ -17,6 +17,7 @@
          racket/list
          racket/match
          racket/set
+         racket/syntax
          syntax/parse
          threading
          "compile.rkt"
@@ -133,17 +134,18 @@
 ;; bundle.
 (define (require-inject ctcs lang)
   (define bundle (contracts-require ctcs))
-  (with-syntax ([?prov (provide-inject bundle #t)]
-                [(?lib ...) (contracts-libs ctcs)])
-    #`(begin
-        (module require/safe corpse-reviver/private/lang/scv/untyped/base
-          (require soft-contract/fake-contract ?lib ...)
-          ?prov)
-        (require/define
-         'require/safe
-         #,(set-subtract (hash-keys (bundle-exports bundle))
-                         (structs-exports (bundle-structs bundle)))
-         #,(hash-keys (bundle-structs bundle))))))
+  (define prov (provide-inject bundle #t))
+  (define libs (require-libs bundle))
+  #`(begin
+      (module require/safe corpse-reviver/private/lang/scv/untyped/base
+        (require soft-contract/fake-contract
+                 #,@libs)
+        #,prov)
+      (require/define
+       'require/safe
+       #,(set-subtract (hash-keys (bundle-exports bundle))
+                       (structs-exports (bundle-structs bundle)))
+       #,(hash-keys (bundle-structs bundle)))))
 
 ;; Bundle Boolean → Syntax
 ;; Returns new provide syntax to be injected into a module according to the
@@ -163,7 +165,20 @@
              defn ...)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; provide inject helpers
+;; inject helpers
+
+;; Bundle → [Listof Syntax]
+;; Returns libraries required by require/typed.
+(define (require-libs bundle)
+  (for/fold ([result null]
+             [seen (set)]
+             #:result result)
+            ([lib (in-hash-values (bundle-libs bundle))])
+    (define lib* (syntax-e lib))
+    (if (set-member? seen lib*)
+        (values result seen)
+        (values (cons (syntax-property lib 'protect-scope #t) result)
+                (set-add seen lib*)))))
 
 ;; [Hash Symbol Syntax] → [Listof Syntax]
 ;; Returns the list of contract definitions.
@@ -184,24 +199,29 @@
   (define omit (structs-exports (bundle-structs bundle)))
   (for/list ([(name ctc) (in-hash (bundle-exports bundle))]
              #:unless (member name omit))
+    (define lib (hash-ref (bundle-libs bundle) name (λ () #f)))
+    (define name* (syntax-property (datum->syntax lib name) 'protect-scope #t))
     (if (and ctc safe?)
         #`(contract-out
-           #,(syntax-property #`[#,name #,ctc] 'parent-identifier name))
-        (datum->syntax #f name))))
+           #,(syntax-property #`[#,name* #,ctc] 'parent-identifier name))
+        name*)))
 
 ;; Bundle Boolean → Syntax
 ;; Returns contract-out syntax for structs.
 (define (struct-outs bundle safe?)
   (for/list ([(name data) (in-hash (bundle-structs bundle))])
     (match-define (struct-data parent fields contracts) data)
-    (define id+parent (if parent (list name parent) name))
+    (define pred (format-symbol "~a?" name))
+    (define lib (hash-ref (bundle-libs bundle) pred (λ () #f)))
+    (define name* (syntax-property (datum->syntax lib name) 'protect-scope #t))
+    (define id+parent (if parent (list name* parent) name*))
     (define field+ctcs (map list fields contracts))
     (if safe?
         #`(contract-out
            #,(syntax-property #`(struct #,id+parent #,field+ctcs)
                               'parent-identifier
                               name))
-        #`(struct-out #,name))))
+        #`(struct-out #,name*))))
 
 ;; Bundle → [Listof Syntax]
 ;; Determines the list of modules that are needed for the definitions of the

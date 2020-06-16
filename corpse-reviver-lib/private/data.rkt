@@ -19,13 +19,13 @@
   (struct contracts
     ([provide bundle?]
      [require bundle?]
-     [libs (listof syntax?)]
      [predicates (hash/c any/c syntax?)]))
 
   (struct bundle
     ([definitions definitions/c]
      [exports exports/c]
-     [structs structs/c]))
+     [structs structs/c]
+     [libs libs/c]))
 
   (struct struct-data
     ([parent (or/c symbol? #f)]
@@ -65,16 +65,16 @@
 ;; Contracts is a struct where
 ;;   provide contains information for contracts on exports,
 ;;   require contains information for contracts on untyped imports,
-;;   libs is a list of libraries imported with require/typed,
 ;;   predicates maps predicates, as an s-expression, to their definition
 ;;     (these predicates come from make-predicate or define-predicate).
-(struct contracts (provide require libs predicates) #:prefab)
+(struct contracts (provide require predicates) #:prefab)
 
 ;; A Bundle is a struct where
 ;;   definitions maps an identifier representing a contract to its definition,
 ;;   exports maps an export to its contract or #f to be uncontracted,
-;;   structs maps struct names to their information.
-(struct bundle (definitions exports structs) #:prefab)
+;;   structs maps struct names to their information,
+;;   libs is a list of libraries imported with require/typed.
+(struct bundle (definitions exports structs libs) #:prefab)
 
 ;; A Struct-Data is a struct where
 ;;   parent is the parent struct name or #f if there is none,
@@ -102,5 +102,6 @@
 
 ;; Contracts
 (define definitions/c (hash-symbol/c syntax?))
-(define exports/c (hash-symbol/c (or/c syntax? #f)))
+(define exports/c (hash-symbol/c (or/c #f syntax?)))
 (define structs/c (hash-symbol/c struct-data?))
+(define libs/c (hash-symbol/c syntax?))

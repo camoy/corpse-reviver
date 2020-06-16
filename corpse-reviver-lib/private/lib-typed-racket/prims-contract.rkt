@@ -192,8 +192,7 @@
       [(_ lib:expr (~var c (clause legacy unsafe? #'lib)) ...)
        (when (zero? (syntax-length #'(c ...)))
          (raise-syntax-error #f "at least one specification is required" stx))
-       (syntax-property* 'lib #'lib
-       #`(begin c.spec ...))]
+       #`(begin c.spec ...)]
       [(_ #:internal nm:opt-rename ty lib
           (~optional [~seq #:struct-maker parent])
           (~optional (~and (~seq (~literal unsafe-kw))
@@ -203,7 +202,6 @@
        (define/with-syntax sm (if (attribute parent)
                                   #'(#:struct-maker parent)
                                   #'()))
-       (syntax-property* 'lib #'lib
        (cond [(not (attribute unsafe?))
               ;; define `cnt*` to be fixed up later by the module type-checking
               (define cnt*
@@ -226,7 +224,7 @@
                   ;; to a different identifier that TR doesn't know about
                   #,(ignore #'(define hidden2 hidden))
                   (rename-without-provide nm.nm hidden2)
-                  #,(internal #'(require/typed-internal hidden2 ty . sm))))]))]))
+                  #,(internal #'(require/typed-internal hidden2 ty . sm))))])]))
   (values (r/t-maker #t #f) (r/t-maker #f #f) (r/t-maker #f #t))))
 
 

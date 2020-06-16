@@ -74,22 +74,22 @@
     (define imports (opaque-imports req-stx))
     (define import-ids (map (λ~> import-local-id syntax-e) imports))
     (define-values (struct-imports struct-defns)
-      (opaque-structs imports))
+      (opaque-structs imports req-stx))
     (define single-defns
-      (opaque-single-defns (set-subtract import-ids struct-imports)))
+      (opaque-single-defns (set-subtract import-ids struct-imports) req-stx))
     (append struct-defns single-defns))
 
-  ;; [Listof Identifier] → Syntax
+  ;; [Listof Identifier] Syntax → Syntax
   ;; Given a list of single import (i.e. non-struct) identifiers, returns syntax
   ;; defining them opaquely.
-  (define (opaque-single-defns names)
+  (define (opaque-single-defns names req-stx)
     (for/list ([name (in-list names)])
-      (datum->syntax #f `(define ,name #:opaque))))
+      (datum->syntax req-stx `(define ,name #:opaque))))
 
-  ;; [Listof Import] → [Listof Symbol] Syntax
+  ;; [Listof Import] Syntax → [Listof Symbol] Syntax
   ;; Given a list of opaque imports, returns the identifiers defined by the
   ;; structs and also syntax defining the structs opaquely.
-  (define (opaque-structs imports)
+  (define (opaque-structs imports req-stx)
     (define structs (opaque-struct-names imports))
     (define names (map car structs))
     (define grouped-names (group-by cdr structs))
@@ -100,7 +100,7 @@
         (dynamic-require-struct-infos mod-name struct-names)))
     (define sorted-struct-infos (sort-by-ancestry struct-infos))
     (values (struct-imports sorted-struct-infos)
-            (struct-defns sorted-struct-infos names)))
+            (struct-defns sorted-struct-infos names req-stx)))
 
   ;; [Listof Struct-Info] → [Listof Struct-Info]
   ;; Sort the list of struct infos based on struct ancestry.
@@ -125,9 +125,9 @@
               accs
               (filter values muts))))
 
-  ;; [Listof Struct-Info] [Listof Symbol] → Syntax
+  ;; [Listof Struct-Info] [Listof Symbol] Syntax → Syntax
   ;; Given struct infos, returns the syntax for defining those structs.
-  (define (struct-defns struct-infos names)
+  (define (struct-defns struct-infos names req-stx)
     (for/list ([si (in-list struct-infos)])
       (match-define (list desc ctr pred accs muts sup) si)
       (define name-string (substring (symbol->string desc) 7))
@@ -145,7 +145,7 @@
                   (λ (x) (append x (list flds)))
                   (λ (x) (if sup? (append x (list sup)) x)))
          `(racket:struct ,name)))
-      (datum->syntax #f decl)))
+      (datum->syntax req-stx decl)))
 
   ;; [Listof Import] → [Listof [Cons Symbol String]]
   ;; Given a list of imports, returns the struct names that can be inferred
@@ -267,7 +267,5 @@
   (syntax-parse stx
     [(_ ?x ...)
      #:with (?x* ...) (map subtract-opaques (syntax->list #'(?x ...)))
-     #:with (?def ...) (append-map (λ~>> opaque-defns
-                                        (replace-context stx))
-                                   (syntax->list #'(?x ...)))
+     #:with (?def ...) (append-map opaque-defns (syntax->list #'(?x ...)))
      #'(begin (require ?x* ...) ?def ...)]))
