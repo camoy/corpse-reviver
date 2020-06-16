@@ -189,7 +189,7 @@
       [(m _ _ (mb _ _ (app _ (lam _ x) _))) #'lam]))
 
   (with-chk (['name "munge"])
-    (define munge-e (λ~>> (munge #'_) syntax->datum))
+    (define munge-e (λ~> (munge #'_ _ (hash)) syntax->datum))
     (chk
      (munge-e #'lifted/1) 'l1
      (munge-e #'any-wrap/c) 'any/c
@@ -218,11 +218,12 @@
      (munge-e #`(quote #,(void))) '(void)))
 
   (with-chk (['name "adjust-scopes"])
+    (define adjust-scopes* (λ~> (adjust-scopes (hash))))
     (chk
-     #:t (syntax-property (adjust-scopes #'blah) 'protect-scope)
-     #:t (syntax-property (adjust-scopes lam-stx) 'protect-scope)
-     #:! #:t (syntax-property (adjust-scopes x-stx) 'protect-scope)
-     #:! #:t (syntax-property (adjust-scopes any/c-stx) 'protect-scope)))
+     #:t (syntax-property (adjust-scopes* #'blah) 'protect-scope)
+     #:t (syntax-property (adjust-scopes* lam-stx) 'protect-scope)
+     #:! #:t (syntax-property (adjust-scopes* x-stx) 'protect-scope)
+     #:! #:t (syntax-property (adjust-scopes* any/c-stx) 'protect-scope)))
 
   (with-chk (['name "locally-defined-id?"])
     (chk
