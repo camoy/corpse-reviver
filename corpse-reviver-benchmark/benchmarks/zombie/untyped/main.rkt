@@ -1,5 +1,7 @@
 #lang racket/base
 
+(require
+  "../base/untyped.rkt")
 (require (only-in "zombie.rkt"
   w0
   world-on-mouse
@@ -20,12 +22,8 @@
     (define m (caar h))
     (define as (cdar h))
     (case m
-     ;; no rendering
-     [(to-draw stop-when)
-       (loop w (cdr h))]
      [(on-mouse)
-      (define r (apply (world-on-mouse w) (if (real-real-string-list? as)
-                                              as (error "cast error"))))
+      (define r (apply (world-on-mouse w) (assert as real-real-string-list?)))
       (loop r (cdr h))]
      [(on-tick)
       (define r ((world-on-tick w)))

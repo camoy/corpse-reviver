@@ -15,6 +15,6 @@
   (define zo* (parse-data ps*))
   (time
     (for ((zo (in-list zo*)))
-      (init (vector-immutable zo "branch")))))
+      (init (vector zo "branch")))))
 
 (main TYPED-DATA)

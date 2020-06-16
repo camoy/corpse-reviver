@@ -12,16 +12,16 @@
 ;; -----------------------------------------------------------------------------
 
 (require
+ corpse-reviver/opaque
   corpse-reviver/require-typed-check
   racket/match
   "gregor-structs.rkt"
-  corpse-reviver/opaque
 )
 (require (only-in "datetime.rkt"
     datetime->iso8601 ;(-> DateTime String)]
-    ))
+))
 
-(require/opaque "_format.rkt" ~r**)
+(require/opaque "_format.rkt")
 
 ;; =============================================================================
 

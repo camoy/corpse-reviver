@@ -19,8 +19,20 @@
 (define word-frequency-list "./../base/frequency.rktd")
 (define word-frequency-list-small "./../base/frequency-small.rktd")
 
+(define (freq-list? x)
+  (and (list? x)
+       (andmap list-string-int x)))
+
+(define (list-string-int x)
+  (and (pair? x)
+       (pair? (cdr x))
+       (null? (cdr (cdr x)))
+       (string? (car x))
+       (exact-integer? (car (cdr x)))))
+
 (define (file->words filename)
   (define words+freqs (file->value (string->path filename)))
+  (unless (freq-list? words+freqs) (error "expected a frequency list"))
   (for/list ([word+freq  words+freqs])
     (car word+freq)))
 

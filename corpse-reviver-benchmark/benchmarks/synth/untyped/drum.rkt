@@ -41,8 +41,11 @@
 
 (define snare
   ;; 0.05 seconds of noise
-  (build-array (vector (seconds->samples 0.05))
-               (lambda (x) (random-sample))))
+  (let ([indexes
+                  (vector (seconds->samples 0.05))]
+         [arr-gen
+                  (lambda (x) (random-sample))])
+    (build-array indexes arr-gen)))
 
 ;; limited drum machine
 ;; drum patterns are simply lists with either O (bass drum), X (snare) or

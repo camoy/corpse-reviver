@@ -21,9 +21,9 @@
 ;; -----------------------------------------------------------------------------
 
 (require
+ corpse-reviver/opaque
   corpse-reviver/require-typed-check
   (only-in racket/math exact-round)
-  corpse-reviver/opaque
   "core-adapter.rkt"
   "gregor-adapter.rkt"
   racket/match)

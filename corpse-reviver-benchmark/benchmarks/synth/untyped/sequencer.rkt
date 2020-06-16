@@ -10,14 +10,26 @@
 ;; details at http://www.phy.mtu.edu/~suits/notefreqs.html
 (define (note-freq note)
   ;; A4 (440Hz) is 57 semitones above C0, which is our base.
-  (* 440 (expt (expt 2 1/12) (- note 57)))) 
+  (define res (* 440 (expt (expt 2 1/12) (- note 57))))
+  (if (flonum? res) res (error "not real")))
 
 ;; A note is represented using the number of semitones from C0.
 (define (name+octave->note name octave)
   (+ (* 12 octave)
      (case name
-       [(C) 0] [(C# Db) 1] [(D) 2] [(D# Eb) 3]  [(E) 4] [(F) 5] [(F# Gb) 6]
-       [(G) 7] [(G# Ab) 8] [(A) 9] [(A# Bb) 10] [(B) 11])))
+       [(C) 0]
+       [(C# Db) 1]
+       [(D) 2]
+       [(D# Eb) 3]
+       [(E) 4]
+       [(F) 5]
+       [(F# Gb) 6]
+       [(G) 7]
+       [(G# Ab) 8]
+       [(A) 9]
+       [(A# Bb) 10]
+       [(B) 11]
+       [else 0])))
 
 ;; Single note.
 (define (note name octave duration)
@@ -39,9 +51,4 @@
    (for*/list ([i    (in-range n)] ; repeat the whole pattern
                [note (in-list  pattern)])
      (define nsamples (* samples-per-beat (cdr note)))
-     (if (list? (car note)) ; chord
-         (apply mix
-                (for/list ([x (in-list (car note))])
-                  (list (synthesize-note x nsamples function)
-                        1))) ; all of equal weight
-         (synthesize-note (car note) nsamples function)))))
+     (synthesize-note (car note) nsamples function))))

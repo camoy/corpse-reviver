@@ -1,7 +1,7 @@
 #lang racket
 
 (require "data.rkt"
-         "tetras.rkt")
+         "tetras.rkt")  
 
 (provide
  list-pick-random
@@ -10,13 +10,14 @@
 
 (random-seed 43453)
 
+
 (define (list-pick-random ls)
   (list-ref ls (random (length ls))))
 
 (define neg-1 -1)
 
 (define tetras
-  (list
+  (list 
    (build-tetra-blocks 'green   1/2 -3/2    0 -1 0 -2 1 -1 1 -2)
    (build-tetra-blocks 'blue    1   -1      0 -1 1 -1 2 -1 3 -1)
    (build-tetra-blocks 'purple  1   -1      0 -1 1 -1 2 -1 2 -2)

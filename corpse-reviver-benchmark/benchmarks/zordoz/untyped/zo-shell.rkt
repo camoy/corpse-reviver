@@ -11,12 +11,13 @@
          (only-in racket/string string-split string-join string-trim)
          racket/match)
 
-(require "zo-string.rkt"
+(require corpse-reviver/opaque
+ "zo-string.rkt"
  "zo-transition.rkt"
  "zo-find.rkt"
- corpse-reviver/opaque)
+ "untyped.rkt")
 
-(require/opaque "_compiler-zo-parse.rkt" zo-parse zo?)
+(require/opaque "_compiler-zo-parse.rkt")
 
 ;; -----------------------------------------------------------------------------
 
@@ -54,8 +55,6 @@
   help-msg
 )
 #:transparent)
-;(define-type Command command)
-(define index? integer?)
 
 (define ALST (command "alst"
                       0

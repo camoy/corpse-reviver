@@ -21,6 +21,7 @@
 ;;; @end legal
 
 #lang racket/base
+(require "../base/untyped.rkt")
 
 ;;; @section Introduction
 ;;;
@@ -72,9 +73,10 @@
     (cond ((zero? a-len) b-len)
           ((zero? b-len) a-len)
           (else
-           (let ((w    (get-scratch (+ 1 b-len)))
-                 (next #f))
+           (let ((w (get-scratch (+ 1 b-len)))
+                 (next 0)) ;;bg changed from #f
              (let fill ((k b-len))
+               (unless (index? k) (error "vl/p/g invariant error"))
                (vector-set! w k k)
                (or (zero? k) (fill (- k 1))))
              (let loop-i ((i 0))
@@ -87,12 +89,15 @@
                            (begin (vector-set! w b-len next)
                                   (loop-i (+ 1 i)))
                            ;; TODO: Make these costs parameters.
-                           (begin (set! next (min (+ 1 (vector-ref w (+ 1 j)))
+                           (let ((next* (min (+ 1 (vector-ref w (+ 1 j)))
                                                   (+ 1 cur)
                                                   (if (pred a-i
                                                             (vector-ref b j))
                                                       (vector-ref w j)
-                                                      (+ 1 (vector-ref w j)))))
+                                                      (+ 1 (vector-ref w j))))))
+                                  (unless (index? next*) (error "invariant"))
+                                  (set! next next*)
+                                  (unless (index? cur) (error "invariant error"))
                                   (vector-set! w j cur)
                                   (loop-j (+ 1 j) next))))))))))))
 

@@ -26,6 +26,7 @@
 
 (require
   corpse-reviver/require-typed-check
+  "../base/untyped.rkt"
   "gregor-structs.rkt"
 )
 (require (only-in "moment.rkt"
@@ -46,16 +47,16 @@
 ;; =============================================================================
 
 ;(: now/moment (->* () (#:tz (U tz #f)) Moment))
-(define (now/moment [tz (unbox current-timezone)])
+(define (now/moment [tz (current-timezone)])
   (unless tz (error "current-timezone is #f"))
-  (posix->moment ((unbox current-clock)) tz))
+  (posix->moment ((current-clock)) tz))
 
 ;(: now/moment/utc (-> Moment))
 (define (now/moment/utc)
   (now/moment "Etc/UTC"))
 
 ;(: now (->* () (#:tz (U tz #f)) DateTime))
-(define (now [tz (unbox current-timezone)])
+(define (now [tz (current-timezone)])
   (unless tz (error "now: current-timezone is #f"))
   (moment->datetime/local (now/moment tz)))
 
@@ -64,7 +65,7 @@
   (now "Etc/UTC"))
 
 ;(: today (->* () (#:tz (U tz #f)) Date))
-(define (today [tz (unbox current-timezone)])
+(define (today [tz (current-timezone)])
   (unless tz (error "today: current-timezone is #f"))
   (datetime->date (now tz)))
 
@@ -73,7 +74,7 @@
   (today "Etc/UTC"))
 
 ;(: current-time (->* () (#:tz (U tz #f)) Time))
-(define (current-time [tz (unbox current-timezone)])
+(define (current-time [tz (current-timezone)])
   (unless tz (error "current-time:  current-timezone is #f"))
   (datetime->time (now tz)))
 
@@ -84,7 +85,8 @@
 ;(: current-posix-seconds (-> Natural))
 (define (current-posix-seconds)
   (let ([r (/ (inexact->exact (current-inexact-milliseconds)) 1000)])
+    (unless (index? r) (error "current-posix-seconds"))
     r))
 
 ;(: current-clock (Parameterof (-> Exact-Rational)))
-(define current-clock (box current-posix-seconds))
+(define current-clock (make-parameter current-posix-seconds))

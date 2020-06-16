@@ -5,9 +5,13 @@
 
 ;; =============================================================================
 (require corpse-reviver/require-typed-check
+ "../base/untyped.rkt"
  "automata.rkt"
  "population.rkt"
  "utilities.rkt")
+
+(define (payoff? x)
+  (and (real? x) (<= 0 x)))
 
 ;; effect run timed simulation, create and display plot of average payoffs
 ;; effect measure time needed for the simulation
@@ -32,7 +36,7 @@
           (define p3 (death-birth p2 s))
           ;; Note s same as r
           (cons
-           (relative-average pp r)
+           (assert (relative-average pp r) payoff?)
            ;; Note evolve is assigned (-> ... [Listof Probability])
            ;; even though it is explicitly typed ... [Listof Payoff]
            (evolve p3 (- c 1) s r))]))

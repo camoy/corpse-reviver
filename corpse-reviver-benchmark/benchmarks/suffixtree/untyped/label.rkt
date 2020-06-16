@@ -1,7 +1,8 @@
 #lang racket/base
 
 (require
-  (rename-in "data.rkt" [label -label]))
+  "untyped.rkt"
+  (rename-in "data.rkt" [make-label -make-label]))
 ;; Label implementation.  Labels are like strings, but also allow for
 ;; efficient shared slicing.
 ;;
@@ -24,7 +25,7 @@
 
 
 (provide
-         label
+         make-label
          label-element?
          label-element-equal?
          string->label
@@ -44,16 +45,17 @@
          label-copy
          label-ref-at-end?
          label-source-id
-         label-same-source?)
+         label-same-source?
+         label-source-eq?)
 
 
-;; label: label-element -> label
+;; make-label: label-element -> label
 ;; Constructs a new label from either a string or a vector of things.
-(define (label label-element)
+(define (make-label label-element)
   (cond ((string? label-element) (string->label label-element))
         ((vector? label-element) (vector->label label-element))
         (else
-         (error 'label "Don't know how to make label from ~S" label-element))))
+         (error 'make-label "Don't know how to make label from ~S" label-element))))
 
 
 (define (make-sentinel)
@@ -65,7 +67,7 @@
 ;; vector->label vector
 ;; Constructs a new label from the input vector.
 (define (vector->label vector)
-  (-label (vector->immutable-vector vector)
+  (-make-label (vector->immutable-vector vector)
               0 (vector-length vector)))
 
 
@@ -73,21 +75,19 @@
 ;; Constructs a new label from the input vector, with a sentinel
 ;; symbol at the end.
 (define (vector->label/with-sentinel vector)
-  (let* ((N (vector-length vector))
-         (V (make-vector (add1 N))))
-    (vector-set! V N (make-sentinel))
-    (let loop ((i 0))
-      (if (< i N)
-          (begin (vector-set! V i (vector-ref vector i))
-                 (loop (add1 i)))
-          (vector->label V)))))
+  (define N (vector-length vector))
+  (define V (make-vector (add1 N) (make-sentinel)))
+  (let loop ((i 0))
+    (if (< i N)
+        (begin (vector-set! V i (vector-ref vector i))
+               (loop (add1 i)))
+        (vector->label V))))
 
 
 ;; string->label: string -> label
 ;; Constructs a new label from the input string.
-(define string->label
-  (let ((f (compose vector->label list->vector string->list)))
-    (lambda (str) (f str))))
+(define (string->label str)
+  (vector->label (list->vector (string->list str))))
 
 
 ;; string->label/with-sentinel: string -> label
@@ -96,20 +96,22 @@
 ;;
 ;; Note: this label can not be converted in whole back to a string:
 ;; the sentinel character interferes with string concatenation
-(define string->label/with-sentinel
-  (let ((f (compose vector->label/with-sentinel list->vector string->list)))
-    (lambda (str) (f str))))
+(define (string->label/with-sentinel str)
+  (vector->label/with-sentinel (list->vector (string->list str))))
 
 
 ;; label-length: label -> number?
 ;; Returns the length of the label.
 (define (label-length label)
-  (- (label-j label) (label-i label)))
+  (define len (- (label-j label) (label-i label)))
+  (unless (index? len) (error "label-length"))
+  len)
 
 
 ;; label-ref: label number? -> char
 ;; Returns the kth element in the label.
 (define (label-ref label k)
+  (unless (index? k) (error "label ref INDEX"))
   (vector-ref (label-datum label) (+ k (label-i label))))
 
 
@@ -117,14 +119,14 @@
 ;; Gets a slice of the label on the half-open interval [i, j)
 (define sublabel
   (case-lambda
-    ((l i)
-     (sublabel l i (label-length l)))
-    ((l i j)
+    ((label i)
+     (sublabel label i (label-length label)))
+    ((label i j)
      (unless (<= i j)
        (error 'sublabel "illegal sublabel [~a, ~a]" i j))
-     (-label (label-datum l)
-                 (+ i (label-i l))
-                 (+ j (label-i l))))))
+     (-make-label (label-datum label)
+                 (+ i (label-i label))
+                 (+ j (label-i label))))))
 
 
 ;; sublabel!: label number number -> void
@@ -152,7 +154,8 @@
         (let loop ((k 0))
           (if (= k m)
               #t
-              (and (equal? (label-ref prefix k) (label-ref other-label k))
+              (and (index? k)
+                   (equal? (label-ref prefix k) (label-ref other-label k))
                    (loop (add1 k))))))))
 
 
@@ -174,7 +177,12 @@
 ;; Precondition: the label must have originally come from a string.
 ;; Note: this operation is expensive: don't use it except for debugging.
 (define (label->string label)
-  (list->string (vector->list (label->vector label))))
+  (define V (label->vector label))
+  (define L (for/list
+                      ([c (in-list (vector->list V))])
+              (unless (char? c) (error "label->string invariant broken"))
+              c))
+  (list->string L))
 
 
 (define (label->string/removing-sentinel label)
@@ -182,27 +190,30 @@
          [N (if (and (> ln 0) (sentinel? (label-ref label (sub1 ln))))
                 (sub1 ln)
                 ln)])
-    (build-string N (lambda (i) (label-ref label i)))))
-
+    (build-string N (lambda (i)
+                      (unless (index? i) (error "label->string 1"))
+                      (let ([val (label-ref label i)])
+                        (unless (char? val) (error "label->string 2"))
+                        val)))))
 
 ;; label->vector: label -> vector
 ;; Extracts the vector that the label represents.
 ;; Note: this operation is expensive: don't use it except for debugging.
 (define (label->vector label)
-  (let* ((N (label-length label))
-         (buffer (make-vector N)))
+  (define N (label-length label))
+  (define buffer (make-vector N 'X));;'X is a placeholder
     (let loop ((i 0))
-      (if (< i N)
+      (if (and (< i N) (index? i))
           (begin
             (vector-set! buffer i (label-ref label i))
-            (loop (add1 i)))
-          (vector->immutable-vector buffer)))))
+           (loop (add1 i)))
+          (vector->immutable-vector buffer))))
 
 
 ;; label-copy: label->label
 ;; Returns a copy of the label.
-(define (label-copy l)
-  (-label (label-datum l) (label-i l) (label-j l)))
+(define (label-copy label)
+  (-make-label (label-datum label) (label-i label) (label-j label)))
 
 
 ;; label-ref-at-end?: label number -> boolean
@@ -219,5 +230,4 @@
   (eq? (label-datum label-1) (label-datum label-2)))
 
 ;; --- from suffixtree.rkt
-(provide label-source-eq?)
 (define label-source-eq? label-same-source?)

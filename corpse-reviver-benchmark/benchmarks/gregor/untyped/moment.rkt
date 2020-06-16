@@ -3,17 +3,14 @@
 ;; Moments in time
 
 (require
+ corpse-reviver/opaque
   corpse-reviver/require-typed-check
   racket/match
+  "../base/untyped.rkt"
   "gregor-structs.rkt"
   (only-in racket/math exact-round)
+  "tzinfo-adapter.rkt"
 )
-(require (only-in "tzinfo-adapter.rkt"
-  system-tzid ;(-> (U tz #f))]
-  tzoffset tzoffset? tzoffset-utc-seconds
-  local-seconds->tzoffset ;(-> String Integer (U tzoffset tzgap tzoverlap))]
-  utc-seconds->tzoffset ;(-> String Exact-Rational tzoffset)]
-))
 (require (only-in "hmsn.rkt"
     NS/SECOND ;Natural]
 ))
@@ -73,7 +70,7 @@
 ;; =============================================================================
 
 ;(: current-timezone (Parameterof (U tz #f)))
-(define current-timezone (box (system-tzid)))
+(define current-timezone (make-parameter (system-tzid)))
 
 ;(: moment (->* (Natural) (Month
 ;                          Natural Natural Natural Natural Natural
@@ -85,7 +82,7 @@
 ;                          )
 ;                          Moment))
 (define (moment year [month 1] [day 1] [hour 0] [minute 0] [second 0] [nano 0]
-                [tz (unbox current-timezone)]
+                [tz (current-timezone)]
                 [resolve resolve-offset/raise])
   (when (eq? tz #f) (error "no timezone"))
   (datetime+tz->moment (datetime year month day hour minute second nano) tz resolve))
@@ -104,8 +101,9 @@
           [(tzoffset? res)
            (make-moment dt (tzoffset-utc-seconds res) zone)]
           [else (resolve res dt zone #f)])]
-        [else
-         (make-moment dt zone #f)]))
+        [(index? zone)
+         (make-moment dt zone #f)]
+        [else (error (format "datetime+tz->moment unknown zone ~a" zone))]))
 
 (define moment->datetime/local Moment-datetime/local)
 (define moment->utc-offset     Moment-utc-offset)
@@ -124,7 +122,6 @@
 
 ;(: moment->jd (-> Any Exact-Rational))
 (define (moment->jd m)
-  (unless (Moment? m) (error "moment->jd type error"))
   (datetime->jd
    (moment->datetime/local
     (moment-in-utc m))))

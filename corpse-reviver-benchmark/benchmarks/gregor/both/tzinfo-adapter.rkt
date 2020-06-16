@@ -1,8 +1,8 @@
 #lang typed/racket/base
 
-;; Adapter module for the tzinfo subproject
-
 (require corpse-reviver/opaque)
+
+;; Adapter module for the tzinfo subproject
 
 (require/typed/provide/opaque "../base/tzinfo/main.rkt"
   [system-tzid (-> (U tz #f))]
@@ -15,7 +15,8 @@
   [#:struct tzoverlap ([offset-before : tzoffset]
                        [offset-after : tzoffset])]
   [local-seconds->tzoffset (-> String Integer (U tzoffset tzgap tzoverlap))]
-  [utc-seconds->tzoffset (-> String Exact-Rational tzoffset)])
+  [utc-seconds->tzoffset (-> String Exact-Rational tzoffset)]
+)
 
 (provide tz)
 (define-type tz (U String Integer))

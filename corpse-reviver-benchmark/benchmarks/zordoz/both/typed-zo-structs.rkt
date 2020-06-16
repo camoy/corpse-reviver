@@ -20,17 +20,17 @@
                  [prefix : prefix]
                  [code : (U form Any)])]
                [#:struct (prefix zo) (
-                 [num-lifts : Exact-Nonnegative-Integer]
-                 [toplevels : (Listof (U #f Symbol global-bucket module-variable))]
+                 [num-lifts : Exact-Nonnegative-Integer] 
+                 [toplevels : (Listof (U #f Symbol global-bucket module-variable))] 
                  [stxs : (Listof (U #f stx))]
                  [src-inspector-desc : Symbol])]
                [#:struct (global-bucket zo) ([name : Symbol])]
                [#:struct (module-variable zo) (
-                 [modidx : Module-Path-Index]
-                 [sym : Symbol]
-                 [pos : Integer]
+                 [modidx : Module-Path-Index] 
+                 [sym : Symbol] 
+                 [pos : Integer] 
                  [phase : Exact-Nonnegative-Integer]
-                 [constantness : (U #f 'constant 'fixed
+                 [constantness : (U #f 'constant 'fixed 
                                      function-shape
                                      struct-shape)])]
                [#:struct function-shape (
@@ -69,13 +69,13 @@
                  [rhs : (U expr seq inline-variant Any)])]
                [#:struct (def-syntaxes form) (
                  [ids : (Listof (U toplevel Symbol))]
-                 [rhs : (U expr seq Any)]
-                 [prefix : prefix]
+                 [rhs : (U expr seq Any)] 
+                 [prefix : prefix] 
                  [max-let-depth : Exact-Nonnegative-Integer]
                  [dummy : (U toplevel #f)])]
                [#:struct (seq-for-syntax form) (
                  [forms : (Listof (U form Any))] ; `begin-for-syntax'
-                 [prefix : prefix]
+                 [prefix : prefix] 
                  [max-let-depth : Exact-Nonnegative-Integer]
                  [dummy : (U toplevel #f)])]
                [#:struct (req form) (
@@ -90,11 +90,11 @@
                [#:struct (mod form) (
                  [name : (U Symbol (Listof Symbol))]
                  [srcname : Symbol]
-                 [self-modidx : Module-Path-Index]
-                 [prefix : prefix]
+                 [self-modidx : Module-Path-Index] 
+                 [prefix : prefix] 
                  [provides : (Listof (List (U Integer #f)
                                            (Listof provided)
-                                           (Listof provided)))]
+                                           (Listof provided)))] 
                  [requires : (Listof (Pair (U Integer #f)
                                            (Listof Module-Path-Index)))]
                  [body : (Listof (U form Any))]
@@ -112,11 +112,11 @@
                  [pre-submodules : (Listof mod)]
                  [post-submodules : (Listof mod)])]
                [#:struct (provided zo) (
-                 [name : Symbol]
-                 [src : (U Module-Path-Index #f)]
-                 [src-name : Symbol]
+                 [name : Symbol] 
+                 [src : (U Module-Path-Index #f)] 
+                 [src-name : Symbol] 
                  [nom-src : (U Module-Path-Index #f)]
-                 [src-phase : Exact-Nonnegative-Integer]
+                 [src-phase : Exact-Nonnegative-Integer] 
                  [protected? : Boolean])]
                [#:struct (lam expr) (
                  [name : (U Symbol (Vectorof Any) (List ))] ;empty list
@@ -138,7 +138,7 @@
                  [clauses : (Listof (U lam closure))])]
                [#:struct (let-one expr) (
                  [rhs : (U expr seq Any)]  ; pushes one value onto stack
-                 [body : (U expr seq Any)]
+                 [body : (U expr seq Any)] 
                  [type : (U #f 'flonum 'fixnum 'extflonum)]
                  [unused? : Boolean])]
                [#:struct (let-void expr) (
@@ -147,9 +147,9 @@
                  [body : (U expr seq Any)])]
                [#:struct (install-value expr) (
                  [count : Exact-Nonnegative-Integer]
-                 [pos : Exact-Nonnegative-Integer]
-                 [boxes? : Boolean]
-                 [rhs : (U expr seq Any)]
+                 [pos : Exact-Nonnegative-Integer] 
+                 [boxes? : Boolean] 
+                 [rhs : (U expr seq Any)] 
                  [body : (U expr seq Any)])]
                [#:struct (let-rec expr) (
                  [procs : (Listof lam)]
@@ -158,15 +158,15 @@
                  [pos : Exact-Nonnegative-Integer]
                  [body : (U expr seq Any)])]
                [#:struct (localref expr) (
-                 [unbox? : Boolean]
-                 [pos : Exact-Nonnegative-Integer]
-                 [clear? : Boolean]
-                 [other-clears? : Boolean]
+                 [unbox? : Boolean] 
+                 [pos : Exact-Nonnegative-Integer] 
+                 [clear? : Boolean] 
+                 [other-clears? : Boolean] 
                  [type : (U #f 'flonum 'fixnum 'extflonum)])]
                [#:struct (toplevel expr) (
-                 [depth : Exact-Nonnegative-Integer]
-                 [pos : Exact-Nonnegative-Integer]
-                 [const? : Boolean]
+                 [depth : Exact-Nonnegative-Integer] 
+                 [pos : Exact-Nonnegative-Integer] 
+                 [const? : Boolean] 
                  [ready? : Boolean])]
                [#:struct (topsyntax expr) (
                  [depth : Exact-Nonnegative-Integer]

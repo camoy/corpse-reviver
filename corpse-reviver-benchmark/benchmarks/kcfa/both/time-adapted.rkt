@@ -8,7 +8,7 @@
 
 (require/typed/check "time.rkt"
   [time-zero Time]
-  [k (Boxof Natural)]
+  [k (Parameterof Natural)]
   [tick (-> Stx Time Time)]
   [alloc (-> Time (-> Var Addr))]
 )
@@ -27,3 +27,4 @@
 
 ;; -- time.rkt
 (define-type Value Closure)
+

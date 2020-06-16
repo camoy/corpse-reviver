@@ -8,14 +8,13 @@
 
 ;; Just testing
 
-(define L-max 3)
+(define l-list '(0 1 2 3))
 (define NUM_SAMPLES 100)
 
 (define (main filename)
   ;; Parse data from input file (also creates module graph)
   (define summary (from-rktd filename))
   (define name (get-project-name summary))
-  (define l-list (for/list ([i (in-range (add1 L-max))]) i))
   ;; Create L-N/M pictures
   (time
     (begin

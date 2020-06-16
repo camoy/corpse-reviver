@@ -72,12 +72,12 @@
 
 (: vector-levenshtein/predicate/get-scratch (-> (Vectorof Char) (Vectorof Char) (-> Char Char Boolean) (-> Integer (Vectorof Index)) Index))
 (define (vector-levenshtein/predicate/get-scratch a b pred get-scratch)
-  (let: ((a-len : Index (vector-length a))
+  (let ((a-len : Index (vector-length a))
         (b-len : Index (vector-length b)))
     (cond ((zero? a-len) b-len)
           ((zero? b-len) a-len)
           (else
-           (let: ((w   : (Vectorof Index) (get-scratch (+ 1 b-len)))
+           (let ((w   : (Vectorof Index) (get-scratch (+ 1 b-len)))
                  (next : Index 0)) ;;bg changed from #f
              (let fill ((k b-len))
                (unless (index? k) (error "vl/p/g invariant error"))

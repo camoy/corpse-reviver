@@ -12,17 +12,14 @@
          (only-in racket/vector vector-append)
          (only-in racket/string string-join)
          (only-in racket/list empty? first rest)
-         "data.rkt")
+         "data.rkt"
+         "../base/untyped.rkt")
 
 (provide array-broadcasting
          array-broadcast
          array-shape-broadcast)
 
-(define (index? n)
-  (and (<= 0 n)
-       (<  n 999999999999)))
-
-(define array-broadcasting (box #t))
+(define array-broadcasting (make-parameter #t))
 
 (define (shift-stretch-axes arr new-ds)
   (define old-ds (array-shape arr))
@@ -38,7 +35,7 @@
   (define old-f (unsafe-array-proc arr))
   (unsafe-build-array
    new-ds
-   (λ (new-js)
+   (lambda (new-js)
      (let ([old-js  (old-js)])
        (let loop ([k  0])
          (cond [(k . < . old-dims)
@@ -55,7 +52,7 @@
                (if (or (array-strict? arr) ((array-size new-arr) . fx<= . (array-size arr)))
                    new-arr
                    (begin (array-default-strict! new-arr)
-                   new-arr))]))
+                          new-arr))]))
 
 (define (shape-insert-axes ds n)
   (vector-append (make-vector n 1) ds))
@@ -103,7 +100,7 @@
                (shape-permissive-broadcast ds1 ds2 dims fail)
                (shape-normal-broadcast ds1 ds2 dims fail)))]))
 
-(define (array-shape-broadcast dss [broadcasting (unbox array-broadcasting)])
+(define (array-shape-broadcast dss [broadcasting (array-broadcasting)])
   (define (fail) (error 'array-shape-broadcast
                         "incompatible array shapes (array-broadcasting ~v): ~a"
                         broadcasting

@@ -48,7 +48,7 @@
        (real? (car (cdr x)))
        (string? (car (cdr (cdr x))))))
 
-(define TEST
+(define DATA
   (with-input-from-file "../base/zombie-hist.rktd" read))
 
 (: main (-> Any Void))
@@ -60,4 +60,4 @@
    [else
     (error "bad input")]))
 
-(time (main TEST))
+(time (main DATA))

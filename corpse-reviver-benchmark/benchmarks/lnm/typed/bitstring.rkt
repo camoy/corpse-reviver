@@ -10,9 +10,10 @@
 ;; -----------------------------------------------------------------------------
 
 (require
- (only-in racket/math exact-ceiling exact-truncate)
- corpse-reviver/opaque
- (only-in racket/list remove-duplicates))
+  (only-in racket/math exact-ceiling exact-truncate)
+  (only-in racket/list remove-duplicates)
+  corpse-reviver/opaque
+)
 
 (require/typed/opaque "_format.rkt"
   [~r (-> Exact-Rational
@@ -45,15 +46,6 @@
         0)))
   (if (index? res) res (error 'bitstring->natural)))
 
-;; Return a copy of `str` where the `i`-th bit is flipped.
-;; (Flipped => 0 goes to 1 and 1 goes to 0)
-(: bitstring-flip (-> String Index String))
-(define (bitstring-flip str i)
-  (define new (if (equal? #\0 (string-ref str i)) "1" "0"))
-  (string-append (substring str 0 i)
-                 new
-                 (substring str (add1 i) (string-length str))))
-
 ;; Return all bitstrings reachable from `str`
 ;;  after incrementing at most `L` bits.
 ;; Result does NOT include the argument bitstring.
@@ -65,6 +57,15 @@
          (define res*
            (for/list ([i (in-range (string-length str))]
                       #:when (equal? #\0 (string-ref str i)))
-             (define str+ (bitstring-flip str (cast i Index)))
-             (cons str+ (in-reach str+ (cast (sub1 L) Index)))))
+             (define str+ (bitstring-flip str (assert i index?)))
+             (cons str+ (in-reach str+ (assert (sub1 L) index?)))))
          (remove-duplicates (apply append res*) string=?)]))
+
+;; Return a copy of `str` where the `i`-th bit is flipped.
+;; (Flipped => 0 goes to 1 and 1 goes to 0)
+(: bitstring-flip (-> String Index String))
+(define (bitstring-flip str i)
+  (define new (if (equal? #\0 (string-ref str i)) "1" "0"))
+  (string-append (substring str 0 i)
+                 new
+                 (substring str (add1 i) (string-length str))))

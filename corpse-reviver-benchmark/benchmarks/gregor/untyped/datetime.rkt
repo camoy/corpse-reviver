@@ -6,6 +6,7 @@
 (require
   corpse-reviver/require-typed-check
   racket/match
+  "../base/untyped.rkt"
   "core-structs.rkt"
   "gregor-structs.rkt"
   (only-in racket/math exact-round exact-floor))
@@ -80,9 +81,7 @@
 (define datetime->date DateTime-date)
 ;(: datetime->time (-> DateTime Time))
 (define datetime->time DateTime-time)
-;(: datetime->jd (-> Any Exact-Rational))
 (define (datetime->jd d)
-  (unless (DateTime? d) (error "datetime->jd type error"))
   (DateTime-jd d))
 
 ;(: datetime->posix (-> DateTime Exact-Rational))
@@ -157,6 +156,7 @@
   (define base (- jd 1/2))
   (define frac (- base (exact-floor base)))
   (define r (exact-round (* frac NS/DAY)))
+  (unless (index? r) (error "jd->day-ns"))
   r)
 
 ;(: jd->posix (-> Exact-Rational Exact-Rational))

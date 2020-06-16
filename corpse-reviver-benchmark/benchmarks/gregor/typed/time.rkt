@@ -20,8 +20,8 @@
 ;; -----------------------------------------------------------------------------
 
 (require
- corpse-reviver/require-typed-check
  corpse-reviver/opaque
+  corpse-reviver/require-typed-check
   "core-adapter.rkt"
   "gregor-adapter.rkt"
   racket/match)
@@ -55,11 +55,9 @@
 (define (time-write-proc t out mode)
   (fprintf out "#<time ~a>" (time->iso8601 t)))
 
-(: time? (-> Any Boolean))
-(define time? Time?)
-
 (: time->hmsn (-> Time HMSN))
 (define time->hmsn Time-hmsn)
+
 (: time->ns (-> Time Natural))
 (define (time->ns t)
   (Time-ns t))

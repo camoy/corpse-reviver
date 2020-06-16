@@ -19,14 +19,13 @@
 (require
   corpse-reviver/require-typed-check
   racket/path
-  corpse-reviver/opaque
+  math/statistics
   (only-in racket/file file->value)
   (only-in racket/vector vector-append)
-  "modulegraph-adapted.rkt")
+  "modulegraph-adapted.rkt"
+  corpse-reviver/opaque)
 
-(require/opaque math/statistics
-  [mean (-> (Sequenceof Real)
-            Real)])
+(require/opaque (only-in math/statistics mean))
 
 (require/typed racket/stream
   [stream-map (-> (-> Index String) (Sequenceof Index) (Sequenceof String))]
@@ -35,7 +34,8 @@
 (require/typed/check "bitstring.rkt"
   [bitstring->natural (-> String Index)]
   [log2 (-> Index Index)]
-  [natural->bitstring (-> Index Index String)])
+  [natural->bitstring (-> Index Index String)]
+)
 
 ;; =============================================================================
 ;; -- data definition: summary
@@ -73,7 +73,7 @@
 (: rktd->dataset (-> Path (Vectorof (Listof Index))))
 (define (rktd->dataset path)
   ;; Check .rktd
-  (unless (bytes=? (string->bytes/utf-8 "rktd") (or (filename-extension path) (string->bytes/utf-8 "")))
+  (unless (bytes=? (string->bytes/utf-8 "rktd") (or (filename-extension path) #""))
     (parse-error "Cannot parse dataset '~a', is not .rktd" (path->string path)))
   ;; Get data
   (define vec (file->value path))
@@ -83,7 +83,9 @@
 ;; Confirm that the dataset `vec` is a well-formed vector of experiment results.
 (: validate-dataset (-> Any (Vectorof (Listof Index))))
 (define (validate-dataset vec0)
-  (define vec (cast vec0 (Vectorof (Listof Index))))
+  (define vec
+    (for/vector : (Vectorof (Listof Index)) ((x (in-vector (assert vec0 vector?))))
+      (listof-index x)))
   (unless (< 0 (vector-length vec)) (parse-error "Dataset is an empty vector, does not contain any entries"))
   ;; Record the number of runs in the first vector, match against other lengths
   (: num-runs (Boxof (U #f Index)))
@@ -100,6 +102,13 @@
       (unless (exact-positive-integer? val)
         (parse-error "Row ~a contains non-integer entry '~a'" row-index val))))
     vec)
+
+(: listof-index (-> Any (Listof Index)))
+(define (listof-index x)
+  (if (and (list? x)
+           (andmap index? x))
+    x
+    (error 'listof-index)))
 
 ;; Check that the dataset and module graph agree
 (: validate-modulegraph (-> (Vectorof (Listof Index)) ModuleGraph Void))
@@ -170,12 +179,3 @@
 (: index->mean-runtime (-> Summary Index Real))
 (define (index->mean-runtime sm i)
   (mean (vector-ref (summary-dataset sm) i)))
-
-;; ;; Return all data for all gradually-typed variations
-;; (: gradual-runtimes (-> Summary (Listof String)))
-;; (define (gradual-runtimes sm)
-;;   (define vec (summary-dataset sm))
-;;   ;; Efficient enough?
-;;   (apply append
-;;          (for/list ([i (in-range 1 (sub1 (vector-length vec)))])
-;;            (vector-ref vec i))))

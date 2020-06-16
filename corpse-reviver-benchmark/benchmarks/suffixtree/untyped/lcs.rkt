@@ -2,7 +2,8 @@
 ;; Some utilities.
 
 (require
- (except-in "data.rkt" label)
+ "untyped.rkt"
+ (except-in "data.rkt" make-label)
  "label.rkt"
  "structs.rkt"
  "ukkonen.rkt")
@@ -30,79 +31,53 @@
 ;; finds the inner node with the deepest string depth.
 (provide longest-common-sublabel)
 (define (longest-common-sublabel label-1 label-2)
-  (let ((label-1-marks (make-hasheq))
-        (label-2-marks (make-hasheq))
-        (deepest-node (node (label "no lcs") #f '() #f))
-        (deepest-depth 0))
-    (letrec
-        [
-         (main
-          (lambda ()
-            (let ((tree (make-tree)))
-              (tree-add! tree label-1)
-              (tree-add! tree label-2)
-              (mark-up-inner-nodes! (tree-root tree) 0)
-              (path-label deepest-node))))
-
-         (mark-up-inner-nodes!
-          (lambda (node depth)
-            (if (null? (node-children node))
-                (begin (when (label-source-eq? (node-up-label node) label-1)
-                         (mark-with-label-1! node))
-                       (when (label-source-eq? (node-up-label node) label-2)
-                         (mark-with-label-2! node)))
-                (begin (for-each
-                        (lambda (child)
-                          (mark-up-inner-nodes!
-                           child
-                           (+ depth (label-length (node-up-label child)))))
-                        (node-children node))
-                       (absorb-children-marks! node depth)))))
-
-         (mark-with-label-1!
-          (lambda (node)
-            (hash-set! label-1-marks node #t)))
-
-         (mark-with-label-2!
-          (lambda (node)
-            (hash-set! label-2-marks node #t)))
-
-         (marked-by-label-1?
-          (lambda (node)
-            (hash-ref label-1-marks node false-thunk)))
-
-         (marked-by-label-2?
-          (lambda (node)
-            (hash-ref label-2-marks node false-thunk)))
-
-         (marked-by-both?
-          (lambda (node)
-            (and (marked-by-label-1? node)
-                 (marked-by-label-2? node))))
-
-         (absorb-children-marks!
-          (lambda (node depth)
-            ;;(let/ec escape
-              (for-each (lambda (child)
-                          (when (marked-by-label-1? child)
-                            (mark-with-label-1! node))
-                          (when (marked-by-label-2? child)
-                            (mark-with-label-2! node))
-                          #;(when (marked-by-both? node)
-                            (escape)))
-                        (node-children node))
-            (when (and (marked-by-both? node)
-                       (> depth deepest-depth))
-              (set! deepest-depth depth)
-              (set! deepest-node node))))
-         ]
-
-      (if (or (= 0 (label-length label-1))
-              (= 0 (label-length label-2)))
-          (string->label "")
-          (begin
-            (main))))))
-
+  (define label-1-marks (make-hasheq))
+  (define label-2-marks (make-hasheq))
+  (define deepest-node (node (make-label "no lcs") #f '() #f))
+  (define deepest-depth 0)
+  (define (main)
+    (define tree (make-tree))
+    (tree-add! tree label-1)
+    (tree-add! tree label-2)
+    (mark-up-inner-nodes! (tree-root tree) 0)
+    (path-label deepest-node))
+  (define (mark-up-inner-nodes! node depth)
+    (cond [(null? (node-children node))
+           (when (label-source-eq? (node-up-label node) label-1)
+             (mark-with-label-1! node))
+           (when (label-source-eq? (node-up-label node) label-2)
+             (mark-with-label-2! node))]
+          [else
+            (for ([child (node-children node)])
+              (let ([i (+ depth (label-length (node-up-label child)))])
+                (unless (index? i) (error "NOOOOO"))
+                (mark-up-inner-nodes! child i)))
+            (absorb-children-marks! node depth)]))
+  (define (mark-with-label-1! node)
+    (hash-set! label-1-marks node #t))
+  (define (mark-with-label-2! node)
+    (hash-set! label-2-marks node #t))
+  (define (marked-by-label-1? node)
+    (hash-ref label-1-marks node false-thunk))
+  (define (marked-by-label-2? node)
+    (hash-ref label-2-marks node false-thunk))
+  (define (marked-by-both? node)
+    (and (marked-by-label-1? node)
+         (marked-by-label-2? node)))
+  (define (absorb-children-marks! node depth)
+      (for ([child (node-children node)])
+        (when (marked-by-label-1? child)
+          (mark-with-label-1! node))
+        (when (marked-by-label-2? child)
+          (mark-with-label-2! node)))
+    (when (and (marked-by-both? node)
+               (> depth deepest-depth))
+      (set! deepest-depth depth)
+      (set! deepest-node node)))
+  (if (or (= 0 (label-length label-1))
+          (= 0 (label-length label-2)))
+      (string->label "")
+      (main)))
 
 
 ;; path-label: node -> label
@@ -116,38 +91,31 @@
 ;; Boehm's paper on "Ropes, an alternative to strings" to see how
 ;; much work this would be.
 (provide path-label)
-(define path-label
-  (letrec
-      [(collect-loop
-        (lambda (current-node collected-labels total-length)
-          (if current-node
-              (collect-loop (node-parent current-node)
-                            (cons (node-up-label current-node)
-                                  collected-labels)
-                            (+ total-length
-                               (label-length (node-up-label current-node))))
-              (build-new-label collected-labels total-length))))
+(define (path-label node)
+  (define (collect-loop current-node collected-labels total-length)
+    (if current-node
+      (collect-loop (node-parent current-node)
+                    (cons (node-up-label current-node) collected-labels)
+                    (+ total-length
+                       (label-length (node-up-label current-node))))
+      (build-new-label collected-labels total-length)))
+  (define (vector-blit! src-label dest-vector dest-offset)
+    (let loop ((i 0))
+      (let ([index (+ i dest-offset)])
+      (when (and (< i (label-length src-label)) (index? i) (index? index))
+        (vector-set! dest-vector
+                     index
+                     (label-ref src-label i))
+        (loop (add1 i))))))
+  (define (build-new-label labels total-length)
+    (define vector (make-vector total-length 'X))
+    (let loop ((labels labels) (i 0))
+      (cond [(null? labels)
+             (vector->label vector)]
+            [(index? i)
+              (vector-blit! (car labels) vector i)
+              (loop (cdr labels)
+                    (+ i (label-length (car labels))))]
+            [else (error "not an index")])))
+  (collect-loop node '() 0))
 
-       (vector-blit!
-        (lambda (src-label dest-vector dest-offset)
-          (let loop ((i 0))
-            (when (< i (label-length src-label))
-              (vector-set! dest-vector
-                           (+ i dest-offset)
-                           (label-ref src-label i))
-              (loop (add1 i))))))
-
-       (build-new-label
-        (lambda (labels total-length)
-          (let ((vector (make-vector total-length)))
-            (let loop ((labels labels)
-                       (i 0))
-              (if (null? labels)
-                  (begin
-                    (vector->label vector))
-                  (begin
-                    (vector-blit! (car labels) vector i)
-                    (loop (cdr labels)
-                          (+ i (label-length (car labels))))))))))]
-    (lambda (node)
-      (collect-loop node '() 0))))

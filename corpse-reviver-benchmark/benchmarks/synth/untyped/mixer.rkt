@@ -6,6 +6,7 @@
                     array-default-strict!
                     unsafe-array-proc
                     unsafe-build-array)
+         (only-in racket/list first second rest)
            (only-in "array-broadcast.rkt" array-broadcast array-shape-broadcast)
          (only-in "array-broadcast.rkt" array-broadcasting))
 
@@ -55,27 +56,23 @@
 ;; Normalizes output to be within [-1,1].
 
 ;; mix : Weighted-Signal * -> (Array Float)
-(define (mix ss)
+(define (mix . ss)
   (define signals
     (for/list ([s ss])
-      (car s)))
+      (first s)))
   (define weights
     (for/list ([x ss])
-      (real->double-flonum (cadr x))))
+      (real->double-flonum (second x))))
   (define downscale-ratio (/ 1.0 (apply + weights)))
   ;; scale-signal : Float -> (Float -> Float)
   (define ((scale-signal w) x) (* x w downscale-ratio))
-  (define old-array-broadcasting (unbox array-broadcasting))
-  (set-box! array-broadcasting 'permissive)
-  (define result
-    (for/fold ([res (array-map (scale-signal (car weights))
-                               (car signals))])
-              ([s (in-list (cdr signals))]
-               [w (in-list (cdr weights))])
+  (parameterize ([array-broadcasting 'permissive]) ; repeat short signals
+    (for/fold ([res (array-map (scale-signal (first weights))
+                               (first signals))])
+        ([s (in-list (rest signals))]
+         [w (in-list (rest weights))])
       (define scale (scale-signal w))
       (array-map (lambda (acc  ; : Float
                           new) ; : Float
                    (+ acc (scale new)))
-                 res s)))
-  (set-box! array-broadcasting old-array-broadcasting)
-  result)
+                 res s))))

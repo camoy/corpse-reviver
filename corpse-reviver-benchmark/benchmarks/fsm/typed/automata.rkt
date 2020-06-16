@@ -25,9 +25,9 @@
  (: grim-trigger (-> Payoff Automaton))
  (: make-random-automaton
   ;; (make-random-automaton n) builds an n states x n inputs automaton
-  ;; with a random transition table
+  ;; with a random transition table 
   (-> Natural Automaton))
-
+ 
  (: match-pair
    ;; give each automaton the reaction of the other in the current state
    ;; determine payoff for each and transition the automaton

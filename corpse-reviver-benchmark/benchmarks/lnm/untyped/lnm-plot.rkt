@@ -27,9 +27,9 @@
     predicate->variations
     untyped-mean
     variation->mean-runtime)
-  "plot-adapted.rkt"
   (only-in racket/math exact-floor exact-ceiling)
   (only-in racket/stream stream-length stream->list stream-filter)
+  "plot-adapted.rkt"
 )
 
 ;; =============================================================================
@@ -68,31 +68,34 @@
                                   THIN))
   (define cutoff-line (horizontal-line cutoff-point xmax
                                                     'orangered
-                                                    'short-dash
-                                                    THICK))
+                                                    THICK
+                                                    'short-dash))
   ;; Get yticks
   (define yticks (compute-yticks num-vars 6 (list cutoff-point)))
-  (plot-x-ticks (compute-xticks 5))
-  (plot-y-ticks (compute-yticks num-vars 6 cutoff-point))
-  (plot-x-far-ticks no-ticks)
-  (plot-y-far-ticks no-ticks)
-  (plot-font-face "bold")
-  (plot-font-size 16)
-  ;; Create 1 pict for each value of L
-  (for/list ([L (in-list L-list)])
-    (define F (function (count-variations summary L xmax) 0 xmax
-                        num-samples
-                        'navy
-                        THICK))
-    (plot-pict (list N-line M-line cutoff-line F)
-               0
-               xmax
-               0
-               num-vars
-               "Overhead (vs. untyped)"
-               "Count"
-               width
-               height)))
+  ;; Set plot parameters ('globally', for all picts)
+  (parameterize (
+    [plot-x-ticks (compute-xticks 5)]
+    [plot-y-ticks (compute-yticks num-vars 6 cutoff-point)]
+    [plot-x-far-ticks no-ticks]
+    [plot-y-far-ticks no-ticks]
+    [plot-font-face "bold"]
+    [plot-font-size 16])
+    ;; Create 1 pict for each value of L
+    (for/list ([L (in-list L-list)])
+      (define F (function (count-variations summary L xmax) 0 xmax
+                          num-samples
+                          'navy
+                          THICK))
+      (define res (plot-pict (list N-line M-line cutoff-line F)
+                 0
+                 xmax
+                 0
+                 num-vars
+                 "Overhead (vs. untyped)"
+                 "Count"
+                 width
+                 height))
+      (if (pict? res) res (error 'lnm)))))
 
 ;; Return a function (-> Real Index) on argument `N`
 ;;  that counts the number of variations
@@ -102,7 +105,8 @@
 (define (count-variations sm L [lim #f])
   (define baseline (untyped-mean sm))
   (define cache (and lim (cache-init sm lim L)))
-  (lambda (N)
+  (lambda (N-raw)
+    (define N (if (>= N-raw 0) N-raw (error 'count-variations)))
     (define good? (make-variation->good? sm (* N baseline) L))
     (if (and cache lim (<= N lim))
         ;; Use cache to save some work, only test the variations
@@ -129,15 +133,12 @@
   (define unsorted-variations (box (all-variations summary)))
   ;; For each integer-overhead-range [0, 1] [1, 2] ... [max-1, max]
   ;; save the variations within that overhead to a cache entry
-  (define ret-len (add1 max-overhead))
-  (define ret (make-vector ret-len))
-  (for ([i (in-range ret-len)])
+  (for/vector ([i (in-range (add1 max-overhead))])
     (define good? (make-variation->good? summary (* i base-overhead) L))
     (define-values (good-vars rest)
       (stream-partition good? (unbox unsorted-variations)))
     (set-box! unsorted-variations rest)
-    (vector-set! ret i (stream->list good-vars)))
-  ret)
+    (stream->list good-vars)))
 
 ;; Count the number of variations with running time less than `overhead`.
 ;; Use `test-fun` to manually check variations we aren't sure about
@@ -195,8 +196,8 @@
 (define (horizontal-line y-val
                          [x-max 1]
                          [c 'black]
-                         [s 'solid]
-                         [w (line-width)])
+                         [w (line-width)]
+                         [s 'solid])
   (lines (list (list 0 y-val)
                (list x-max y-val))
          c

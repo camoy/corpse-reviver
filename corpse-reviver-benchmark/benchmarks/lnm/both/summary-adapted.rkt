@@ -16,7 +16,8 @@
   [get-project-name (-> Summary String)]
   [predicate->variations (-> Summary (-> String Boolean) (Sequenceof String))]
   [untyped-mean (-> Summary Real)]
-  [variation->mean-runtime (-> Summary String Real)])
+  [variation->mean-runtime (-> Summary String Real)]
+)
 
 (define-type Summary summary)
 

@@ -14,6 +14,7 @@
 ;; ----------------------------------------------------------------------------
 
 (require
+  "../base/untyped.rkt"
   (only-in racket/file file->value)
   (only-in "bitstring.rkt" log2 natural->bitstring)
 )
@@ -55,7 +56,7 @@
   (void)
   ;; For each row, print the config ID and all the values
   (for ([(row n) (in-indexed vec)])
-    (void (natural->bitstring n (log2 num-configs)))
+    (void (natural->bitstring (assert n index?) (log2 num-configs)))
     (for ([v row]) (void "~a~a" sep v))
     (void)))
 
@@ -64,8 +65,16 @@
 (define (rktd->spreadsheet input-filename
                            [output #f]
                            [format 'tab])
-  (define vec (file->value input-filename))
+  (define vec
+    (for/vector ((x (in-vector (assert (file->value input-filename) vector?))))
+      (listof-index x)))
   (define suffix (symbol->extension format))
-  (define out (or output (path-replace-extension input-filename suffix)))
+  (define out (or output (path-replace-suffix input-filename suffix)))
   (define sep (symbol->separator format))
   (vector->spreadsheet vec out sep))
+
+(define (listof-index x)
+  (if (and (list? x)
+           (andmap index? x))
+    x
+    (error 'listof-index)))

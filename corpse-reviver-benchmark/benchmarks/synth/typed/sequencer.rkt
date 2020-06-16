@@ -13,7 +13,7 @@
   [fs Natural])
 
 (require/typed/check "mixer.rkt"
-  [mix (-> (Listof Weighted-Signal) Array)])
+  [mix (-> Weighted-Signal * Array)])
 
 (provide sequence note)
 

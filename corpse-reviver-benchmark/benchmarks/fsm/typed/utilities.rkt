@@ -44,7 +44,7 @@
 
 (: accumulated-%s (-> [Listof Probability] [Listof Real]))
 ;; [Listof Probability] -> [Listof Probability]
-;; calculate the accumulated probabilities
+;; calculate the accumulated probabilities 
 
 (define (accumulated-%s probabilities)
   (define total (sum probabilities))

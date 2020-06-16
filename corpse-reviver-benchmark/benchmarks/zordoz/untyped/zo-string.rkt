@@ -257,40 +257,40 @@
   (define (unexported->spec ux)
     (define (elem->spec e)
       (format-list
+       " "
        (list (number->string              (car e))
              (list->string symbol->string (cadr e))
-             (list->string symbol->string (caddr e)))
-       " "))
+             (list->string symbol->string (caddr e)))))
     (list->string elem->spec ux))
   (define (lang-info->spec li)
     (match li
       [(vector mp sym any)
         (format-list
+         " "
          (list (module-path->spec mp)
                (symbol->string    sym)
-               (any->string       any))
-         " ")]
+               (any->string       any)))]
       [#f "#f"]))
   (define
     (provides->spec pds)
     (define (elem->spec e)
       (format-list
+       " "
        (list (if (number? (car e))
                  (number->string (car e))
                  "#f")
              (listof-zo->string provided->spec (cadr e))
-             (listof-zo->string provided->spec (caddr e)))
-       " "))
+             (listof-zo->string provided->spec (caddr e)))))
     (list->string elem->spec pds))
   (define
     (requires->spec rqs)
     (define (elem->spec e)
       (format-list
+       " "
        (list (if (number? (car e))
                  (number->string (car e))
                  "#f")
-             (list->string module-path-index->string (cdr e)))
-       " "))
+             (list->string module-path-index->string (cdr e)))))
     (list->string elem->spec rqs))
   (define
     (syntax-bodies->spec sbs)
@@ -299,9 +299,9 @@
             [(seq-for-syntax? d) (format-spec #f (seq-for-syntax->spec d))]))
     (define (elem->spec e)
       (format-list
+       " "
        (list (number->string                 (car e))
-             (list->string ds-or-sfs->spec (cdr e)))
-       " "))
+             (list->string ds-or-sfs->spec (cdr e)))))
     (list->string elem->spec sbs))
   (define (internal-context->string ic)
     (match ic
@@ -363,8 +363,8 @@
   (define (toplevel-map->spec tm)
     (cond [(eq? #f tm) "#f"]
           [else (format-list
-                 (for/list ([n tm]) (number->string n))
-                 " ")]))
+                 " "
+                 (for/list ([n tm]) (number->string n)))]))
   (list "lam"
         (lcons "name"          (lam-name->spec                  (lam-name z)))
         (lcons "flags"         (list->string symbol->string (lam-flags z)))
@@ -610,10 +610,10 @@
 
 (define
   (function-shape->spec fs)
-  (format-list (list "function-shape"
+  (format-list " "
+               (list "function-shape"
                      (format "arity : ~a"            (function-shape-arity fs))
-                     (format "preserves-marks? : ~a" (function-shape-preserves-marks? fs)))
-               " "))
+                     (format "preserves-marks? : ~a" (function-shape-preserves-marks? fs)))))
 
 (define
   (struct-shape->spec ss)
@@ -627,35 +627,35 @@
 
 (define
   (struct-type-shape->spec sts)
-  (format-list (list "struct-type-shape"
-                     (format "field-count : ~a" (struct-type-shape-field-count sts)))
-               " "))
+  (format-list " "
+               (list "struct-type-shape"
+                     (format "field-count : ~a" (struct-type-shape-field-count sts)))))
 
 (define
   (constructor-shape->spec cs)
-  (format-list (list "constructor-shape"
-                     (format "arity : ~a" (constructor-shape-arity cs)))
-               " "))
+  (format-list " "
+               (list "constructor-shape"
+                     (format "arity : ~a" (constructor-shape-arity cs)))))
 
 (define
   (predicate-shape->spec ps)
-  (format-list (list "predicate-shape")))
+  (format-list "\n" (list "predicate-shape")))
 
 (define
   (accessor-shape->spec sts)
-  (format-list (list "accessor-shape"
-                     (format "field-count : ~a" (accessor-shape-field-count sts)))
-               " "))
+  (format-list " "
+               (list "accessor-shape"
+                     (format "field-count : ~a" (accessor-shape-field-count sts)))))
 
 (define
   (mutator-shape->spec sts)
-  (format-list (list "mutator-shape"
-                     (format "field-count : ~a" (mutator-shape-field-count sts)))
-               " "))
+  (format-list " "
+               (list "mutator-shape"
+                     (format "field-count : ~a" (mutator-shape-field-count sts)))))
 
 (define
   (struct-other-shape->spec ps)
-  (format-list (list "struct-other-shape")))
+  (format-list "\n" (list "struct-other-shape")))
 
 ;; --- helpers
 
@@ -685,7 +685,7 @@
 ;; Alternate syntax for `string-join` -- the `sep` argument appears as a label
 ;; and defaults to a newline character.
 (define
-  (format-list xs [sep "\n"])
+  (format-list sep xs)
   (string-join xs sep))
 
 ;; Turn a spec into a string.
@@ -700,7 +700,7 @@
     (if (empty? fields) 0 (apply max field-name-lengths)))
   (if (not deep?)
       title
-      (format-list
+      (format-list "\n"
        (cons title
              (for/list  ([fd  fields])
                (define forced ((cdr fd)))
@@ -713,8 +713,8 @@
 (define
   (list->string f xs)
   (format "[~a]"
-          (format-list (for/list  ([x  xs]) (f x))
-                       " ")))
+          (format-list " "
+                       (for/list  ([x  xs]) (f x)))))
 
 ;; Turn a list of things that might be 'form' structs into a list of strings.
 (define

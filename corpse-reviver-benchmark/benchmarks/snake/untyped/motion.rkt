@@ -1,4 +1,4 @@
-#lang racket
+#lang racket  
 (require "data.rkt"
          "const.rkt"
          "motion-help.rkt")
@@ -35,7 +35,7 @@
   (define j (add1 (random (sub1 BOARD-HEIGHT))))
   (world (snake-grow (world-snake w))
          (posn i j)
-
+         
          #;(posn (- BOARD-WIDTH 1) (- BOARD-HEIGHT 1))))
 (provide
  world-change-dir

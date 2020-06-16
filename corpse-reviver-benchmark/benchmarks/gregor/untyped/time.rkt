@@ -20,11 +20,11 @@
 ;; -----------------------------------------------------------------------------
 
 (require
- corpse-reviver/require-typed-check
  corpse-reviver/opaque
- "core-structs.rkt"
- "gregor-structs.rkt"
- racket/match)
+  corpse-reviver/require-typed-check
+  "core-structs.rkt"
+  "gregor-structs.rkt"
+  racket/match)
 (require (only-in
   "hmsn.rkt"
     hmsn->day-ns ;(-> HMSN Natural)]
@@ -32,7 +32,7 @@
     NS/SECOND ;Natural]
     ))
 
-(require/opaque "_format.rkt" ~r ~r*)
+(require/opaque "_format.rkt")
 
 ;; =============================================================================
 
@@ -50,9 +50,8 @@
 
 ;(: time->hmsn (-> Time HMSN))
 (define time->hmsn Time-hmsn)
-;(: time->ns (-> Any Natural))
+
 (define (time->ns t)
-  (unless (Time? t) (error "time->ns: type error"))
   (Time-ns t))
 
 ;(: hmsn->time (-> HMSN Time))

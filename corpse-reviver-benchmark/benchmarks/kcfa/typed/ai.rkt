@@ -7,7 +7,7 @@
   "benv-adapted.rkt"
   "time-adapted.rkt"
   "denotable-adapted.rkt"
-  (except-in racket/set set/c)
+  racket/set
   (only-in racket/match match-define)
 )
 

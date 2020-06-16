@@ -68,25 +68,17 @@
 
 (: resolve-gap/pre (-> tzgap DateTime (U String #f) (U #f Moment) Moment))
 (define (resolve-gap/pre gap target-dt target-tzid orig)
-  ;(define tm (tzgap-starts-at gap))
-  ;(define delta (tzoffset-utc-seconds (tzgap-offset-before gap)))
   (match-define (tzgap tm (tzoffset delta _ _) _) gap)
   (make-moment (posix->datetime (+ tm delta (- (/ 1 NS/SECOND)))) delta target-tzid))
 
 (: resolve-gap/post (-> tzgap DateTime (U String #f) (U #f Moment) Moment))
 (define (resolve-gap/post gap target-dt target-tzid orig)
-  ;(match-define (tzgap _ _ (tzoffset delta _ _)) gap)
-  (define tm (tzgap-starts-at gap))
-  (define delta (tzoffset-utc-seconds (tzgap-offset-before gap)))
-  (define sum (+ tm delta))
-  (make-moment (posix->datetime sum) delta target-tzid))
+  (match-define (tzgap tm _ (tzoffset delta _ _)) gap)
+  (make-moment (posix->datetime (+ tm delta)) delta target-tzid))
 
 (: resolve-gap/push (-> tzgap DateTime (U String #f) (U #f Moment) Moment))
 (define (resolve-gap/push gap target-dt target-tzid orig)
-  ;(match-define (tzgap tm (tzoffset delta1 _ _) (tzoffset delta2 _ _)) gap)
-  (define tm (tzgap-starts-at gap))
-  (define delta1 (tzoffset-utc-seconds (tzgap-offset-before gap)))
-  (define delta2 (tzoffset-utc-seconds (tzgap-offset-after gap)))
+  (match-define (tzgap tm (tzoffset delta1 _ _) (tzoffset delta2 _ _)) gap)
   (make-moment (posix->datetime (+ (datetime->posix target-dt) (- delta2 delta1))) delta2 target-tzid))
 
 (: resolve-overlap/pre (-> tzoverlap DateTime (U String #f) (U #f Moment) Moment))
@@ -101,9 +93,7 @@
 
 (: resolve-overlap/retain (-> tzoverlap DateTime (U String #f) (U #f Moment) Moment))
 (define (resolve-overlap/retain overlap target-dt target-tzid orig)
-  ;(match-define (tzoverlap (tzoffset delta1 _ _) (tzoffset delta2 _ _)) overlap)
-  (define delta1 (tzoffset-utc-seconds (tzoverlap-offset-before overlap)))
-  (define delta2 (tzoffset-utc-seconds (tzoverlap-offset-after overlap)))
+  (match-define (tzoverlap (tzoffset delta1 _ _) (tzoffset delta2 _ _)) overlap)
   (make-moment target-dt
                (or (and orig (= (Moment-utc-offset orig) delta1) delta1)
                    delta2)

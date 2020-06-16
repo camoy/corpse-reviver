@@ -125,7 +125,8 @@
 
 (: prefix-> (-> prefix String (U zo (Listof zo) #f)))
 (define (prefix-> z field-name)
-  (define-predicate gb-or-mv? (U global-bucket module-variable))
+  (: gb-or-mv? (-> (U #f Symbol global-bucket module-variable) Boolean : (U global-bucket module-variable)))
+  (define (gb-or-mv? x) (or (global-bucket? x) (module-variable? x)))
   (match field-name
     ["toplevels"
      (filter gb-or-mv? (prefix-toplevels z))]
@@ -558,4 +559,5 @@
 ;; --- helpers
 
 ;; True if the argument is an 'expr' or a 'seq' zo struct.
-(define-predicate expr-or-seq? (U expr seq))
+(: expr-or-seq? (-> Any Boolean : (U expr seq)))
+(define (expr-or-seq? x) (or (expr? x) (seq? x)))

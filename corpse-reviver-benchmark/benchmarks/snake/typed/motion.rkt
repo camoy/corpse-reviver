@@ -13,6 +13,7 @@
                      [snake-grow    (Snake . -> . Snake)])
 
 (provide reset!)
+
 (define (reset!)
   (random-seed 1324))
 

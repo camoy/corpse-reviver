@@ -7,7 +7,7 @@
   population-payoffs
   match-up*
   death-birth
-  ;; ==
+  ;; == 
 )
 
 ;; =============================================================================
@@ -72,7 +72,7 @@
   ;; copy b into a
   (for ([x (in-list (vector->list b))][i (in-naturals)])
     (vector-set! a i x))
-  ;; now shuffle a
+  ;; now shuffle a 
   (for ([x (in-list (vector->list b))] [i (in-naturals)])
     (define j (random (add1 i)))
     (unless (= j i) (vector-set! a i (vector-ref a j)))

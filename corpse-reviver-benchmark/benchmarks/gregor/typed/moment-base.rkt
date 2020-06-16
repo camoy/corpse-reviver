@@ -12,10 +12,10 @@
 ;; -----------------------------------------------------------------------------
 
 (require
+ corpse-reviver/opaque
   corpse-reviver/require-typed-check
   racket/match
   "gregor-adapter.rkt"
-  corpse-reviver/opaque
 )
 (require/typed/check "datetime.rkt"
     [datetime->iso8601 (-> DateTime String)]

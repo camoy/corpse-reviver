@@ -24,6 +24,7 @@
 (require
   racket/match
   "core-structs.rkt"
+  "../base/untyped.rkt"
   (only-in racket/math exact-truncate exact-floor))
 
 ;; =============================================================================
@@ -82,6 +83,10 @@
     (let-values ([(m y) (if (<= e 13)
                             (values (sub1 e) (- c 4716))
                             (values (- e 13) (- c 4715)))])
+      (unless (and (index? y)
+                   (and (index? m) (< 0 m) (< m 13))
+                   (index? dom))
+        (error "jdn->ymd"))
       (case m
         [(1) (YMD y 1 dom)]
         [(2) (YMD y 2 dom)]
@@ -98,7 +103,6 @@
            [(11) (YMD y 11 dom)]
            [(12) (YMD y 12 dom)]
            [else (error "jdn->ymd")])]))))
-
 
 ;(: jdn->wday (-> Integer (U 0 1 2 3 4 5 6)))
 (define (jdn->wday jdn)
@@ -152,7 +156,8 @@
 (define (ymd-add-months ymd n)
   (match-define (YMD y m d) ymd)
   ;(: ny Natural)
-  (define ny (+ y (div (+ m n -1) 12)))
+  (define ny
+    (let ([r (+ y (div (+ m n -1) 12))]) (unless (index? r) (error "ymd-add-months")) r))
   (define for-case
     (let ([v (mod1 (+ m n) 12)])
       (if (< v 0)
@@ -178,6 +183,8 @@
          [else (error "ymd-add-months")])]))
   (define max-dom (days-in-month ny nm))
   (define nd (if (<= d max-dom) d max-dom))
+  (unless (index? nd)
+    (error "ymd-add-months"))
   (case nm
     [(1) (YMD ny 1 nd)]
     [(2) (YMD ny 2 nd)]
@@ -194,7 +201,6 @@
        [(11) (YMD ny 11 nd)]
        [(12) (YMD ny 12 nd)]
        [else (error "ymd-add-months")])]))
-
 
 ;(: leap-year? (-> Natural Boolean))
 (define (leap-year? y)

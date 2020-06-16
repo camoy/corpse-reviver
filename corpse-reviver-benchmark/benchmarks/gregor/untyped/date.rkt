@@ -21,10 +21,11 @@
 ;; -----------------------------------------------------------------------------
 
 (require
+ corpse-reviver/opaque
+  "../base/untyped.rkt"
   "core-structs.rkt"
   "gregor-structs.rkt"
   corpse-reviver/require-typed-check
-  corpse-reviver/opaque
   racket/match)
 
 (require (only-in
@@ -34,9 +35,9 @@
     jdn->iso-wday ;(-> Integer (U 0 1 2 3 4 5 6))]
     ymd->yday ;(-> YMD Natural)]
     iso-weeks-in-year ;(-> Natural (U 52 53))]
-    ))
+))
 
-(require/opaque "_format.rkt" ~r)
+(require/opaque "_format.rkt")
 
 ;; =============================================================================
 
@@ -65,7 +66,6 @@
 (define date->ymd Date-ymd)
 ;(: date->jdn (-> Any Integer))
 (define (date->jdn d)
-  (unless (Date? d) (error "date->jdn type error"))
   (Date-jdn d))
 
 ;(: ymd->date (-> YMD Date))
@@ -94,12 +94,14 @@
   (define w (quotient (+ yday (- iso-wday ) 10)
                       7))
   (cond [(zero? w)
-         (define y-1 (sub1 y))
+         (define y-1
+           (let ([r (sub1 y)]) (unless (index? r) (error "date->iso-week+year")) r))
          (cons (iso-weeks-in-year y-1) y-1)]
         [(and (= w 53) (> w (iso-weeks-in-year y)))
          (cons 1 (add1 y))]
-        [else
-         (cons w y)]))
+        [(index? w)
+         (cons w y)]
+        [else (error "date->iso-week+year")]))
 
 ;(: date->iso8601 (-> Date String))
 (define (date->iso8601 d)

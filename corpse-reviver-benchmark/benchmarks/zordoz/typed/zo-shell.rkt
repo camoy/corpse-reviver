@@ -7,11 +7,11 @@
  zo-read
  init)
 
-(require corpse-reviver/require-typed-check
+(require corpse-reviver/opaque
+         corpse-reviver/require-typed-check
          (only-in racket/string string-split string-join string-trim)
          "typed-zo-structs.rkt"
-         racket/match
-         corpse-reviver/opaque)
+         racket/match)
 
 (require/typed/check "zo-string.rkt"
   [zo->spec (-> zo Spec)]
@@ -19,10 +19,9 @@
 (require/typed/check "zo-transition.rkt"
   [zo-transition (-> zo String (values (U zo (Listof zo)) Boolean))])
 (require/typed/check "zo-find.rkt"
-  [zo-find (->* (zo String) ((U Natural #f)) (Listof result))]
+  [zo-find (->* [zo String] [(U Natural #f)] (Listof result))]
   [#:struct result ([zo : zo]
                     [path : (Listof zo)])])
-
 (require/typed/opaque "_compiler-zo-parse.rkt"
                       [zo-parse (->* () (Input-Port) zo)])
 
@@ -43,7 +42,7 @@
 
 ;; Entry point to the REPL, expects command-line arguments passed as a list.
 ;; In the future, there may be more entry points.
-(: init (-> (Immutable-Vector zo String) Void))
+(: init (-> (Vector zo String) Void))
 (define (init args)
   (match args
     [(vector ctx arg)

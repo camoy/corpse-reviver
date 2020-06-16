@@ -16,6 +16,7 @@
  day-ns->hmsn)
 
 (require
+  "../base/untyped.rkt"
   "core-structs.rkt"
   racket/match)
 
@@ -50,6 +51,8 @@
                (* NS/MINUTE m)
                (* NS/SECOND s)
                n))
+  (unless (index? r)
+    (error "nope"))
   r)
 
 ;(: day-ns->hmsn (-> Natural HMSN))

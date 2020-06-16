@@ -102,48 +102,49 @@
 
 ;(: test-clock (-> Void))
 (define (test-clock)
-  (define old-clock (unbox current-clock))
-  (set-box! current-clock (lambda () 1))
-  ;; -- today
-  (unless (date=? (today/utc) (date 1970)) (error "test1"))
-  (unless (date=? (today "America/Chicago") (date 1969 12 31)) (error "test2"))
-  ;; -- current-time
-  (unless (time=? (current-time/utc) (make-time 0 0 1)) (error "test 3"))
-  (unless (time=? (current-time "America/Chicago") (make-time 18 0 1)) (error "test4"))
-  ;; -- now
-  (unless (datetime=? (now/utc) (datetime 1970 1 1 0 0 1)) (error "test5"))
-  (unless (datetime=? (now "America/Chicago") (datetime 1969 12 31 18 0 1)) (error "test6"))
-  ;; -- "moment"
-  (unless (moment=? (now/moment/utc) (moment 1970 1 1 0 0 1 0 UTC)) (error "test7"))
-  ;; 2015-04-25: Can't type check! Need help
-  ;; (unless (moment=? (now/moment #:tz "America/Chicago")
-  ;;  (moment 1969 12 31 18 0 1 0 #:tz "America/Chicago")) (error "test8"))
-  (set-box! current-clock old-clock))
+  (parameterize ([current-clock (lambda () 1)])
+   ;; -- today
+   (unless (date=? (today/utc) (date 1970)) (error "test1"))
+   (unless (date=? (today "America/Chicago") (date 1969 12 31)) (error "test2"))
+   ;; -- current-time
+   (unless (time=? (current-time/utc) (make-time 0 0 1)) (error "test 3"))
+   (unless (time=? (current-time "America/Chicago") (make-time 18 0 1)) (error "test4"))
+   ;; -- now
+   (unless (datetime=? (now/utc) (datetime 1970 1 1 0 0 1)) (error "test5"))
+   (unless (datetime=? (now "America/Chicago") (datetime 1969 12 31 18 0 1)) (error "test6"))
+
+   ;; -- "moment"
+   (unless (moment=? (now/moment/utc) (moment 1970 1 1 0 0 1 0 UTC)) (error "test7"))
+   ;; 2015-04-25: Can't type check! Need help
+   ;; (unless (moment=? (now/moment #:tz "America/Chicago")
+   ;;  (moment 1969 12 31 18 0 1 0 #:tz "America/Chicago")) (error "test8"))
+))
 
 ;(: test-iso (-> (Listof DateTime) Void))
 (define (test-iso dates)
-  (define old-timezone (unbox current-timezone))
-  (define old-clock (unbox current-clock))
-  (set-box! current-timezone "America/New_York")
-  (set-box! current-clock (lambda () 1463207954418177/1024000))
-  ;; -- test-case "today"
-   (let ([d (today)])
-    (unless (string=? "2015-04-13" (date->iso8601 d)) (error "test9")))
-  ;; -- test-case "current-time"
-   (let ([t (current-time)])
-    (unless (string=? "04:33:37.986500977" (time->iso8601 t)) (error "test10")))
-  ;; -- test-case "now"
-   (let ([n (now)])
-    (unless (string=? "2015-04-13T04:33:37.986500977" (datetime->iso8601 n)) (error "test11")))
-  ;; -- test-case "now/moment"
-   (let ([n (now/moment)])
+  (parameterize* ([current-timezone "America/New_York"]
+                  [current-clock (lambda () 1463207954418177/1024000)])
+   ;; -- test-case "today"
+    (let ([d (today)])
+     (unless (string=? "2015-04-13" (date->iso8601 d)) (error "test9")))
+
+   ;; -- test-case "current-time"
+    (let ([t (current-time)])
+     (unless (string=? "04:33:37.986500977" (time->iso8601 t)) (error "test10")))
+
+   ;; -- test-case "now"
+    (let ([n (now)])
+     (unless (string=? "2015-04-13T04:33:37.986500977" (datetime->iso8601 n)) (error "test11")))
+
+   ;; -- test-case "now/moment"
+    (let ([n (now/moment)])
      (unless (string=? "2015-04-13T04:33:37.986500977-04:00[America/New_York]" (moment->iso8601/tzid n)) (error "test12")))
-  (set-box! current-timezone old-timezone)
-  (set-box! current-clock old-clock)
+  )
   (for ([d1 dates])
     (datetime->iso8601 d1)
     (time->iso8601 (datetime->time d1))
-    (date->iso8601 (datetime->date d1))))
+    (date->iso8601 (datetime->date d1)))
+)
 
 ;(: test-difference (-> (Listof DateTime) Void))
 (define (test-difference dates)

@@ -19,7 +19,18 @@
 (define word-frequency-list "./../base/frequency.rktd")
 (define word-frequency-list-small "./../base/frequency-small.rktd")
 
-(define-predicate freq-list? (Listof (List String Integer)))
+(: freq-list? (-> Any Boolean : (Listof (List String Integer))))
+(define (freq-list? x)
+  (and (list? x)
+       (andmap list-string-int x)))
+
+(: list-string-int (-> Any Boolean : (List String Integer)))
+(define (list-string-int x)
+  (and (pair? x)
+       (pair? (cdr x))
+       (null? (cdr (cdr x)))
+       (string? (car x))
+       (exact-integer? (car (cdr x)))))
 
 (: file->words (-> String (Listof String)))
 (define (file->words filename)

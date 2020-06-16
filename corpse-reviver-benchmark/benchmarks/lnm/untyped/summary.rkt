@@ -17,9 +17,10 @@
 ;; -----------------------------------------------------------------------------
 
 (require
+  "../base/untyped.rkt"
   racket/path
   racket/stream
-  corpse-reviver/opaque
+  math/statistics
   (only-in racket/file file->value)
   (only-in racket/vector vector-append)
   (only-in "modulegraph.rkt"
@@ -31,9 +32,10 @@
     bitstring->natural
     log2
     natural->bitstring)
+  corpse-reviver/opaque
 )
 
-(require/opaque math/statistics mean)
+(require/opaque (only-in math/statistics mean))
 
 ;; =============================================================================
 ;; -- data definition: summary
@@ -70,7 +72,7 @@
 ;; (: rktd->dataset (-> Path (Vectorof (Listof Index))))
 (define (rktd->dataset path)
   ;; Check .rktd
-  (unless (bytes=? (string->bytes/utf-8 "rktd") (filename-extension path))
+  (unless (bytes=? (string->bytes/utf-8 "rktd") (or (filename-extension path) #""))
     (parse-error "Cannot parse dataset '~a', is not .rktd" (path->string path)))
   ;; Get data
   (define vec (file->value path))
@@ -79,21 +81,31 @@
 
 ;; Confirm that the dataset `vec` is a well-formed vector of experiment results.
 ;; (: validate-dataset (-> Any (Vectorof (Listof Index))))
-(define (validate-dataset vec)
-  (unless (vector? vec) (parse-error "Dataset is not a vector"))
+(define (validate-dataset vec0)
+  (define vec
+    (for/vector ((x (in-vector (assert vec0 vector?))))
+      (listof-index x)))
   (unless (< 0 (vector-length vec)) (parse-error "Dataset is an empty vector, does not contain any entries"))
   ;; Record the number of runs in the first vector, match against other lengths
   (define num-runs (box #f))
   (for ([row-index (in-range (vector-length vec))])
     (define inner (vector-ref vec row-index))
     (unless (list? inner) (parse-error "Dataset is not a vector of lists found non-list entry '~a'" inner))
-    (if (not (unbox num-runs))
+    ;; unboxed is for occurrence typing
+    (define unboxed (unbox num-runs))
+    (if (not unboxed)
         (set-box! num-runs (length inner))
-        (unless (= (unbox num-runs) (length inner)) (parse-error "Rows 0 and ~a of dataset have different lengths; all variations must describe the same number of runs.\n  Bad row: ~a" row-index inner)))
+        (unless (= unboxed (length inner)) (parse-error "Rows 0 and ~a of dataset have different lengths; all variations must describe the same number of runs.\n  Bad row: ~a" row-index inner)))
     (for ([val (in-list inner)])
       (unless (exact-positive-integer? val)
         (parse-error "Row ~a contains non-integer entry '~a'" row-index val))))
     vec)
+
+(define (listof-index x)
+  (if (and (list? x)
+           (andmap index? x))
+    x
+    (error 'listof-index)))
 
 ;; Check that the dataset and module graph agree
 ;; (: validate-modulegraph (-> (Vectorof (Listof Index)) ModuleGraph Void))
@@ -110,7 +122,7 @@
   (define tag (path->project-name path))
   ;; Search in the MODULE_GRAPH_DIR directory for a matching TeX file
   (define relative-pathstring (format "../~a/~a.tex" MODULE_GRAPH_DIR tag))
-  (build-path (path-only path)
+  (build-path (or (path-only path) (error 'infer-graph))
               (string->path relative-pathstring)))
 
 ;; -----------------------------------------------------------------------------
@@ -147,14 +159,6 @@
 (define (typed-runtimes sm)
   (define vec (summary-dataset sm))
   (vector-ref vec (sub1 (vector-length vec))))
-
-;; Return all data for all gradually-typed variations
-(define (gradual-runtimes sm)
-  (define vec (summary-dataset sm))
-  ;; Efficient enough?
-  (apply append
-         (for/list ([i (in-range 1 (sub1 (vector-length vec)))])
-           (vector-ref vec i))))
 
 (define (variation->mean-runtime sm var)
   (index->mean-runtime sm (bitstring->natural var)))

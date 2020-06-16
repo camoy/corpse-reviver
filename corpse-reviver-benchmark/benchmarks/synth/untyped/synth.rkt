@@ -14,7 +14,8 @@
            array-strictness)
          (only-in racket/unsafe/ops unsafe-fx+ unsafe-fx<)
          (only-in "array-utils.rkt" next-indexes!)
-         (only-in racket/math exact-floor))
+         (only-in racket/math exact-floor)
+         "../base/untyped.rkt")
 
 ;; --- from array-sequence.rkt
 
@@ -51,16 +52,18 @@
 ;; -- synth
 
 ;; TODO this slows down a bit, it seems, but improves memory use
-(set-box! array-strictness #f)
+(array-strictness #f)
 
 (define fs 44100)
 (define bits-per-sample 16)
 
 (define (freq->sample-period freq)
-  (round (/ fs freq)))
+  (define res (inexact->exact (round (/ fs freq))))
+  (if (index? res) res (error "not index")))
 
 (define (seconds->samples s)
-  (inexact->exact (round (* s fs))))
+  (define res (inexact->exact (round (* s fs))))
+  (if (index? res) res (error "not index")))
 
 ;; --- Oscillators
 
@@ -94,3 +97,4 @@
 ;; For now, it just converts a signal to a sequence.
 (define (emit signal)
   (signal->integer-sequence signal 0.3))
+

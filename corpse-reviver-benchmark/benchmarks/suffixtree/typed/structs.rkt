@@ -1,11 +1,11 @@
 #lang typed/racket/base
 (require corpse-reviver/require-typed-check
-         (except-in "typed-data.rkt" label)
+         (except-in "typed-data.rkt" make-label)
          racket/list)
 
 (require/typed/check
  "label.rkt"
- [label (-> (U String (Vectorof (U Char Symbol))) Label)]
+ [make-label (-> (U String (Vectorof (U Char Symbol))) Label)]
  [label-element-equal? (-> Any Any Boolean)]
  [label-length (-> Label Index)]
  [label-ref (-> Label Integer (U Symbol Char))]
@@ -39,10 +39,10 @@
 ;; Builds a new empty suffix-tree.
 (: new-suffix-tree (-> Tree))
 (define (new-suffix-tree)
-  (suffix-tree
+  (make-suffix-tree
    ;; The root node has no label, no parent, an empty list of
    ;; children.  Its suffix link is invalid, but we set it to #f.
-   (let ((root (node (label (make-vector 0 'X)) #f (list) #f)))
+   (let ((root (make-node (make-label (make-vector 0 'X)) #f (list) #f)))
      root)))
 
 (: node-root? (-> Node Boolean))
@@ -53,9 +53,9 @@
 ;; node-add-leaf!: node label -> node
 ;; Attaches a new leaf node to an internal node.  Returns thew new leaf.
 (: node-add-leaf! (-> Node Label Node))
-(define (node-add-leaf! n l)
-  (let ((leaf (node l n (list) #f)))
-    (node-add-child! n leaf)
+(define (node-add-leaf! node label)
+  (let ((leaf (make-node label node (list) #f)))
+    (node-add-child! node leaf)
     leaf))
 
 
@@ -104,16 +104,16 @@
 ;; node-up-split!: node number -> node
 ;; Introduces a new node that goes between this node and its parent.
 (: node-up-split! (-> Node Index Node))
-(define (node-up-split! n offset)
-  (let* ((l (node-up-label n))
-         (pre-label (sublabel l 0 offset))
-         (post-label (sublabel l offset))
-         (parent (node-parent n))
-         (new-node (node pre-label parent (children-list n) #f)))
-    (set-node-up-label! n post-label)
+(define (node-up-split! node offset)
+  (let* ((label (node-up-label node))
+         (pre-label (sublabel label 0 offset))
+         (post-label (sublabel label offset))
+         (parent (node-parent node))
+         (new-node (make-node pre-label parent (children-list node) #f)))
+    (set-node-up-label! node post-label)
     (unless parent (error "node-up-split!"))
-    (node-remove-child! parent n)
-    (set-node-parent! n new-node)
+    (node-remove-child! parent node)
+    (set-node-parent! node new-node)
     (node-add-child! parent new-node)
     new-node))
 

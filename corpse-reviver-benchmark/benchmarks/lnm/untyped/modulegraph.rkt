@@ -17,14 +17,15 @@
 ;; -----------------------------------------------------------------------------
 
 (require
+  "../base/untyped.rkt"
   racket/match
-  corpse-reviver/opaque
   (only-in racket/path file-name-from-path filename-extension)
   (only-in racket/sequence sequence->list)
   (only-in racket/string string-split string-trim)
-  )
+  corpse-reviver/opaque
+)
 
-(require/opaque "_list.rkt" sort*)
+(require/opaque (only-in "_list.rkt" sort*))
 
 ;; =============================================================================
 ;; --- data definition: modulegraph
@@ -42,26 +43,6 @@
 (define (module-names mg)
   (for/list ([node+neighbors (in-list (modulegraph-adjlist mg))])
     (car node+neighbors)))
-
-;; Get the index matching the module name
-;; (: name->index (-> ModuleGraph String Index))
-(define (name->index mg name)
-  (for/or ([node+neighbors (in-list (modulegraph-adjlist mg))]
-           [i (in-range 0 (length (modulegraph-adjlist mg)))])
-    (and (string=? name (car node+neighbors))
-         i)))
-
-;; Get the name of the module with index `i`
-;; (: index->name (-> ModuleGraph Index String))
-(define (index->name mg i)
-  (car (list-ref (modulegraph-adjlist mg) i)))
-
-;; Get the names of modules required by `name`.
-;; (: require (-> ModuleGraph String (Listof String)))
-(define (requires mg name)
-  (for/or ([node+neighbors (in-list (modulegraph-adjlist mg))])
-    (and (string=? name (car node+neighbors))
-         (cdr node+neighbors))))
 
 ;; -----------------------------------------------------------------------------
 ;; --- parsing TiKZ
@@ -89,7 +70,7 @@
 (define (ensure-tex filename)
   (define path (or (and (path? filename) filename)
                    (string->path filename)))
-  (unless (bytes=? (string->bytes/utf-8 "tex") (filename-extension path))
+  (unless (bytes=? (string->bytes/utf-8 "tex") (or (filename-extension path) #""))
     (parse-error "Cannot parse module graph from non-tex file '~a'" filename))
   ;; Remove anything past the first hyphen in the project name
   (define project-name (path->project-name path))
@@ -98,8 +79,9 @@
 ;; Parse the project's name from a path
 ;; (: path->project-name (-> Path String))
 (define (path->project-name path)
+  (define p (or (file-name-from-path path) (error 'path->project-name)))
   (define without-ext
-    (car (string-split (path->string (file-name-from-path path)) ".")))
+    (car (string-split (path->string p) ".")))
   (define without-hyphen
     (car (string-split without-ext "-")))
   without-hyphen)
@@ -124,10 +106,11 @@
 ;; (: parse-nodes (->* [Port] [(Listof texnode)] (Listof texnode)))
 (define (parse-nodes port [nodes-acc '()])
   (define raw-line (read-line port))
-  (when (eof-object? raw-line)
-    ;; EOF here means there's no edges below
-    (parse-error "Hit end-of-file while reading nodes. Module graphs must have edges."))
-  (define line (string-trim raw-line))
+  (define line
+    (if (eof-object? raw-line)
+      ;; EOF here means there's no edges below
+      (parse-error "Hit end-of-file while reading nodes. Module graphs must have edges.")
+      (string-trim raw-line)))
   (cond
     [(< (string-length line) 4)
      ;; Degenerate line, can't contain anything useful
@@ -153,10 +136,11 @@
 ;; (: parse-edges (->* [Port] [(Listof texedge)] (Listof texedge)))
 (define (parse-edges port [edges-acc '()])
   (define raw-line (read-line port))
-  (when (eof-object? raw-line)
-    ;; End of file; should have seen \end{tikzpicture}
-    (parse-error "Parsing reached end-of-file before reading \end{tikzpicture}. Are you sure the input is valid .tex?"))
-  (define line (string-trim raw-line))
+  (define line
+    (if (eof-object? raw-line)
+      ;; End of file; should have seen \end{tikzpicture}
+      (parse-error "Parsing reached end-of-file before reading \end{tikzpicture}. Are you sure the input is valid .tex?")
+      (string-trim raw-line)))
   (cond
     [(< (string-length line) 4)
      ;; Degenerate line, can't contain anything useful
@@ -197,8 +181,9 @@
   (define m (regexp-match NODE_REGEXP str))
   (match m
     [(list _ id _ index name)
-     (texnode (string->number id)
-              (string->number index)
+     #:when (and id index name)
+     (texnode (assert (string->number id) index?)
+              (assert (string->number index) index?)
               name)]
     [else
      (parse-error "Cannot parse node declaration '~a'" str)]))
@@ -211,8 +196,10 @@
   (define m (regexp-match EDGE_REGEXP str))
   (match m
     [(list _ id-src id-dst)
-     (cons (string->number id-src)
-           (string->number id-dst))]
+     #:when (and id-src id-dst)
+     (cons
+           (assert (string->number id-src) index?)
+           (assert (string->number id-dst) index?))]
     [else
      (parse-error "Cannot parse edge declaration '~a'" str)]))
 
@@ -221,22 +208,33 @@
 (define (tex->modulegraph project-name nodes edges)
   ;; Convert a TiKZ node id to a module name
   (define (id->name id)
-    (for/or ([tx (in-list nodes)])
-      (and (= id (texnode-id tx))
-           (texnode-name tx))))
+    (or (for/or ([tx (in-list nodes)])
+          (and (= id (texnode-id tx))
+               (texnode-name tx)))
+        (error 'tex->modulegraph)))
   ;; Create an adjacency list by finding the matching edges for each node
   (define adjlist
-    (for/list ([tx (in-list nodes)])
-      (cons (cons (texnode-index tx) (texnode-name tx))
-            (for/list ([src+dst (in-list edges)]
-                       #:when (= (texnode-id tx) (car src+dst)))
-              (id->name (cdr src+dst))))))
+    (for/list
+      ([tx (in-list nodes)])
+      (define hd (cons (texnode-index tx) (texnode-name tx)))
+      (define rest
+        (for/list
+          ([src+dst (in-list edges)]
+           #:when (= (texnode-id tx) (car src+dst)))
+              (id->name (cdr src+dst))))
+        (cons
+         hd rest)))
   ;; Alphabetically sort the adjlist, check that the indices match the ordering
   ;; Need to append .rkt, else things like (string< "a-base" "a") fail. They should pass...
-  (define sorted (sort* adjlist string<? (lambda (x) (string-append (cdar x) ".rkt"))))
-  (unless (equal? (map caar sorted)
+  (define (get-key x)
+    (string-append (cdar x) ".rkt"))
+  (define sorted (sort*
+    adjlist string<? get-key))
+  (unless (equal? (for/list
+                    ([x (in-list sorted)])
+                    (caar x))
                   (sequence->list (in-range (length sorted))))
-    (parse-error "Indices do not match alphabetical ordering on module names. Is the TiKZ graph correct?\n    Source: '~a'\n" (map car sorted)))
+    (parse-error "Indices do not match alphabetical ordering on module names. Is the TiKZ graph correct?"))
   ;; Drop the indices
   (define untagged
     (for/list ([tag+neighbors (in-list sorted)])

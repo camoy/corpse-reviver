@@ -83,7 +83,7 @@
 (: char-table (HashTable Char String))
 (define char-table
 (make-hash
- (for/list: : (Listof (Pair Char String))
+ (for/list : (Listof (Pair Char String))
    ([l : String lines])
     (match 
         (ann (regexp-match #px"^\\| \\{\\{[^|]*\\|[^|]*\\|(.)\\}\\} \\|\\| '''([^']*)'''" l)

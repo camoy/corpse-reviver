@@ -34,7 +34,7 @@
     (for/last ([p (in-naturals)] [% (in-list %s)] #:final (< r %)) p)))
 
 ;; [Listof Probability] -> [Listof Probability]
-;; calculate the accumulated probabilities
+;; calculate the accumulated probabilities 
 
 (define (accumulated-%s probabilities)
   (define total (sum probabilities))

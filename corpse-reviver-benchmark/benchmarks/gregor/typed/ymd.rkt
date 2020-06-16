@@ -103,7 +103,6 @@
            [(12) (YMD y 12 dom)]
            [else (error "jdn->ymd")])]))))
 
-
 (: jdn->wday (-> Integer (U 0 1 2 3 4 5 6)))
 (define (jdn->wday jdn)
   (case (mod (add1 jdn) 7)
@@ -201,7 +200,6 @@
        [(11) (YMD ny 11 nd)]
        [(12) (YMD ny 12 nd)]
        [else (error "ymd-add-months")])]))
-
 
 (: leap-year? (-> Natural Boolean))
 (define (leap-year? y)

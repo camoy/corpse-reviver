@@ -3,11 +3,12 @@
 ;; Resolving offsets between moments
 
 (require
+ corpse-reviver/opaque
   corpse-reviver/require-typed-check
-  "tzinfo-adapter.rkt"
   "core-structs.rkt"
   "gregor-structs.rkt"
-  racket/match)
+  racket/match
+  "tzinfo-adapter.rkt")
 (require (only-in "hmsn.rkt"
     NS/SECOND ;Natural]
 ))

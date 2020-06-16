@@ -1,13 +1,9 @@
 #lang racket/base
 
-(require 
+(require "../base/untyped.rkt"
          (only-in racket/performance-hint begin-encourage-inline)
          (for-syntax racket/base)
          (only-in racket/fixnum fx* fx+))
-
-(define (index? n)
-  (and (<= 0 n)
-       (<  n 999999999999)))
 
 (provide
 array-shape-size

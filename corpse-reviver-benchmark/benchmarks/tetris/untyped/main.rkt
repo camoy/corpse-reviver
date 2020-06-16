@@ -11,7 +11,7 @@
 (define (replay w0 hist)
   (for/fold ([w w0]) ([e hist])
     (match e
-      [`(on-key ,ke) (world-key-move w ke)]
+      [`(on-key ,(? string? ke)) (world-key-move w ke)]
       [`(on-tick) (next-world w)]
       [`(stop-when)
        (game-over? w)
