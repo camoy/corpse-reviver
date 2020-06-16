@@ -1,6 +1,6 @@
 #lang info
 
-;; HACK: Invalidate cache (27).
+;; HACK: Invalidate cache (1242).
 
 ;; General
 
