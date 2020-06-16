@@ -213,8 +213,11 @@
     (match-define (struct-data parent fields contracts) data)
     (define pred (format-symbol "~a?" name))
     (define lib (hash-ref (bundle-libs bundle) pred (λ () #f)))
-    (define name* (syntax-property (datum->syntax lib name) 'protect-scope #t))
-    (define id+parent (if parent (list name* parent) name*))
+    (define name*
+      (syntax-property (datum->syntax lib name) 'protect-scope #t))
+    (define parent*
+      (syntax-property (datum->syntax lib parent) 'protect-scope #t))
+    (define id+parent (if parent (list name* parent*) name*))
     (define field+ctcs (map list fields contracts))
     (if safe?
         #`(contract-out
