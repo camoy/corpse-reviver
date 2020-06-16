@@ -19,7 +19,7 @@ jobs:
       - run: raco pkg install --auto */ || true
       # If we have a cache hit, the above will link the current working directory as the
       # package. But that will not be compiled. Therefore, we have to setup.
-      - run: raco setup corpse-reviver
+      - run: raco setup corpse-reviver || true
       - uses: GabrielBB/xvfb-action@v1.0
         with:
           # Stop the tests after 30 minutes.
