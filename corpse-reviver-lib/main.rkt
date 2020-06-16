@@ -234,6 +234,18 @@
       (test-optimize "rest-args"
                      "main.rkt"
                      '("main.rkt")))
+    (test-case
+      "Test conflicted import."
+      (test-optimize "conflict"
+                     "main.rkt"
+                     '("main.rkt"
+                       "a.rkt"
+                       "b.rkt")))
+    (test-case
+      "Test conflicted import (with opaques)."
+      (test-optimize "conflict-opaque"
+                     "main.rkt"
+                     '("main.rkt")))
     (test-benchmark "sieve")
     (test-benchmark "fsm")
     (test-benchmark "morsecode")
