@@ -17,6 +17,9 @@ jobs:
           version: 'current'
       # Typed Racket Hacks prints to STDOUT causing exit code 1. Let's just force success.
       - run: raco pkg install --auto */ || true
+      # If we have a cache hit, the above will link the current working directory as the
+      # package. But that will not be compiled. Therefore, we have to setup.
+      - run: raco setup corpse-reviver
       - uses: GabrielBB/xvfb-action@v1.0
         with:
           # Stop the tests after 30 minutes.
