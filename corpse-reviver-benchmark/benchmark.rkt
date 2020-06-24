@@ -60,7 +60,7 @@
    10  ; iterations
    10  ; cutoff
    #f  ; no-skip?
-   4   ; num-samples
+   10  ; num-samples
    10  ; sample-factor
    1   ; worker-count
    "." ; output-dir

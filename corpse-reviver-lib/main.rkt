@@ -13,7 +13,6 @@
 
 (require racket/cmdline
          racket/contract
-         setup/parallel-build
          soft-contract/main
          threading
          "private/compile.rkt"
@@ -52,7 +51,8 @@
 (define (compile-files/scv-cr -targets)
   (measure 'total
     (define targets (map canonicalize-path -targets))
-    (parallel-compile-files targets)
+    (for-each delete-bytecode targets)
+    (for-each compile-files targets)
     (define mods (sort-by-dep (map make-mod targets)))
     (define opt-mods (optimize mods))
     (compile-modules opt-mods)))

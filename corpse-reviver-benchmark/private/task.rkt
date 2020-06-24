@@ -33,7 +33,6 @@
          racket/string
          racket/syntax
          racket/system
-         setup/parallel-build
          threading
          "config.rkt"
          "gc.rkt")
@@ -232,11 +231,17 @@
 ;; whether the compilation was successful.
 (define (typed-untyped-compile! -targets analysis-times)
   (define targets (map path->string -targets))
+  (for-each delete-bytecode targets)
   (define (execute-thunk)
-    (with-handlers ([exn:fail? (make-error-handler analysis-times)])
-      (if (config-baseline? cfg)
-          (parallel-compile-files targets)
-          (compile-files/scv-cr targets))))
+    ;; HACK: Remove this (and all of private/benchmark-typed-racket) once TR
+    ;; #837 is resolved.
+    (with-patched-typed-racket
+      (λ ()
+        (with-handlers ([exn:fail? (make-error-handler analysis-times)])
+          (if (config-baseline? cfg)
+              (compile-files targets)
+              (compile-files/scv-cr targets))))
+      PROXY-HASH))
   (define interceptor (make-log-interceptor scv-cr-logger))
   (define-values (logs gc-hash)
     (measure-gc
@@ -262,13 +267,9 @@
   (define resolved-entry (make-resolved-module-path (string->path entry)))
   (define iterations (config-ref config key:iterations))
   (for ([_ (in-range iterations)])
-    ;; HACK: Remove this (and all of private/benchmark-typed-racket) once TR
-    ;; #837 is resolved.
-    (with-patched-typed-racket
-      (λ ()
-        (with-handlers ([exn:fail? (make-error-handler running-times)])
-          (dynamic-require resolved-entry #f)))
-      PROXY-HASH)))
+    (parameterize ([current-namespace (make-base-namespace)])
+      (with-handlers ([exn:fail? (make-error-handler running-times)])
+        (dynamic-require resolved-entry #f)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; output
