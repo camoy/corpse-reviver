@@ -28,6 +28,7 @@
 
 (*GRID-X* #f)
 (*GRID-Y* #f)
+(*OVERHEAD-MAX* 10)
 (*OVERHEAD-PLOT-HEIGHT* 200)
 (*OVERHEAD-PLOT-WIDTH* 400)
 (*GRID-NUM-COLUMNS* 2)
@@ -47,8 +48,11 @@
         (overhead-plot pi)))
   (define pis
     (for/list ([(benchmark paths) (in-hash runtimes)])
-      (define pi (runtime-paths->performance-info benchmark paths))
-      (if (exhaustive? pi) pi (runtime-paths->sample-info pi paths))))
+      (with-handlers
+        ([exn:fail:benchmark?
+          (λ _ (error 'overhead-grid "benchmark ~a failed" benchmark))])
+        (define pi (runtime-paths->performance-info benchmark paths))
+        (if (exhaustive? pi) pi (runtime-paths->sample-info pi paths)))))
   (grid-plot overhead-or-samples pis))
 
 ;;
@@ -57,11 +61,16 @@
   (define runtimes (make-paths->hash "runtime" paths))
   (define pis
     (for/list ([(benchmark paths) (in-hash runtimes)])
-      (runtime-paths->performance-info benchmark paths)))
+      (with-handlers
+        ([exn:fail:benchmark?
+          (λ _ (error 'exact-grid "benchmark ~a failed" benchmark))])
+        (runtime-paths->performance-info benchmark paths))))
   (grid-plot exact-runtime-plot pis))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; private
+
+(struct exn:fail:benchmark exn:fail ())
 
 (define (runtime-paths->sample-info pi paths)
   (make-sample-info pi (runtime-paths->samples paths)))
@@ -136,8 +145,10 @@
   (define hashes
     (for/list ([run-hash (in-list run-hashes)])
       (match-define
-        (hash-table ['config config] ['real real] _ ...)
+        (hash-table ['config config] ['real real] ['error err] _ ...)
         run-hash)
+      (when err
+        (raise (exn:fail:benchmark err (current-continuation-marks))))
       (hash config (list real))))
   (apply hash-union #:combine append hashes))
 

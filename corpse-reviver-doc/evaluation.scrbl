@@ -3,7 +3,7 @@
 @(require racket/runtime-path
           "private/figure.rkt")
 
-@(define-runtime-path DATA "data")
+@(define-runtime-path DATA "baseline")
 @(define paths (directory-list DATA #:build? DATA))
 
 @title{Evaluation}
