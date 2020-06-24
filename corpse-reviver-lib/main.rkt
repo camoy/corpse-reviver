@@ -52,7 +52,7 @@
   (measure 'total
     (define targets (map canonicalize-path -targets))
     (for-each delete-bytecode targets)
-    (for-each compile-files targets)
+    (compile-files targets)
     (define mods (sort-by-dep (map make-mod targets)))
     (define opt-mods (optimize mods))
     (compile-modules opt-mods)))
