@@ -16,6 +16,7 @@
                                   any)]
   [sort-by-dep (-> (listof mod?) (listof mod?))]
   [imports (-> path-string? (listof symbol?))]
+  [compile-files (-> (listof path-string?) any)]
   [delete-bytecode (-> path-string? any)])
 
  in-dir)
@@ -24,6 +25,7 @@
 ;; require
 
 (require compiler/compilation-path
+         compiler/compile-file
          mischief/for
          racket/contract
          racket/file
@@ -34,6 +36,7 @@
          racket/runtime-path
          syntax/modcode
          syntax/modcollapse
+         syntax/modread
          syntax/modresolve
          threading
          "data.rkt"
@@ -151,6 +154,12 @@
            (resolve-module-path _ target)
            (satisfies path? _)
            path->symbol)))
+
+;; [Listof Path-String] → Any
+(define (compile-files files)
+  (with-module-reading-parameterization
+    (λ ()
+      (for-each compile-file files))))
 
 ;; Path-String → Any
 ;; Delete bytecode associated with target if it exists.
