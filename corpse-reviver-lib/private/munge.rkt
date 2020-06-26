@@ -102,6 +102,11 @@
         [(flat-named-contract _ ctc)
          (go #'ctc)]
 
+        ;; Collapse parameter/c with same in and out contracts (SCV)
+        [(parameter/c e0:expr e1:expr)
+         #:when (equal? (syntax->datum #'e0) (syntax->datum #'e1))
+         #`(parameter/c #,(go #'e0))]
+
         [(flat-contract-predicate v)
          (go #'v)]
 
