@@ -41,6 +41,7 @@
                           flat-contract-predicate
                           struct-predicate-procedure?/c
                           struct-predicate-procedure?
+                          parameter/c
                           struct-type/c
                           letrec
                           c->
