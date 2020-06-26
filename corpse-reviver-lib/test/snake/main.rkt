@@ -11,7 +11,7 @@
                      [handle-key (World String . -> . World)]
                      [game-over? (World . -> . Boolean)])
 
-(: replay (-> World (Listof Any) Void))
+(: replay : (-> World (Listof Any) Void))
 (define (replay w0 hist)
   (reset!)
   (let loop ((w : World w0)
@@ -32,13 +32,13 @@
   (void))
 
 (define DATA (with-input-from-file "../base/snake-hist.rktd" read))
-(define LOOPS 10)
+(define LOOPS 200)
 
 (: main (-> Any Void))
 (define (main hist)
   (define w0 (WORLD))
   (cond [(list? hist)
-         (for ([i (in-range LOOPS)])
+         (for ([_i (in-range LOOPS)])
            (replay w0 hist))]
         [else
          (error "bad input")]))

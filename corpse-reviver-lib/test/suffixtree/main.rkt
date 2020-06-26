@@ -11,11 +11,12 @@
 (define KCFA_TYPED "../base/kcfa-typed.rkt")
 
 ;; LCS on all pairs of lines in a file
-(: main (-> [Listof String] Void))
-(define (main lines)
-  (for* ([a lines] [b lines])
-    (longest-common-substring a b))
+(: main (-> String Void))
+(define (main testfile)
+  (define lines (file->lines testfile))
+  (time
+    (for* ([a lines] [b lines])
+      (longest-common-substring a b)))
   (void))
 
-(define lines (file->lines LARGE_TEST))
-(time (main lines))
+(main LARGE_TEST)

@@ -18,10 +18,11 @@
 
 (require
   racket/match
-  corpse-reviver/opaque
   (only-in racket/path file-name-from-path filename-extension)
   (only-in racket/sequence sequence->list)
-  (only-in racket/string string-split string-trim))
+  (only-in racket/string string-split string-trim)
+  corpse-reviver/opaque
+)
 
 (require/typed/opaque "_list.rkt"
   [sort* (All (a b)
@@ -82,8 +83,7 @@
 (define (ensure-tex filename)
   (define path (or (and (path? filename) filename)
                    (string->path filename)))
-  (unless (bytes=? (string->bytes/utf-8 "tex")
-                   (or (filename-extension path) (string->bytes/utf-8 "")))
+  (unless (bytes=? (string->bytes/utf-8 "tex") (or (filename-extension path) (string->bytes/utf-8 "")))
     (parse-error "Cannot parse module graph from non-tex file '~a'" filename))
   ;; Remove anything past the first hyphen in the project name
   (define project-name (path->project-name path))
@@ -196,8 +196,8 @@
   (match m
     [(list _ id _ index name)
      #:when (and id index name)
-     (texnode (or (cast (string->number id) Index) (parse-error "bad node id"))
-              (or (cast (string->number index) Index) (parse-error "bad node index"))
+     (texnode (assert (string->number id) index?)
+              (assert (string->number index) index?)
               name)]
     [else
      (parse-error "Cannot parse node declaration '~a'" str)]))
@@ -212,8 +212,8 @@
     [(list _ id-src id-dst)
      #:when (and id-src id-dst)
      ((inst cons Index Index)
-           (cast (string->number id-src) Index)
-           (cast (string->number id-dst) Index))]
+           (assert (string->number id-src) index?)
+           (assert (string->number id-dst) index?))]
     [else
      (parse-error "Cannot parse edge declaration '~a'" str)]))
 

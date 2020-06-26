@@ -289,20 +289,20 @@
     (: elem->spec (-> (List Exact-Nonnegative-Integer (Listof Symbol) (Listof Symbol)) String))
     (define (elem->spec e)
       (format-list
+       " "
        (list (number->string              (car e))
              (list->string symbol->string (cadr e))
-             (list->string symbol->string (caddr e)))
-       " "))
+             (list->string symbol->string (caddr e)))))
     (list->string elem->spec ux))
   (: lang-info->spec (-> (U #f (Vector Module-Path Symbol Any)) String))
   (define (lang-info->spec li)
     (match li
       [(vector mp sym any)
         (format-list
+         " "
          (list (module-path->spec mp)
                (symbol->string    sym)
-               (any->string       any))
-         " ")]
+               (any->string       any)))]
       [#f "#f"]))
   (: provides->spec (-> (Listof (List (U Integer #f) (Listof provided) (Listof provided))) String))
   (define
@@ -310,12 +310,12 @@
     (: elem->spec (-> (List (U Integer #f) (Listof provided) (Listof provided)) String))
     (define (elem->spec e)
       (format-list
+       " "
        (list (if (number? (car e))
                  (number->string (car e))
                  "#f")
              (listof-zo->string provided->spec (cadr e))
-             (listof-zo->string provided->spec (caddr e)))
-       " "))
+             (listof-zo->string provided->spec (caddr e)))))
     (list->string elem->spec pds))
   (: requires->spec (-> (Listof (Pair (U Integer #f) (Listof Module-Path-Index))) String))
   (define
@@ -323,11 +323,11 @@
     (: elem->spec (-> (Pair (U Integer #f) (Listof Module-Path-Index)) String))
     (define (elem->spec e)
       (format-list
+       " "
        (list (if (number? (car e))
                  (number->string (car e))
                  "#f")
-             (list->string module-path-index->string (cdr e)))
-       " "))
+             (list->string module-path-index->string (cdr e)))))
     (list->string elem->spec rqs))
   (: syntax-bodies->spec (-> (Listof (Pair Exact-Positive-Integer (Listof (U def-syntaxes seq-for-syntax)))) String))
   (define
@@ -339,9 +339,9 @@
     (: elem->spec (-> (Pair Exact-Positive-Integer (Listof (U def-syntaxes seq-for-syntax))) String))
     (define (elem->spec e)
       (format-list
+       " "
        (list (number->string                 (car e))
-             (list->string ds-or-sfs->spec (cdr e)))
-       " "))
+             (list->string ds-or-sfs->spec (cdr e)))))
     (list->string elem->spec sbs))
   (: internal-context->string (-> (U #f #t stx (Vectorof stx)) (U Spec String)))
   (define (internal-context->string ic)
@@ -410,8 +410,8 @@
   (define (toplevel-map->spec tm)
     (cond [(eq? #f tm) "#f"]
           [else (format-list
-                 (for/list : (Listof String) ([n : Exact-Nonnegative-Integer tm]) (number->string n))
-                 " ")]))
+                 " "
+                 (for/list : (Listof String) ([n : Exact-Nonnegative-Integer tm]) (number->string n)))]))
   (list "lam"
         (lcons "name"          (lam-name->spec                  (lam-name z)))
         (lcons "flags"         (list->string symbol->string (lam-flags z)))
@@ -690,10 +690,10 @@
 (: function-shape->spec (-> function-shape String))
 (define
   (function-shape->spec fs)
-  (format-list (list "function-shape"
+  (format-list " "
+               (list "function-shape"
                      (format "arity : ~a"            (function-shape-arity fs))
-                     (format "preserves-marks? : ~a" (function-shape-preserves-marks? fs)))
-               " "))
+                     (format "preserves-marks? : ~a" (function-shape-preserves-marks? fs)))))
 
 (: struct-shape->spec (-> struct-shape String))
 (define
@@ -709,40 +709,40 @@
 (: struct-type-shape->spec (-> struct-type-shape String))
 (define
   (struct-type-shape->spec sts)
-  (format-list (list "struct-type-shape"
-                     (format "field-count : ~a" (struct-type-shape-field-count sts)))
-               " "))
+  (format-list " "
+               (list "struct-type-shape"
+                     (format "field-count : ~a" (struct-type-shape-field-count sts)))))
 
 (: constructor-shape->spec (-> constructor-shape String))
 (define
   (constructor-shape->spec cs)
-  (format-list (list "constructor-shape"
-                     (format "arity : ~a" (constructor-shape-arity cs)))
-               " "))
+  (format-list " "
+               (list "constructor-shape"
+                     (format "arity : ~a" (constructor-shape-arity cs)))))
 
 (: predicate-shape->spec (-> predicate-shape String))
 (define
   (predicate-shape->spec ps)
-  (format-list (list "predicate-shape")))
+  (format-list "\n" (list "predicate-shape")))
 
 (: accessor-shape->spec (-> accessor-shape String))
 (define
   (accessor-shape->spec sts)
-  (format-list (list "accessor-shape"
-                     (format "field-count : ~a" (accessor-shape-field-count sts)))
-               " "))
+  (format-list " "
+               (list "accessor-shape"
+                     (format "field-count : ~a" (accessor-shape-field-count sts)))))
 
 (: mutator-shape->spec (-> mutator-shape String))
 (define
   (mutator-shape->spec sts)
-  (format-list (list "mutator-shape"
-                     (format "field-count : ~a" (mutator-shape-field-count sts)))
-               " "))
+  (format-list " "
+               (list "mutator-shape"
+                     (format "field-count : ~a" (mutator-shape-field-count sts)))))
 
 (: struct-other-shape->spec (-> struct-other-shape String))
 (define
   (struct-other-shape->spec ps)
-  (format-list (list "struct-other-shape")))
+  (format-list "\n" (list "struct-other-shape")))
 
 ;; --- helpers
 
@@ -775,9 +775,9 @@
 
 ;; Alternate syntax for `string-join` -- the `sep` argument appears as a label
 ;; and defaults to a newline character.
-(: format-list (->* ((Listof String)) (String) String))
+(: format-list (-> String (Listof String) String))
 (define
-  (format-list xs [sep "\n"])
+  (format-list sep xs)
   (string-join xs sep))
 
 ;; Turn a spec into a string.
@@ -797,7 +797,7 @@
     (if (empty? fields) 0 (apply max field-name-lengths)))
   (if (not deep?)
       title
-      (format-list
+      (format-list "\n"
        (cons title
              (for/list : (Listof String) ([fd : (Pair String (-> (U Spec String))) fields])
                (: forced (U String Spec))
@@ -813,8 +813,8 @@
 (define
   (list->string f xs)
   (format "[~a]"
-          (format-list (for/list : (Listof String) ([x : A xs]) (f x))
-                       " ")))
+          (format-list " "
+                       (for/list : (Listof String) ([x : A xs]) (f x)))))
 
 ;; Turn a list of things that might be 'form' structs into a list of strings.
 (: listof-form-or-any->string (-> (Listof (U form Any)) String))
@@ -879,7 +879,7 @@
 
 ;; If `str` has fewer than `w` characters,
 ;; append `(w - (len str))` characters to its right end.
-(: pad (->* (String Natural) (Char) String))
+(: pad (->* [String Natural] [Char] String))
 (define
   (pad str w [c #\space])
   (: l Index)

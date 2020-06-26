@@ -7,22 +7,22 @@
   population-payoffs
   match-up*
   death-birth
-  ;; ==
+  ;; == 
   ;Payoff
   ;Population
 )
  (: build-random-population
-  ;; (build-population n c) for even n, build a population of size n
+  ;; (build-population n c) for even n, build a population of size n 
   ;; with c constraint: (even? n)
   (-> Natural Population))
  (: population-payoffs (-> Population [Listof Payoff]))
  (: match-up*
   ;; (match-ups p r) matches up neighboring pairs of
-  ;; automata in population p for r rounds
+  ;; automata in population p for r rounds 
   (-> Population Natural Population))
  (: death-birth
-  ;; (death-birth p r) replaces r elements of p with r "children" of
-  ;; randomly chosen fittest elements of p, also shuffle
+  ;; (death-birth p r) replaces r elements of p with r "children" of 
+  ;; randomly chosen fittest elements of p, also shuffle 
   ;; constraint (< r (length p))
   (->* [Population Natural] [(U False Real)] Population))
 
@@ -93,7 +93,7 @@
   ;; copy b into a
   (for ([x (in-list (vector->list b))][i (in-naturals)])
     (vector-set! a i x))
-  ;; now shuffle a
+  ;; now shuffle a 
   (for ([x (in-list (vector->list b))] [i (in-naturals)])
     (define j (random (add1 i)))
     (unless (= j i) (vector-set! a i (vector-ref a j)))

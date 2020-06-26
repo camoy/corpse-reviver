@@ -21,14 +21,14 @@
   [line-width (-> Nonnegative-Real)]
   [plot-width (-> Positive-Integer)]
   [plot-height (-> Positive-Integer)]
-  [plot-x-ticks (-> ticks Void)]
-  [plot-y-ticks (-> ticks Void)]
-  [plot-x-far-ticks (-> ticks Void)]
-  [plot-y-far-ticks (-> ticks Void)]
-  [plot-font-face   (-> String Void)]
-  [plot-font-size   (-> Nonnegative-Real Void)]
+  [plot-x-ticks [Parameterof ticks]]
+  [plot-y-ticks [Parameterof ticks]]
+  [plot-x-far-ticks [Parameterof ticks]]
+  [plot-y-far-ticks [Parameterof ticks]]
+  [plot-font-face   [Parameterof String]]
+  [plot-font-size   [Parameterof Nonnegative-Real]]
   [no-ticks ticks]
-  [linear-seq (-> Real Real Nonnegative-Integer (Listof Real))] 
+  [linear-seq (-> Real Real Nonnegative-Integer (Listof Real))]
   [function
    (-> (-> Real Real)
        (U Real #f)

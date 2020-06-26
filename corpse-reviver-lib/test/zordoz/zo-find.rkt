@@ -38,7 +38,7 @@
 ;; Searches a zo-struct `z` recursively for member zo-structs matching the `s`.
 ;; Terminates after at most `#:limit` recursive calls.
 ;; Return a list of 'result' structs.
-(: zo-find (->* (zo String) [(U Natural #f)] (Listof result)))
+(: zo-find (->* [zo String] [(U Natural #f)] (Listof result)))
 (define (zo-find z str [lim #f])
   ;; (-> zo? string? (listof result?))
   (define-values (_ children) (parse-zo z))

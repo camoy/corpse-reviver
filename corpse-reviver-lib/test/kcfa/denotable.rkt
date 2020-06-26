@@ -6,7 +6,7 @@
 
 (require
   corpse-reviver/require-typed-check
-  (except-in racket/set set/c)
+  racket/set
   "structs-adapted.rkt"
   "benv-adapted.rkt"
   "time-adapted.rkt"

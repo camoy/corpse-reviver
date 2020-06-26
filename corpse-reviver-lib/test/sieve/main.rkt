@@ -1,6 +1,8 @@
 #lang typed/racket/base
 
-(require/typed "streams.rkt"
+(require corpse-reviver/require-typed-check)
+
+(require/typed/check "streams.rkt"
   [#:struct stream ([first : Natural]
                     [rest : (-> stream)])]
   [make-stream (-> Natural (-> stream) stream)]
@@ -34,7 +36,7 @@
 (define primes (sieve (count-from 2)))
 
 (: N-1 Natural)
-(define N-1 666)
+(define N-1 6666)
 
 (: main (-> Void))
 (define (main)

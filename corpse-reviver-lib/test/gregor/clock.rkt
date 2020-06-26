@@ -25,15 +25,11 @@
   "gregor-adapter.rkt"
 )
 (require/typed/check "moment.rkt"
-    [current-timezone (Boxof (U tz #f))]
+    [current-timezone (Parameterof (U tz #f))]
     [posix->moment (-> Exact-Rational tz Moment)]
     [moment->datetime/local (-> Moment DateTime)]
     [UTC String]
-    [moment (->* (Natural)
-                 (Month Natural Natural Natural Natural Natural
-                        (U tz #f)
-                        (-> (U tzgap tzoverlap) DateTime (U String #f) (U #f Moment) Moment))
-                 Moment)]
+    [moment (->* (Natural) (Month Natural Natural Natural Natural Natural (U tz #f) (-> (U tzgap tzoverlap) DateTime (U String #f) (U #f Moment) Moment)) Moment)]
     [moment=? (-> Moment Moment Boolean)]
     [moment->iso8601 (-> Moment String)]
     [moment->iso8601/tzid (-> Moment String)]
@@ -46,16 +42,16 @@
 ;; =============================================================================
 
 (: now/moment (->* () ((U tz #f)) Moment))
-(define (now/moment [tz (unbox current-timezone)])
+(define (now/moment [tz (current-timezone)])
   (unless tz (error "current-timezone is #f"))
-  (posix->moment ((unbox current-clock)) tz))
+  (posix->moment ((current-clock)) tz))
 
 (: now/moment/utc (-> Moment))
 (define (now/moment/utc)
   (now/moment "Etc/UTC"))
 
 (: now (->* () ((U tz #f)) DateTime))
-(define (now [tz (unbox current-timezone)])
+(define (now [tz (current-timezone)])
   (unless tz (error "now: current-timezone is #f"))
   (moment->datetime/local (now/moment tz)))
 
@@ -64,7 +60,7 @@
   (now "Etc/UTC"))
 
 (: today (->* () ((U tz #f)) Date))
-(define (today [tz (unbox current-timezone)])
+(define (today [tz (current-timezone)])
   (unless tz (error "today: current-timezone is #f"))
   (datetime->date (now tz)))
 
@@ -73,7 +69,7 @@
   (today "Etc/UTC"))
 
 (: current-time (->* () ((U tz #f)) Time))
-(define (current-time [tz (unbox current-timezone)])
+(define (current-time [tz (current-timezone)])
   (unless tz (error "current-time:  current-timezone is #f"))
   (datetime->time (now tz)))
 
@@ -87,5 +83,5 @@
     (unless (index? r) (error "current-posix-seconds"))
     r))
 
-(: current-clock (Boxof (-> Exact-Rational)))
-(define current-clock (box current-posix-seconds))
+(: current-clock (Parameterof (-> Exact-Rational)))
+(define current-clock (make-parameter current-posix-seconds))

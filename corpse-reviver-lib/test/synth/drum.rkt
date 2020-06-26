@@ -56,7 +56,7 @@
 (: snare Array)
 (define snare
   ;; 0.05 seconds of noise
-  (let: ([indexes : In-Indexes
+  (let ([indexes : In-Indexes
                   (vector (seconds->samples 0.05))]
          [arr-gen : (-> Indexes Flonum)
                   (lambda ([x : Indexes]) (random-sample))])

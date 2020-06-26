@@ -2,11 +2,11 @@
 
 (require
   corpse-reviver/require-typed-check
-  "summary-adapted.rkt")
-
+  "summary-adapted.rkt"
+)
 (require/typed/check "spreadsheet.rkt"
-                     [rktd->spreadsheet (-> Path-String Path-String Symbol Void)])
-
+  [rktd->spreadsheet (-> Path-String Path-String Symbol Void)]
+)
 (require/typed/check "lnm-plot.rkt"
  [lnm-plot (-> Summary
                (Listof Index)
@@ -17,8 +17,8 @@
                Float
                Positive-Integer
                Positive-Integer
-               (Listof Any))])
-
+               (Listof Any))]
+)
 ;; Just testing
 
 (: l-list (Listof Index))
@@ -30,7 +30,7 @@
   ;; Parse data from input file (also creates module graph)
   (define summary (from-rktd filename))
   (define name (get-project-name summary))
- ;; Create L-N/M pictures
+  ;; Create L-N/M pictures
   (time
     (begin
       (lnm-plot summary l-list

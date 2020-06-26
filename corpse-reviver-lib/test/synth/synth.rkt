@@ -19,7 +19,7 @@
   [array-shape (-> Array Indexes)]
   [unsafe-array-proc (-> Array (-> Indexes Float))]
   [array-size (-> Array Integer)]
-  [array-strictness (Boxof (U #f #t))])
+  [array-strictness (Parameterof (U #f #t))])
 
 ;; --- from array-sequence.rkt
 
@@ -33,13 +33,13 @@
          [(x)
           (:do-in
            ([(ds size dims js proc)
-             (let: ([arr : Array  arr-expr])
+             (let ([arr : Array  arr-expr])
                (cond [(array? arr)
                       (define ds (array-shape arr))
                       (define dims (vector-length ds))
                       (define size (array-size arr))
                       (define proc (unsafe-array-proc arr))
-                      (define: js : Indexes (make-vector dims 0))
+                      (define js : Indexes (make-vector dims 0))
                       (values ds size dims js proc)]
                      [else
                       (raise-argument-error 'in-array "Array" arr)]))])
@@ -56,7 +56,7 @@
 ;; -- synth
 
 ;; TODO this slows down a bit, it seems, but improves memory use
-(set-box! array-strictness #f)
+(array-strictness #f)
 
 (: fs Natural)
 (define fs 44100)
@@ -81,7 +81,7 @@
 ;; array functions receive a vector of indices
 (define-syntax-rule (array-lambda (i) body ...)
   (lambda ([i* : (Vectorof Integer)])
-    (let: ([i : Integer (vector-ref i* 0)]) body ...)))
+    (let ([i : Integer (vector-ref i* 0)]) body ...)))
 
 (: make-sawtooth-wave (-> Float (-> Float (-> Indexes Float))))
 (define ((make-sawtooth-wave coeff) freq)
@@ -101,7 +101,7 @@
 
 ;; assumes array of floats in [-1.0,1.0]
 ;; assumes gain in [0,1], which determines how loud the output is
-(: signal->integer-sequence (->* (Array) (Float) (Vectorof Integer)))
+(: signal->integer-sequence (->* [Array] [Float] (Vectorof Integer)))
 (define (signal->integer-sequence signal [gain 1])
   (for/vector : (Vectorof Integer) #:length (array-size signal)
               ([sample : Float (in-array signal)])
@@ -116,3 +116,4 @@
 (: emit (-> Array (Vectorof Integer)))
 (define (emit signal)
   (signal->integer-sequence signal 0.3))
+

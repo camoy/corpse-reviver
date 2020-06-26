@@ -70,19 +70,20 @@
 
 ;; =============================================================================
 
-(: current-timezone (Boxof (U tz #f)))
-(define current-timezone (box (system-tzid)))
+(: current-timezone (Parameterof (U tz #f)))
+(define current-timezone (make-parameter (system-tzid)))
 
 (: moment (->* (Natural) (Month
                           Natural Natural Natural Natural Natural
                           (U tz #f)
                           (-> (U tzgap tzoverlap)
-                              DateTime
-                              (U String #f)
-                              (U #f Moment) Moment))
+                                               DateTime
+                                               (U String #f)
+                                               (U #f Moment) Moment)
+                          )
                           Moment))
 (define (moment year [month 1] [day 1] [hour 0] [minute 0] [second 0] [nano 0]
-                [tz (unbox current-timezone)]
+                [tz (current-timezone)]
                 [resolve resolve-offset/raise])
   (when (eq? tz #f) (error "no timezone"))
   (datetime+tz->moment (datetime year month day hour minute second nano) tz resolve))
@@ -149,10 +150,7 @@
 
 (: timezone-adjust (-> Moment (U Natural String) Moment))
 (define (timezone-adjust m z)
-  (: dt DateTime)
-  (define dt (error 'foo));(Moment-datetime/local m))
-  (: neg-sec Integer)
-  (define neg-sec (error 'foo));(Moment-utc-offset m))
+  (match-define (Moment dt neg-sec _) m)
   (: dt/utc DateTime)
   (define dt/utc
     (datetime-add-seconds dt (- neg-sec)))

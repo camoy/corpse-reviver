@@ -2,14 +2,14 @@
 ;; Some utilities.
 
 (require corpse-reviver/require-typed-check
-         (except-in "typed-data.rkt" label)
+         (except-in "typed-data.rkt" make-label)
          racket/list)
 
 (require/typed/check "label.rkt"
  [label->string (-> Label String)]
  [string->label (-> String Label)]
  [string->label/with-sentinel (-> String Label)]
- [label (-> (U String (Vectorof (U Char Symbol))) Label)]
+ [make-label (-> (U String (Vectorof (U Char Symbol))) Label)]
  [label-source-eq? (-> Label Label Boolean)]
  [label-length (-> Label Index)]
  [vector->label (-> (Vectorof (U Char Symbol)) Label)]
@@ -54,7 +54,7 @@
   (: label-2-marks (HashTable Node Boolean))
   (define label-2-marks (make-hasheq))
   (: deepest-node Node)
-  (define deepest-node (node (label "no lcs") #f '() #f))
+  (define deepest-node (node (make-label "no lcs") #f '() #f))
   (: deepest-depth Index)
   (define deepest-depth 0)
   (: main (-> Label))
@@ -95,14 +95,11 @@
          (marked-by-label-2? node)))
   (: absorb-children-marks! (-> Node Index Void))
   (define (absorb-children-marks! node depth)
-    ;(let/ec escape
       (for ([child (node-children node)])
         (when (marked-by-label-1? child)
           (mark-with-label-1! node))
         (when (marked-by-label-2? child)
           (mark-with-label-2! node)))
-        ;(when (marked-by-both? node)
-        ;  (escape))))
     (when (and (marked-by-both? node)
                (> depth deepest-depth))
       (set! deepest-depth depth)
@@ -111,7 +108,6 @@
           (= 0 (label-length label-2)))
       (string->label "")
       (main)))
-
 
 
 ;; path-label: node -> label

@@ -5,7 +5,7 @@
 
 (require/typed/check "zo-shell.rkt"
   [zo-read (-> Path-String zo)]
-  [init (-> (Immutable-Vector zo String) Void)])
+  [init (-> (Vector zo String) Void)])
 
 (define TYPED-DATA
   '("../base/typed-zo-find_rkt.zo"))
@@ -22,6 +22,6 @@
   (define zo* (parse-data ps*))
   (time
     (for ((zo (in-list zo*)))
-      (init (vector-immutable zo "branch")))))
+      (init (vector zo "branch")))))
 
 (main TYPED-DATA)

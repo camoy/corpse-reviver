@@ -10,7 +10,8 @@
 ;;   (Or, a list of such plots)
 
 (provide
-  lnm-plot)
+  lnm-plot
+)
 
 ;; -----------------------------------------------------------------------------
 
@@ -19,8 +20,8 @@
   "summary-adapted.rkt"
   "plot-adapted.rkt"
   (only-in racket/math exact-floor)
-  (only-in racket/math exact-floor exact-ceiling))
-
+  (only-in racket/math exact-floor exact-ceiling)
+)
 (require/typed racket/stream
   [stream-length (-> (Sequenceof String) Index)]
   [stream->list (-> (Sequenceof String) (Listof String))]
@@ -78,29 +79,34 @@
                                   THIN))
   (define cutoff-line (horizontal-line cutoff-point xmax
                                                     'orangered
-                                                    'short-dash
-                                                    THICK))
+                                                    THICK
+                                                    'short-dash))
   ;; Get yticks
   (define yticks (compute-yticks num-vars 6 (list cutoff-point)))
   ;; Set plot parameters ('globally', for all picts)
-  (plot-x-ticks (compute-xticks 5))
-  (plot-y-ticks (compute-yticks num-vars 6 cutoff-point))
-  (plot-x-far-ticks no-ticks)
-  (plot-y-far-ticks no-ticks)
-  (plot-font-face "bold")
-  (plot-font-size 16)
-  ;; Create 1 pict for each value of L
-  (for/list ([L (in-list L-list)])
-    (define F (function (count-variations summary L xmax) 0 xmax
-                        num-samples
-                        'navy
-                        THICK))
-    (define res (plot-pict (list N-line M-line cutoff-line F)
-                           0 xmax
-                           0 num-vars
-                           "Overhead (vs. untyped)" "Count"
-                           width height))
-    (if (pict? res) res (error 'lnm))))
+  (parameterize (
+    [plot-x-ticks (compute-xticks 5)]
+    [plot-y-ticks (compute-yticks num-vars 6 cutoff-point)]
+    [plot-x-far-ticks no-ticks]
+    [plot-y-far-ticks no-ticks]
+    [plot-font-face "bold"]
+    [plot-font-size 16])
+    ;; Create 1 pict for each value of L
+    (for/list ([L (in-list L-list)])
+      (define F (function (count-variations summary L xmax) 0 xmax
+                          num-samples
+                          'navy
+                          THICK))
+      (define res (plot-pict (list N-line M-line cutoff-line F)
+                 0
+                 xmax
+                 0
+                 num-vars
+                 "Overhead (vs. untyped)"
+                 "Count"
+                 width
+                 height))
+      (if (pict? res) res (error 'lnm)))))
 
 ;; Return a function (-> Real Index) on argument `N`
 ;;  that counts the number of variations
@@ -222,14 +228,14 @@
 (: horizontal-line (->* [Real]
                         [Index
                          Symbol
-                         Plot-Pen-Style
-                         Nonnegative-Real]
+                         Nonnegative-Real
+                         Plot-Pen-Style]
                         renderer2d))
 (define (horizontal-line y-val
                          [x-max 1]
                          [c 'black]
-                         [s 'solid]
-                         [w (line-width)])
+                         [w (line-width)]
+                         [s 'solid])
   (lines (list (list 0 y-val)
                (list x-max y-val))
          c

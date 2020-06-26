@@ -18,7 +18,7 @@
 (define (game-over? w)
   (blocks-overflow? (world-blocks w)))
 
-(: replay (-> World (Listof Any) Void))
+(: replay : (-> World (Listof Any) Void))
 (define (replay w0 hist)
   (for/fold ([w : World w0])
             ([e hist])
@@ -31,7 +31,7 @@
   (void))
 
 (define DATA (with-input-from-file "../base/tetris-hist.rktd" read))
-(define LOOPS 1)
+(define LOOPS 2)
 
 (: main (-> Any Void))
 (define (main raw)
