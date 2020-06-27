@@ -1,4 +1,4 @@
-#lang s-exp corpse-reviver/private/lang/typed/base
+#lang s-exp corpse-reviver/private/lang/opt/typed/base
 
 (require (for-syntax racket/base))
 

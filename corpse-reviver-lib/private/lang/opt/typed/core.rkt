@@ -99,9 +99,9 @@
   (require chk)
 
   (chk
-   #:x (dynamic-require "../../../test/langs/bad-typed.rkt" #f)
+   #:x (dynamic-require "../../../../test/langs/bad-untyped.rkt" #f)
    "add1: contract violation"
 
-   #:x (dynamic-require "../../../test/langs/good-typed.rkt" #f)
+   #:x (dynamic-require "../../../../test/langs/good-typed.rkt" #f)
    "adder: broke its own contract"
    ))

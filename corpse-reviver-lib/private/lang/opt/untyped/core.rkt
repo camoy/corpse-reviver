@@ -98,15 +98,15 @@
   (require chk)
 
   (chk
-   #:x (dynamic-require "../../../test/langs/bad-untyped.rkt" #f)
+   #:x (dynamic-require "../../../../test/langs/bad-untyped.rkt" #f)
    "add1: contract violation"
 
-   #:x (dynamic-require "../../../test/langs/good-untyped.rkt" #f)
+   #:x (dynamic-require "../../../../test/langs/good-untyped.rkt" #f)
    "adder: contract violation"
 
-   #:x (dynamic-require "../../../test/langs/bad-spec-untyped.rkt" #f)
+   #:x (dynamic-require "../../../../test/langs/bad-spec-untyped.rkt" #f)
    "add1: contract violation"
 
-   #:x (dynamic-require "../../../test/langs/good-spec-untyped.rkt" #f)
+   #:x (dynamic-require "../../../../test/langs/good-spec-untyped.rkt" #f)
    "adder: contract violation"
    ))
