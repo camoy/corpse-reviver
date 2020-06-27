@@ -24,7 +24,7 @@ vector-copy-all
   (define (vector->supertype-vector js)
     (define dims (vector-length js))
     (cond [(= dims 0)  (vector)]
-          [else  (define new-js : (Vectorof (U A B)) (make-vector dims (vector-ref js 0)))
+          [else  (define: new-js : (Vectorof (U A B)) (make-vector dims (vector-ref js 0)))
                  (let loop ([#{i : Integer} 1])
                    (cond [(i . < . dims)  (vector-set! new-js i (vector-ref js i))
                                           (loop (+ i 1))]
@@ -50,7 +50,7 @@ vector-copy-all
   (: check-array-shape ((Vectorof Integer) (-> Nothing) -> Indexes))
   (define (check-array-shape ds fail)
     (define dims (vector-length ds))
-    (define new-ds : Indexes (make-vector dims 0))
+    (define: new-ds : Indexes (make-vector dims 0))
     (let loop ([#{i : Integer} 0])
       (cond [(i . < . dims)
              (define di (vector-ref ds i))
@@ -95,7 +95,7 @@ vector-copy-all
   (define (raise-index-error) (raise-array-index-error name ds js))
   (define dims (vector-length ds))
   (unless (= dims (vector-length js)) (raise-index-error))
-  (define new-js : Indexes (make-vector dims 0))
+  (define: new-js : Indexes (make-vector dims 0))
   (let loop ([#{i : Integer} 0])
     (cond [(i . < . dims)
            (define di (vector-ref ds i))
@@ -113,7 +113,7 @@ vector-copy-all
   (cond
     [(not (index? n-1)) (error 'unsafe-vector-remove "internal error")]
     [else
-     (define new-vec : (Vectorof I) (make-vector n-1 (vector-ref vec 0)))
+     (define: new-vec : (Vectorof I) (make-vector n-1 (vector-ref vec 0)))
      (let loop ([#{i : Integer} 0])
        (when (i . < . k)
          (vector-set! new-vec i (vector-ref vec i))
@@ -127,7 +127,7 @@ vector-copy-all
 (: unsafe-vector-insert (All (I) ((Vectorof I) Integer I -> (Vectorof I))))
 (define (unsafe-vector-insert vec k v)
   (define n (vector-length vec))
-  (define dst-vec : (Vectorof I) (make-vector (+ n 1) v))
+  (define: dst-vec : (Vectorof I) (make-vector (+ n 1) v))
   (let loop ([#{i : Integer} 0])
     (when (i . < . k)
       (vector-set! dst-vec i (vector-ref vec i))

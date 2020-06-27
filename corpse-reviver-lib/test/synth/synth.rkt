@@ -39,7 +39,7 @@
                       (define dims (vector-length ds))
                       (define size (array-size arr))
                       (define proc (unsafe-array-proc arr))
-                      (define js : Indexes (make-vector dims 0))
+                      (define: js : Indexes (make-vector dims 0))
                       (values ds size dims js proc)]
                      [else
                       (raise-argument-error 'in-array "Array" arr)]))])

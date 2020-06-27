@@ -63,7 +63,7 @@
        ;; 1. old-procs : new array index -> old array procedure
        ;; 2. old-jks :   new array index -> old array index
        (define old-procs (make-vector new-dk (unsafe-array-proc (car arrs))))
-       (define old-jks : Indexes (make-vector new-dk 0))
+       (define: old-jks : Indexes (make-vector new-dk 0))
        (let arrs-loop ([arrs arrs] [dks dks] [#{jk : Integer} 0])
          (unless (null? arrs)
            (define arr (car arrs))
