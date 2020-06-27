@@ -2,7 +2,7 @@
 
 (require corpse-reviver/require-typed-check)
 
-(require/typed/check "data.rkt"
+(require/typed "data.rkt"
   [#:struct posn ([x : Real]
                   [y : Real])]
   [#:struct snake ([dir : Dir]

@@ -13,7 +13,7 @@
 
 (require corpse-reviver/require-typed-check)
 
-(require/typed/check "morse-code-table.rkt"
+(require/typed "morse-code-table.rkt"
   [char-table (HashTable Char String)])
 
 ;; map a character to a dit-dah string

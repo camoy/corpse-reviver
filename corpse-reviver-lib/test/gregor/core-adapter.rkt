@@ -11,7 +11,7 @@
   corpse-reviver/require-typed-check
   "../base/types.rkt")
 
-(require/typed/check "core-structs.rkt"
+(require/typed "core-structs.rkt"
   [#:struct YMD ([y : Natural]
                  [m : Month]
                  [d : Natural])]

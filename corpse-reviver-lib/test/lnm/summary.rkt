@@ -31,7 +31,7 @@
   [stream-map (-> (-> Index String) (Sequenceof Index) (Sequenceof String))]
   [stream-filter (-> (-> String Boolean) (Sequenceof String) (Sequenceof String))]
 )
-(require/typed/check "bitstring.rkt"
+(require/typed "bitstring.rkt"
   [bitstring->natural (-> String Index)]
   [log2 (-> Index Index)]
   [natural->bitstring (-> Index Index String)]

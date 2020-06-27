@@ -17,7 +17,7 @@
 
 (require corpse-reviver/require-typed-check)
 
-(require/typed/check "data.rkt"
+(require/typed "data.rkt"
   [#:struct label ([datum : (Vectorof (U Char Symbol))]
                    [i : Natural] [j : Natural])]
   [make-label (-> (Vectorof (U Char Symbol)) Natural Natural Label)]

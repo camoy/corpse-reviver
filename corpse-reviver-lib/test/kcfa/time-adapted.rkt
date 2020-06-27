@@ -6,7 +6,7 @@
   "benv-adapted.rkt"
 )
 
-(require/typed/check "time.rkt"
+(require/typed "time.rkt"
   [time-zero Time]
   [k (Parameterof Natural)]
   [tick (-> Stx Time Time)]

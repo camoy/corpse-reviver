@@ -3,7 +3,7 @@
          (except-in "typed-data.rkt" make-label)
          racket/list)
 
-(require/typed/check
+(require/typed
  "label.rkt"
  [make-label (-> (U String (Vectorof (U Char Symbol))) Label)]
  [label-element-equal? (-> Any Any Boolean)]

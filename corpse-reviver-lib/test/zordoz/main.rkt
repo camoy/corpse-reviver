@@ -3,7 +3,7 @@
 (require corpse-reviver/require-typed-check
          "typed-zo-structs.rkt")
 
-(require/typed/check "zo-shell.rkt"
+(require/typed "zo-shell.rkt"
   [zo-read (-> Path-String zo)]
   [init (-> (Vector zo String) Void)])
 

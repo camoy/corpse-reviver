@@ -2,7 +2,7 @@
 
 (define-type Color Symbol)
 (require corpse-reviver/require-typed-check)
-(require/typed/check "data.rkt"
+(require/typed "data.rkt"
   [#:struct posn ([x : Real]
                   [y : Real])]
   [#:struct block ([x : Real]

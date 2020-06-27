@@ -7,7 +7,7 @@
          corpse-reviver/require-typed-check
          "typed-data.rkt")
 
-(require/typed/check "array-struct.rkt"
+(require/typed "array-struct.rkt"
   [array-strict? (-> Array Boolean)]
   [array-default-strict! (-> Array Void)]
   [array-shape (-> Array Indexes)]
@@ -15,7 +15,7 @@
   [unsafe-array-proc (-> Array (-> Indexes Float))]
   [unsafe-build-array (-> Indexes (-> Indexes Float) Array)])
 
-(require/typed/check "array-utils.rkt"
+(require/typed "array-utils.rkt"
   [make-thread-local-indexes (-> Integer (-> Indexes))])
 
 (provide array-broadcasting

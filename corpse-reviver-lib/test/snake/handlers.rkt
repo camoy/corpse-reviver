@@ -3,10 +3,10 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 (require corpse-reviver/require-typed-check
          "data-adaptor.rkt")
-(require/typed/check "collide.rkt"
+(require/typed "collide.rkt"
                      [snake-wall-collide? (Snake . -> . Boolean)]
                      [snake-self-collide? (Snake . -> . Boolean)])
-(require/typed/check "motion.rkt"
+(require/typed "motion.rkt"
                      [world-change-dir (World Dir . -> . World)])
 
 (: handle-key : (World String . -> . World) )

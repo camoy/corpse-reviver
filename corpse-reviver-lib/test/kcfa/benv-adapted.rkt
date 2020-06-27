@@ -5,7 +5,7 @@
   "structs-adapted.rkt"
 )
 
-(require/typed/check "benv.rkt"
+(require/typed "benv.rkt"
   [#:struct Closure
     ([lam : Lam]
      [benv : BEnv])]

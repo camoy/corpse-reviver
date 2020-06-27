@@ -3,12 +3,12 @@
 (require corpse-reviver/require-typed-check
          "data-adaptor.rkt")
 
-(require/typed/check "const.rkt"
+(require/typed "const.rkt"
                      [BOARD-WIDTH Integer]
                      [BOARD-HEIGHT Integer])
-(require/typed/check "data.rkt"
+(require/typed "data.rkt"
                      [posn=? (Posn Posn . -> . Boolean)])
-(require/typed/check "motion-help.rkt"
+(require/typed "motion-help.rkt"
                      [snake-slither (Snake . -> . Snake)]
                      [snake-grow    (Snake . -> . Snake)])
 

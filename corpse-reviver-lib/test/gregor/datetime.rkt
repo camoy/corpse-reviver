@@ -10,12 +10,12 @@
   racket/match
   (only-in racket/math exact-round exact-floor))
 
-(require/typed/check
+(require/typed
   "hmsn.rkt"
     [NS/DAY Natural]
     [NS/SECOND Natural]
 )
-(require/typed/check
+(require/typed
   "date.rkt"
     [date->iso8601 (-> Date String)]
     [date->jdn (-> Date Integer)]
@@ -24,7 +24,7 @@
     [date (->* (Natural) (Month Natural) Date)]
     [date=? (-> Date Date Boolean)]
 )
-(require/typed/check "time.rkt"
+(require/typed "time.rkt"
     [time->iso8601 (-> Time String)]
     [time->ns (-> Time Natural)]
     [day-ns->time (-> Natural Time)]

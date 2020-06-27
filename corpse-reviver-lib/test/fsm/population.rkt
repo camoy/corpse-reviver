@@ -29,7 +29,7 @@
 ;; =============================================================================
 (require corpse-reviver/require-typed-check
  "automata-adapted.rkt")
-(require/typed/check "utilities.rkt"
+(require/typed "utilities.rkt"
  (choose-randomly
   (->* [[Listof Probability] Natural] [(U False Real)] [Listof Natural]))
 )

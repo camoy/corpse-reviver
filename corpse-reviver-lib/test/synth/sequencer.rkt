@@ -3,16 +3,16 @@
 (require corpse-reviver/require-typed-check
          "typed-data.rkt")
 
-(require/typed/check "array-struct.rkt"
+(require/typed "array-struct.rkt"
   [build-array (-> Indexes (-> Indexes Flonum) Array)])
 
-(require/typed/check "array-transform.rkt"
+(require/typed "array-transform.rkt"
   [array-append* ((Listof Array) -> Array)])
 
-(require/typed/check "synth.rkt"
+(require/typed "synth.rkt"
   [fs Natural])
 
-(require/typed/check "mixer.rkt"
+(require/typed "mixer.rkt"
   [mix (-> Weighted-Signal * Array)])
 
 (provide sequence note)

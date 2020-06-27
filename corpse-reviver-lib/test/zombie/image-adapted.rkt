@@ -2,7 +2,7 @@
 
 (require corpse-reviver/require-typed-check)
 
-(require/typed/check "image.rkt"
+(require/typed "image.rkt"
   (#:struct image ((impl : Any)))
   (empty-scene (-> Real Real Image))
   (place-image (-> Image Real Real Image Image))

@@ -20,7 +20,7 @@
   corpse-reviver/require-typed-check
   (only-in racket/file file->value)
 )
-(require/typed/check "bitstring.rkt"
+(require/typed "bitstring.rkt"
   [log2 (-> Index Index)]
   [natural->bitstring (-> Index Index String)])
 

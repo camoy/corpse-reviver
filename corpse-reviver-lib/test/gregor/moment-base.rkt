@@ -17,7 +17,7 @@
   racket/match
   "gregor-adapter.rkt"
 )
-(require/typed/check "datetime.rkt"
+(require/typed "datetime.rkt"
     [datetime->iso8601 (-> DateTime String)]
     )
 

@@ -2,7 +2,7 @@
 
 (require corpse-reviver/require-typed-check)
 
-(require/typed/check "streams.rkt"
+(require/typed "streams.rkt"
   [#:struct stream ([first : Natural]
                     [rest : (-> stream)])]
   [make-stream (-> Natural (-> stream) stream)]

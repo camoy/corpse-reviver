@@ -4,7 +4,7 @@
   corpse-reviver/require-typed-check
   "image-adapted.rkt"
 )
-(require/typed/check "zombie.rkt"
+(require/typed "zombie.rkt"
   (w0 World)
   (world-on-mouse (-> World (-> Real Real String World)))
   (world-on-tick (-> World (-> World)))

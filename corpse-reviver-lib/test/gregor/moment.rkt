@@ -12,22 +12,22 @@
   (only-in racket/math exact-round)
   "tzinfo-adapter.rkt"
 )
-(require/typed/check "hmsn.rkt"
+(require/typed "hmsn.rkt"
     [NS/SECOND Natural]
 )
-(require/typed/check "datetime.rkt"
+(require/typed "datetime.rkt"
     [datetime (->* (Natural) (Month Natural Natural Natural Natural Natural) DateTime)]
     [datetime->posix (-> DateTime Exact-Rational)]
     [posix->datetime (-> Exact-Rational DateTime)]
     [datetime->jd (-> DateTime Exact-Rational)]
     [datetime-add-seconds (-> DateTime Integer DateTime)]
 )
-(require/typed/check "moment-base.rkt"
+(require/typed "moment-base.rkt"
     [make-moment (-> DateTime Integer (U String #f) Moment)]
     [moment->iso8601 (-> Moment String)]
     [moment->iso8601/tzid (-> Moment String)]
 )
-(require/typed/check "offset-resolvers.rkt"
+(require/typed "offset-resolvers.rkt"
     [resolve-offset/raise (-> (U tzgap tzoverlap) DateTime (U String #f) (U Moment #f) Moment)]
 )
 

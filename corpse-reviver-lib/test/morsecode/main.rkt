@@ -10,10 +10,10 @@
   corpse-reviver/require-typed-check
   (only-in racket/file file->value))
 
-(require/typed/check "morse-code-strings.rkt"
+(require/typed "morse-code-strings.rkt"
   [string->morse (-> String String)])
 
-(require/typed/check "levenshtein.rkt"
+(require/typed "levenshtein.rkt"
                [string-levenshtein (String String -> Integer)])
 
 (define word-frequency-list "./../base/frequency.rktd")

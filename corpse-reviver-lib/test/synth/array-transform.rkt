@@ -5,17 +5,17 @@
          corpse-reviver/require-typed-check
          "typed-data.rkt")
 
-(require/typed/check "array-struct.rkt"
+(require/typed "array-struct.rkt"
   [array-shape (-> Array Indexes)]
   [unsafe-array-proc (-> Array (-> Indexes Float))]
   [array-default-strict! (-> Array Void)]
   [unsafe-build-array (-> Indexes (-> Indexes Float) Array)])
 
-(require/typed/check "array-broadcast.rkt"
+(require/typed "array-broadcast.rkt"
   [array-broadcast (-> Array Indexes Array)]
   [array-shape-broadcast (-> (Listof Indexes) Indexes)])
 
-(require/typed/check "array-utils.rkt"
+(require/typed "array-utils.rkt"
   [unsafe-vector-remove (-> Indexes Integer Indexes)]
   [vector-copy-all (-> Indexes Indexes)]
   [unsafe-vector-insert (-> Indexes Integer Integer Indexes)])

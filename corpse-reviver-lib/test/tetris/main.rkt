@@ -2,12 +2,12 @@
 
 (require "base-types.rkt")
 (require corpse-reviver/require-typed-check)
-(require/typed/check "aux.rkt"
+(require/typed "aux.rkt"
   [list-pick-random (-> (Listof Tetra) Tetra)]
   [tetras (Listof Tetra)])
-(require/typed/check "bset.rkt"
+(require/typed "bset.rkt"
    [blocks-overflow? (-> BSet Boolean)])
-(require/typed/check "world.rkt"
+(require/typed "world.rkt"
   [world-key-move (-> World String World)]
   [next-world (-> World World)])
 

@@ -3,7 +3,7 @@
 (require corpse-reviver/require-typed-check
  (only-in racket/file file->lines file->string))
 
-(require/typed/check "lcs.rkt"
+(require/typed "lcs.rkt"
   [longest-common-substring (-> String String String)])
 
 (define LARGE_TEST "../base/prufock.txt")

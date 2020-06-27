@@ -7,7 +7,7 @@
   "time-adapted.rkt"
 )
 
-(require/typed/check "denotable.rkt"
+(require/typed "denotable.rkt"
   [#:struct State
     ([call : Exp]
      [benv : BEnv]

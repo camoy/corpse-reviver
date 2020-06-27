@@ -28,7 +28,7 @@
   "gregor-adapter.rkt"
   racket/match)
 
-(require/typed/check
+(require/typed
   "ymd.rkt"
     [ymd->jdn (-> YMD Integer)]
     [jdn->ymd (-> Exact-Rational YMD)]

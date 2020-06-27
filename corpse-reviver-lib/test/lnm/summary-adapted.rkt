@@ -5,7 +5,7 @@
  "modulegraph-adapted.rkt"
  )
 
-(require/typed/check "summary.rkt"
+(require/typed "summary.rkt"
   [#:struct summary (
     [source : Path-String]
     [dataset : (Vectorof (Listof Index))]

@@ -16,18 +16,18 @@
   "core-adapter.rkt"
   "gregor-adapter.rkt"
   (only-in racket/math exact-floor))
-(require/typed/check
+(require/typed
   "ymd.rkt"
     [days-in-month (-> Natural Month (U 28 29 30 31))]
   )
-(require/typed/check "hmsn.rkt"
+(require/typed "hmsn.rkt"
     [NS/DAY Natural]
 )
-(require/typed/check "date.rkt"
+(require/typed "date.rkt"
     [date->ymd (-> Date YMD)]
     [date (->* (Natural) (Month Natural) Date)]
 )
-(require/typed/check "datetime.rkt"
+(require/typed "datetime.rkt"
     [datetime<? (-> DateTime DateTime Boolean)]
     [datetime->date (-> DateTime Date)]
     [date+time->datetime (-> Date Time DateTime)]

@@ -13,12 +13,12 @@
          "typed-zo-structs.rkt"
          racket/match)
 
-(require/typed/check "zo-string.rkt"
+(require/typed "zo-string.rkt"
   [zo->spec (-> zo Spec)]
   [zo->string (->* (zo) (Boolean) String)])
-(require/typed/check "zo-transition.rkt"
+(require/typed "zo-transition.rkt"
   [zo-transition (-> zo String (values (U zo (Listof zo)) Boolean))])
-(require/typed/check "zo-find.rkt"
+(require/typed "zo-find.rkt"
   [zo-find (->* [zo String] [(U Natural #f)] (Listof result))]
   [#:struct result ([zo : zo]
                     [path : (Listof zo)])])

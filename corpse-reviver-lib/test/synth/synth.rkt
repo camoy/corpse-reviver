@@ -11,10 +11,10 @@
          (only-in racket/unsafe/ops unsafe-fx+ unsafe-fx<)
          (only-in racket/math exact-floor))
 
-(require/typed/check "array-utils.rkt"
+(require/typed "array-utils.rkt"
   [next-indexes! (-> Indexes Integer Indexes Void)])
 
-(require/typed/check "array-struct.rkt"
+(require/typed "array-struct.rkt"
   [array? (-> Array Boolean)] ;; Cannot be "Any". Get error about passing higher-order value
   [array-shape (-> Array Indexes)]
   [unsafe-array-proc (-> Array (-> Indexes Float))]

@@ -3,7 +3,7 @@
 (require
   corpse-reviver/require-typed-check)
 
-(require/typed/check "modulegraph.rkt"
+(require/typed "modulegraph.rkt"
   [#:struct modulegraph (
     [project-name : String]
     [adjlist : (Listof (Listof String))])]

@@ -16,10 +16,10 @@
          "typed-zo-structs.rkt"
          racket/match)
 
-(require/typed/check "zo-transition.rkt"
+(require/typed "zo-transition.rkt"
   [zo-transition (-> zo String (values (U zo (Listof zo)) Boolean))])
 
-(require/typed/check "zo-string.rkt"
+(require/typed "zo-string.rkt"
   [zo->spec (-> zo Spec)])
 
 ;; -----------------------------------------------------------------------------

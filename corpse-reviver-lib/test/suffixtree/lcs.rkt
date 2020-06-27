@@ -5,7 +5,7 @@
          (except-in "typed-data.rkt" make-label)
          racket/list)
 
-(require/typed/check "label.rkt"
+(require/typed "label.rkt"
  [label->string (-> Label String)]
  [string->label (-> String Label)]
  [string->label/with-sentinel (-> String Label)]
@@ -15,13 +15,13 @@
  [vector->label (-> (Vectorof (U Char Symbol)) Label)]
  [label-ref (-> Label Integer (U Symbol Char))])
 
-(require/typed/check
+(require/typed
  "structs.rkt"
  [make-tree (-> Tree)]
  [tree-root (-> Tree Node)]
  )
 
-(require/typed/check "ukkonen.rkt"
+(require/typed "ukkonen.rkt"
  [tree-add! (-> Tree Label Void)])
 
 (: false-thunk (-> #f))

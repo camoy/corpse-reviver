@@ -6,7 +6,7 @@
   corpse-reviver/require-typed-check
   "structs-adapted.rkt"
 )
-(require/typed/check "ui.rkt"
+(require/typed "ui.rkt"
   [analyze (-> Exp MonoStore)]
   [format-mono-store (-> MonoStore String)])
 

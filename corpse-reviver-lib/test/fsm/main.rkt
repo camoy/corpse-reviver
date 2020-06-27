@@ -6,7 +6,7 @@
 ;; =============================================================================
 (require corpse-reviver/require-typed-check
  "automata-adapted.rkt")
-(require/typed/check "population.rkt"
+(require/typed "population.rkt"
  (build-random-population
   (-> Natural Population))
  (population-payoffs (-> Population [Listof Payoff]))
@@ -15,7 +15,7 @@
  (match-up*
   (-> Population Natural Population))
 )
-(require/typed/check "utilities.rkt"
+(require/typed "utilities.rkt"
  (relative-average (-> [Listof Real] Real Real))
 )
 

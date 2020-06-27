@@ -5,7 +5,7 @@
          corpse-reviver/require-typed-check
          "typed-data.rkt")
 
-(require/typed/check "array-utils.rkt"
+(require/typed "array-utils.rkt"
   [unsafe-array-index->value-index (-> Indexes Indexes Integer)]
   [check-array-shape-size (-> Symbol Indexes Integer)]
   [check-array-shape (-> (Vectorof Integer) (-> Nothing) Indexes)])

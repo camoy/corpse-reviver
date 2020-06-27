@@ -12,7 +12,7 @@
   (only-in racket/string string-join)
 )
 
-(require/typed/check "ai.rkt"
+(require/typed "ai.rkt"
   (atom-eval (-> BEnv Store (-> Exp Denotable)))
   (next (-> State (Setof State)))
   (explore (-> (Setof State) (Listof State) (Setof State)))

@@ -25,7 +25,7 @@
   "core-adapter.rkt"
   "gregor-adapter.rkt"
   racket/match)
-(require/typed/check
+(require/typed
   "hmsn.rkt"
     [hmsn->day-ns (-> HMSN Natural)]
     [day-ns->hmsn (-> Natural HMSN)]

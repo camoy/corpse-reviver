@@ -2,7 +2,7 @@
 
 (require "base-types.rkt")
 (require corpse-reviver/require-typed-check)
-(require/typed/check "tetras.rkt"
+(require/typed "tetras.rkt"
   [build-tetra-blocks (-> Color Real Real Real Real Real Real Real Real Real Real Tetra)]
   )
 

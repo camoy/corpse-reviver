@@ -2,7 +2,7 @@
 
 (require "base-types.rkt")
 (require corpse-reviver/require-typed-check)
-(require/typed/check "data.rkt"
+(require/typed "data.rkt"
                      [posn=? (-> Posn Posn Boolean)])
 
 ;; Determines if two blocks are the same (ignoring color).

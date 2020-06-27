@@ -2,12 +2,12 @@
 
 (require "base-types.rkt")
 (require corpse-reviver/require-typed-check)
-(require/typed/check "block.rkt"
+(require/typed "block.rkt"
   [block-rotate-ccw (-> Posn Block Block)]
   [block-rotate-cw (-> Posn Block Block)]
   [block=? (-> Block Block Boolean)]
   [block-move (-> Real Real Block Block)])
-(require/typed/check "consts.rkt"
+(require/typed "consts.rkt"
   [board-width Integer])
 
 ;; Determine if the block is in the set of blocks.

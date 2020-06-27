@@ -6,17 +6,17 @@
   "gregor-adapter.rkt"
   "tzinfo-adapter.rkt"
 )
-(require/typed/check "date.rkt"
+(require/typed "date.rkt"
     [date=? (-> Date Date Boolean)]
     [date (->* (Natural) (Month Natural) Date)]
     [date->iso8601 (-> Date String)]
 )
-(require/typed/check "time.rkt"
+(require/typed "time.rkt"
     [time=? (-> Time Time Boolean)]
     [time->iso8601 (-> Time String)]
     [make-time (->* (Integer) (Integer Integer Integer) Time)]
 )
-(require/typed/check "datetime.rkt"
+(require/typed "datetime.rkt"
     [datetime=? (-> DateTime DateTime Boolean)]
     [datetime<=? (-> DateTime DateTime Boolean)]
     [datetime (->* (Natural) (Month Natural Natural Natural Natural Natural) DateTime)]
@@ -25,7 +25,7 @@
     [datetime->iso8601 (-> DateTime String)]
     [datetime->posix (-> DateTime Exact-Rational)]
 )
-(require/typed/check "moment.rkt"
+(require/typed "moment.rkt"
     [current-timezone (Parameterof (U tz #f))]
     [moment (->* (Natural) (Month Natural Natural Natural Natural Natural (U tz #f) (-> (U tzgap tzoverlap) DateTime (U String #f) (U #f Moment) Moment)) Moment)]
     [moment=? (-> Moment Moment Boolean)]
@@ -33,7 +33,7 @@
     [moment->iso8601/tzid (-> Moment String)]
     [posix->moment (-> Exact-Rational tz Moment)]
 )
-(require/typed/check "clock.rkt"
+(require/typed "clock.rkt"
     [current-clock (Parameterof (-> Exact-Rational))]
     [today/utc (-> Date)]
     [today (->* () ((U tz #f)) Date)]
@@ -44,7 +44,7 @@
     [now/moment/utc (-> Moment)]
     [now/moment (-> Moment)]
 )
-(require/typed/check "difference.rkt"
+(require/typed "difference.rkt"
     [datetime-months-between (-> DateTime DateTime Integer)]
     [datetime-days-between (-> DateTime DateTime Integer)]
     [datetime-nanoseconds-between (-> DateTime DateTime Integer)]

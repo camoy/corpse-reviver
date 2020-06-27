@@ -2,12 +2,12 @@
 
 (require corpse-reviver/require-typed-check
          "data-adaptor.rkt")
-(require/typed/check "const.rkt"
+(require/typed "const.rkt"
                      [WORLD (-> World)])
-(require/typed/check "motion.rkt"
+(require/typed "motion.rkt"
                      [reset!           (-> Void)]
                      [world->world     (World . -> . World)])
-(require/typed/check "handlers.rkt"
+(require/typed "handlers.rkt"
                      [handle-key (World String . -> . World)]
                      [game-over? (World . -> . Boolean)])
 

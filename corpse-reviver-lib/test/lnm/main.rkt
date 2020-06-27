@@ -4,10 +4,10 @@
   corpse-reviver/require-typed-check
   "summary-adapted.rkt"
 )
-(require/typed/check "spreadsheet.rkt"
+(require/typed "spreadsheet.rkt"
   [rktd->spreadsheet (-> Path-String Path-String Symbol Void)]
 )
-(require/typed/check "lnm-plot.rkt"
+(require/typed "lnm-plot.rkt"
  [lnm-plot (-> Summary
                (Listof Index)
                Index

@@ -3,17 +3,17 @@
 (require corpse-reviver/require-typed-check
          "typed-data.rkt")
 
-(require/typed/check "sequencer.rkt"
+(require/typed "sequencer.rkt"
   [note (-> Symbol Natural Natural (Pairof Natural Natural))]
   [sequence (-> Natural (Listof (Pairof (U Natural #f) Natural)) Natural (-> Float (-> Indexes Float)) Array)])
 
-(require/typed/check "drum.rkt"
+(require/typed "drum.rkt"
   [drum (-> Natural Pattern Natural Array)])
 
-(require/typed/check "mixer.rkt"
+(require/typed "mixer.rkt"
   [mix (-> Weighted-Signal * Array)])
 
-(require/typed/check "synth.rkt"
+(require/typed "synth.rkt"
   [emit (-> Array (Vectorof Integer))]
   [sawtooth-wave (-> Float (-> Indexes Float))])
 

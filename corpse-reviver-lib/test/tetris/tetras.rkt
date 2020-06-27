@@ -2,7 +2,7 @@
 
 (require "base-types.rkt")
 (require corpse-reviver/require-typed-check)
-(require/typed/check "bset.rkt"
+(require/typed "bset.rkt"
    [blocks-intersect (-> BSet BSet BSet)]
    [blocks-move (-> Real Real BSet BSet)]
    [blocks-rotate-cw (-> Posn BSet BSet)]

@@ -2,7 +2,7 @@
 
 (require corpse-reviver/require-typed-check
          "data-adaptor.rkt")
-(require/typed/check "cut-tail.rkt"
+(require/typed "cut-tail.rkt"
                      [cut-tail ((NEListof Posn) . -> . (Listof Posn))])
 
 ;; next-head : Posn Direction -> Posn

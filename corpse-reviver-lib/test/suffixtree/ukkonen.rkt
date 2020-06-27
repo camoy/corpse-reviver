@@ -8,7 +8,7 @@
  (except-in "typed-data.rkt" make-label)
  corpse-reviver/require-typed-check
 )
-(require/typed/check "label.rkt"
+(require/typed "label.rkt"
   [label-length (-> Label Index)]
   [label-ref (-> Label Integer (U Symbol Char))]
   [label->string (-> Label String)]
@@ -21,7 +21,7 @@
   [sublabel (case-> (-> Label Index Label)
                     (-> Label Index Index Label))])
 
-(require/typed/check "structs.rkt"
+(require/typed "structs.rkt"
   [new-suffix-tree (-> Tree)]
   [node-find-child (-> Node Any (U Node #f))]
   [node-root? (-> Node Boolean)]

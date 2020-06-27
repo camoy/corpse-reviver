@@ -27,7 +27,7 @@
   [stream->list (-> (Sequenceof String) (Listof String))]
   [stream-filter (-> (-> String Boolean) (Sequenceof String) (Sequenceof String))]
 )
-(require/typed/check "bitstring.rkt"
+(require/typed "bitstring.rkt"
   [in-reach (-> String Index (Listof String))]
   [log2 (-> Index Index)]
 )

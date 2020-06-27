@@ -4,7 +4,7 @@
   corpse-reviver/require-typed-check
   "core-adapter.rkt")
 
-(require/typed/check "gregor-structs.rkt"
+(require/typed "gregor-structs.rkt"
   [#:struct Date ([ymd : YMD]
                   [jdn : Integer])]
   [#:struct Time ([hmsn : HMSN]

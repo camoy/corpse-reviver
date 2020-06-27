@@ -3,20 +3,20 @@
 (require corpse-reviver/require-typed-check
          "typed-data.rkt")
 
-(require/typed/check "array-struct.rkt"
+(require/typed "array-struct.rkt"
   [array-size (-> Array Integer)]
   [make-array (-> In-Indexes Flonum Array)]
   [build-array (-> In-Indexes (-> Indexes Float) Array)]
   [unsafe-vector->array (-> Indexes (Vectorof Float) Mutable-Array)])
 
-(require/typed/check "array-utils.rkt"
+(require/typed "array-utils.rkt"
   [array-shape-size (-> Indexes Integer)]
   [check-array-shape (-> In-Indexes (-> Nothing) Indexes)])
 
-(require/typed/check "array-transform.rkt"
+(require/typed "array-transform.rkt"
   [array-append* ((Listof Array) -> Array)])
 
-(require/typed/check "synth.rkt"
+(require/typed "synth.rkt"
   [fs Natural]
   [seconds->samples (-> Float Integer)])
 
