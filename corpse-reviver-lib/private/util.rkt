@@ -9,7 +9,7 @@
   [rename -topological-sort topological-sort (->* (hash?) (list?) list?)]
   [hash-remove* (-> hash? list? hash?)]
   [on (parametric->/c [A B] (-> (-> A B) (-> B B boolean?) (-> A A boolean?)))]
-  [satisfies (parametric->/c [A] (-> (-> A boolean?) A (or/c A #f)))]
+  [satisfies (parametric->/c [A] (-> A (-> A boolean?) (or/c A #f)))]
   [path->symbol (-> path-string? symbol?)]
   [symbol->path (-> symbol? path-string?)]
   [proper-list? predicate/c]
@@ -57,9 +57,9 @@
 (define ((on f <:) x y)
   (<: (f x) (f y)))
 
-;; (A → Boolean) → [Or A #f]
-;; If the values satisfies the predicate, return it. Otherwise give back false.
-(define (satisfies predicate? x)
+;; A (A → Boolean) → [Or A #f]
+;; If the value satisfies the predicate, return it. Otherwise give back false.
+(define (satisfies x predicate?)
   (and (predicate? x) x))
 
 ;; Path-String → Symbol
@@ -132,11 +132,13 @@
 (module+ test
   (require chk)
 
-  (with-chk (['name "topological sort"])
+  (with-chk (['name "topological-sort"])
     (chk
      (-topological-sort (hash 'a '(b) 'b '(c)) '(a b c))
      '(c b a)
      (-topological-sort (hash 'a '(b) 'b '(c)) '(a b))
+     '(b a)
+     (-topological-sort (hash 'a '(b) 'b '(c)))
      '(b a)))
 
   (with-chk (['name "hash-remove*"])
@@ -151,8 +153,8 @@
 
   (with-chk (['name "satisfies"])
     (chk
-     #:! #:t (satisfies even? 1)
-     (satisfies even? 2) 2))
+     #:! #:t (satisfies 1 even?)
+     (satisfies 2 even?) 2))
 
   (with-chk (['name "symbol->path, path->symbol"])
     (chk

@@ -27,7 +27,6 @@
 (require compiler/compilation-path
          compiler/compile-file
          mischief/for
-         racket/contract
          racket/file
          racket/function
          racket/list
@@ -152,7 +151,7 @@
     (and~> mpi
            collapse-module-path-index
            (resolve-module-path _ target)
-           (satisfies path? _)
+           (satisfies path?)
            path->symbol)))
 
 ;; [Listof Path-String] → Any
@@ -191,8 +190,8 @@
            chk
            rackunit
            syntax/parse/define
-           "syntax.rkt"
-           "../test/path.rkt")
+           "../test/path.rkt"
+           "syntax.rkt")
 
   (define goodbye-stx
     #'(module hello-world racket/base

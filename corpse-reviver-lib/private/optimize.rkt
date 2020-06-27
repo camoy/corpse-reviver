@@ -210,7 +210,7 @@
 
 ;; Mod → Path-String
 (define typed-module-target
-  (λ-and~>> (satisfies mod-typed?) mod-target))
+  (λ-and~> (satisfies mod-typed?) mod-target))
 
 ;; Blame Mod → Boolean
 (define ((blame-me? me) blm)

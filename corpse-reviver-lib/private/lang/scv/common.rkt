@@ -164,7 +164,7 @@
   ;; #f if it isn't a descriptor.
   (define descriptor->name
     (λ-and~> symbol->string
-             (satisfies (λ (x) (string-prefix? x "struct:")) _)
+             (satisfies (λ~> (string-prefix? "struct:")))
              (substring 7)
              string->symbol))
 
@@ -214,7 +214,7 @@
         (define path* (if (syntax? path) (syntax-e path) path))
         (and~> path*
                resolve-module-path
-               (satisfies path? _)
+               (satisfies path?)
                path->string)))
     (or (empty? opaque-mods)
         (for/and ([src (in-set srcs)])

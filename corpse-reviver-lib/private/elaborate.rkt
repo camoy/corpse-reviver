@@ -177,7 +177,7 @@
     (define lib* (syntax-e lib))
     (if (set-member? seen lib*)
         (values result seen)
-        (values (cons (syntax-property lib 'protect-scope #t) result)
+        (values (cons (protect lib) result)
                 (set-add seen lib*)))))
 
 ;; [Hash Symbol Syntax] → [Listof Syntax]
@@ -200,7 +200,7 @@
   (for/list ([(name ctc) (in-hash (bundle-exports bundle))]
              #:unless (member name omit))
     (define lib (hash-ref (bundle-libs bundle) name (λ () #f)))
-    (define name* (syntax-property (datum->syntax lib name) 'protect-scope #t))
+    (define name* (protect (datum->syntax lib name)))
     (if (and ctc safe?)
         #`(contract-out
            #,(syntax-property #`[#,name* #,ctc] 'parent-identifier name))
@@ -213,10 +213,8 @@
     (match-define (struct-data parent fields contracts) data)
     (define pred (format-symbol "~a?" name))
     (define lib (hash-ref (bundle-libs bundle) pred (λ () #f)))
-    (define name*
-      (syntax-property (datum->syntax lib name) 'protect-scope #t))
-    (define parent*
-      (syntax-property (datum->syntax lib parent) 'protect-scope #t))
+    (define name* (protect (datum->syntax lib name)))
+    (define parent* (protect (datum->syntax lib parent)))
     (define id+parent (if parent (list name* parent*) name*))
     (define field+ctcs (map list fields contracts))
     (if safe?
@@ -250,7 +248,6 @@
            "extract.rkt"
            "../test/path.rkt"
            "../test/expand.rkt")
-
   (define (uncontract stx)
     (syntax-case stx (contract-out)
       [(contract-out x) (syntax->datum #'x)]

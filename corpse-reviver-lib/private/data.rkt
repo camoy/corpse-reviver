@@ -33,7 +33,6 @@
      [contracts (listof syntax?)]))
 
   [current-write-contracts? (parameter/c boolean?)]
-
   [definitions/c contract?]
   [exports/c contract?]
   [structs/c contract?])
@@ -57,7 +56,7 @@
 ;;   typed? indicates if the module was originally typed,
 ;;   imports is a list of dependencies,
 ;;   positions maps a line-column pair to the binding it's contained in,
-;;   deps is an graph of contract dependencies.
+;;   deps is a graph of contract dependencies.
 (struct
  mod
  (target raw syntax contracts typed? imports positions deps)

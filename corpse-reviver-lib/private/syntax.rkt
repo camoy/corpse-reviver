@@ -15,6 +15,8 @@
   [syntax-deps (-> (or/c syntax? pair?) (listof module-path?))]
   [typed? (-> path-string? boolean?)]
 
+  [protect (-> syntax? syntax?)]
+  [protected? (-> syntax? boolean?)]
   [strip-context* (-> syntax? syntax?)]
   [lifted->l (-> syntax? (or/c syntax? #f))]
   [contains-id? (-> syntax? identifier? boolean?)]
@@ -55,7 +57,10 @@
 ;; Syntax Syntax → Syntax
 ;; Replace a syntax's source locations with another's source locations. The two
 ;; syntaxes should have the same structure.
-(define (replace-srcloc stx srcloc-stx)
+(define/contract (replace-srcloc stx srcloc-stx)
+  (->i ([stx0 syntax?] [stx1 syntax?])
+       #:pre (stx0 stx1) (syntax-datum-equal? stx0 stx1)
+       [_ syntax?])
   (let go ([e stx]
            [ref srcloc-stx])
     (cond
@@ -81,12 +86,6 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; syntax properties
 
-;; Syntax Symbol → [Listof Any]
-;; Retrieves a set of all the values associated with the key within the given
-;; syntax object and returns them as a list.
-(define (syntax-property-values stx key)
-  (set->list (syntax-property-values* stx key)))
-
 ;; Syntax Symbol → [Set Any]
 ;; Same as syntax-property-values, but returns as a set.
 (define (syntax-property-values* stx key)
@@ -97,6 +96,12 @@
       (if (proper-list? e)
           (apply set-union vals (map go e))
           vals))))
+
+;; Syntax Symbol → [Listof Any]
+;; Retrieves a set of all the values associated with the key within the given
+;; syntax object and returns them as a list.
+(define syntax-property-values
+  (compose set->list syntax-property-values*))
 
 ;; Syntax Any Any ... → Syntax
 ;; Attaches several syntax properties to the syntax.
@@ -147,9 +152,9 @@
 ;; Converts module path index to a relative module path.
 (define (module-path-index->module-path mpi)
   (define mp (collapse-module-path-index mpi))
-  (or (and~>> mp
-              (satisfies path?)
-              (simplify-path #f))
+  (or (and~> mp
+             (satisfies path?)
+             (simplify-path _ #f))
       mp))
 
 ;; Path-String → Boolean
@@ -163,16 +168,21 @@
 ;; etc
 
 ;; Syntax → Syntax
+;; Protects the scopes on this syntax from erasure during `strip-context*`.
+(define protect (λ~> (syntax-property 'protect-scope #t)))
+
+;; Syntax → Boolean
+;; Returns if the syntax has scopes protected.
+(define protected? (λ~> (syntax-property 'protect-scope)))
+
+;; Syntax → Syntax
 ;; Strip context from syntax, unless there is a protect-scope syntax property.
 (define (strip-context* stx)
   (let go ([e stx])
     (cond
-      [(syntax? e)
-       (if (syntax-property e 'protect-scope)
-           e
-           (datum->syntax #f (go (syntax-e e)) e e))]
-      [(pair? e) (cons (go (car e))
-                       (go (cdr e)))]
+      [(and (syntax? e) (protected? e)) e]
+      [(syntax? e) (datum->syntax #f (go (syntax-e e)) e e)]
+      [(pair? e) (cons (go (car e)) (go (cdr e)))]
       [else e])))
 
 ;; Syntax → [Or Syntax #f]
@@ -205,28 +215,28 @@
       [(-> _ ... x) #'x]
       [_ (error 'chase-codomain "~a isn't a function contract" ctc)])))
 
+;; Syntax Syntax → Boolean
+;; Returns whether two syntaxes have the same structure.
+(define syntax-datum-equal? (syntax->datum . on . equal?))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; syntax classes
 
 (define-syntax-class clause
   (pattern (~or x:id [x:id _])
            #:with (out ...) #'(x)
-           #:with opaque #'(define x #:opaque)
            #:with define #'(void))
 
   (pattern [#:opaque x pred]
            #:with (out ...) #'(x pred)
-           #:with opaque #'(define pred #:opaque)
            #:with define #'(define-type x (Opaque pred)))
 
   (pattern [#:struct x:id ([f:id : t] ...)]
            #:with (out ...) #'((struct-out x))
-           #:with opaque #'(struct x ([f : t] ...) #:transparent)
            #:with define #'(void))
 
   (pattern [#:struct [x:id y:id] ([f:id : t] ...)]
            #:with (out ...) #'((struct-out x))
-           #:with opaque #'(struct x y ([f : t] ...) #:transparent)
            #:with define #'(void)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -254,9 +264,7 @@
 
 
   (with-chk (['name "syntax-fetch"])
-    (define stx
-      (syntax-fetch untyped))
-    (chk (syntax->datum stx)
+    (chk (syntax->datum (syntax-fetch untyped))
          '(module untyped racket/base
             (#%module-begin "hello world"))))
 
@@ -281,11 +289,17 @@
      (syntax->datum (lifted->l #'lifted/1)) 'l1
      #:! #:t (lifted->l #'blah)))
 
+  (with-chk (['name "protect, protected?"])
+    (chk
+     #:! #:t (protected? #'_)
+     #:t (protected? (protect #'_))))
+
   (with-chk (['name "strip-context*"])
-    (chk #:eq (negate bound-identifier=?) (strip-context* #'x) #'x)
-    (chk #:eq bound-identifier=?
-         (strip-context* (syntax-property #'x 'protect-scope #t))
-         #'x))
+    (chk
+     #:! #:eq bound-identifier=? (strip-context* #'x) #'x
+     #:eq bound-identifier=?
+     (strip-context* (protect #'x))
+     #'x))
 
   (with-chk (['name "contains-id?"])
     (chk
@@ -300,4 +314,11 @@
                                'c #'(-> x y z w))
                          #'a)
          #'w))
+
+  (with-chk (['name "syntax-datum-equal?"])
+    (chk
+     #:t (syntax-datum-equal? #'(foo (bar baz))
+                              (datum->syntax #f '(foo (bar baz))))
+     #:! #:t (syntax-datum-equal? #'(foo (bar baz))
+                                  #'(foo (bar baz qux)))))
   )

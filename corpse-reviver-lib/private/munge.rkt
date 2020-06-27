@@ -3,8 +3,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; provide
 
-(require racket/contract
-         "data.rkt")
+(require racket/contract "data.rkt")
 (provide
  (contract-out
   [munge (-> symbol? syntax? libs/c syntax?)]))
@@ -12,8 +11,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; require
 
-(require racket/contract
-         racket/list
+(require racket/list
          syntax/parse
          syntax/strip-context
          threading
@@ -30,9 +28,7 @@
   (define stx*
     (let go ([stx stx])
       (syntax-parse stx
-        #:datum-literals (lambda
-                          equal?
-                          quote
+        #:datum-literals (quote
                           ->*
                           simple-result->
                           any-wrap/c
@@ -43,7 +39,6 @@
                           struct-predicate-procedure?
                           parameter/c
                           struct-type/c
-                          letrec
                           c->
                           c->*
                           typed-racket-hash/c
@@ -135,18 +130,18 @@
     [(x ...) (datum->syntax #f (map (λ~> (adjust-scopes libs)) (attribute x)))]
 
     ;; Protect scopes on foreign syntax. We don't consider contract identifiers
-    ;; foreign syntax since their meaning should come from SCV (i.e.
-    ;; fake-contract).
+    ;; foreign syntax since their meaning should come from SCV, in other words
+    ;; `soft-contract/fake-contract`.
     [x:id
      #:when (not (or (locally-defined-id? #'x) (expanded-or-contract-id? #'x)))
-     (syntax-property (contract-sc #'x) 'protect-scope #t)]
+     (protect (contract-sc #'x))]
 
-    ;; Identifier came from require/typed. We must attach that import-specific
-    ;; scope.
+    ;; Identifier came from require/typed. We must attach an import-specific
+    ;; scope to it. This prevents collisions from modules that are require/typed
+    ;; which have conflicting bindings.
     [x:id
      #:when (hash-has-key? libs (syntax-e #'x))
-     (syntax-property
-      (replace-context (hash-ref libs (syntax-e #'x)) #'x) 'protect-scope #t)]
+     (protect (replace-context (hash-ref libs (syntax-e #'x)) #'x))]
 
     ;; These scopes will be erased later.
     [x #'x]))
@@ -154,8 +149,7 @@
 ;; Identifier → Boolean
 ;; Returns if this is a locally defined contract and should have it's scopes
 ;; stripped. We can re-use the symbol->number function for this purpose.
-(define (locally-defined-id? x)
-  (symbol->number (syntax-e x)))
+(define locally-defined-id? (λ~> syntax-e symbol->number))
 
 ;; Identifier → Boolean
 ;; Returns whether identifier came from expansion or is a contract identifier.
@@ -220,16 +214,18 @@
      (munge-e #'struct-predicate-procedure?/c) '(λ (x) #f)
      (munge-e #'(struct-type/c _)) 'struct-type?
      (munge-e #'(flat-named-contract blah integer?)) 'integer?
+     (munge-e #'(parameter/c integer? integer?)) '(parameter/c integer?)
+     (munge-e #'(parameter/c integer? any/c)) '(parameter/c integer? any/c)
      (munge-e #'(flat-contract-predicate integer?)) 'integer?
      (munge-e #`(quote #,(void))) '(void)))
 
   (with-chk (['name "adjust-scopes"])
     (define adjust-scopes* (λ~> (adjust-scopes (hash))))
     (chk
-     #:t (syntax-property (adjust-scopes* #'blah) 'protect-scope)
-     #:t (syntax-property (adjust-scopes* lam-stx) 'protect-scope)
-     #:! #:t (syntax-property (adjust-scopes* x-stx) 'protect-scope)
-     #:! #:t (syntax-property (adjust-scopes* any/c-stx) 'protect-scope)))
+     #:t (protected? (adjust-scopes* #'blah))
+     #:t (protected? (adjust-scopes* lam-stx))
+     #:! #:t (protected? (adjust-scopes* x-stx))
+     #:! #:t (protected? (adjust-scopes* any/c-stx))))
 
   (with-chk (['name "locally-defined-id?"])
     (chk
