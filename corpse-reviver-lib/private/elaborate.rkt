@@ -59,8 +59,8 @@
     (syntax-parse raw-stx
       #:datum-literals (module)
       [(module ?name ?lang (?mb ?body ...))
-       #:with ?lang/opt (opt-lang #'?lang)
-       #'(module ?name ?lang/opt ?body ...)]))
+       #:with ?lang* (lang-scv #'?lang)
+       #'(module ?name ?lang* ?body ...)]))
   (mod target raw-stx (strip-context* stx) #f #f (imports target) #f #f))
 
 ;; [Listof Mod] → [Hash String Mod]
@@ -80,27 +80,17 @@
     (syntax-parse raw-stx
       #:datum-literals (module)
       [(module ?name ?lang (?mb ?body ...))
-       #:with ?lang/opt (opt-lang #'?lang)
+       #:with ?lang* (lang-scv #'?lang)
        #:with ?prov (provide-inject prov-bundle #f)
        #:with ?req  (require-inject ctcs)
        #:with ?bodies (mangle-provides #'(begin ?body ...))
-       #`(module ?name ?lang/opt
+       #`(module ?name ?lang*
            (module #%type-decl racket/base)
            ?req ?bodies ?prov)]))
   (~> stx
       strip-context*
       contract-sc
       (normalize-srcloc target)))
-
-;; Syntax Boolean → Syntax
-;; Returns the name of the no-check language for the new module.
-(define (opt-lang lang)
-  (match (syntax-e lang)
-    ['racket/base #'corpse-reviver/private/lang/scv/untyped/base]
-    ['racket #'corpse-reviver/private/lang/scv/untyped/full]
-    ['typed/racket/base #'corpse-reviver/private/lang/scv/typed/base]
-    ['typed/racket #'corpse-reviver/private/lang/scv/typed/full]
-    [else (error 'opt-lang "unknown language ~a" lang)]))
 
 ;; Syntax → Syntax
 ;; Hide provide forms and move them to the bottom of the module. This is
@@ -132,18 +122,18 @@
 ;; bundle.
 (define (require-inject ctcs)
   (define bundle (contracts-require ctcs))
-  (define prov (provide-inject bundle #t))
-  (define libs (require-libs bundle))
-  #`(begin
-      (module require/safe corpse-reviver/private/lang/scv/untyped/base
-        (require soft-contract/fake-contract
-                 #,@libs)
-        #,prov)
-      (require/define
-       'require/safe
-       #,(set-subtract (hash-keys (bundle-exports bundle))
-                       (structs-exports (bundle-structs bundle)))
-       #,(hash-keys (bundle-structs bundle)))))
+  (define structs (bundle-structs bundle))
+  (with-syntax ([?prov (provide-inject bundle #t)]
+                [(?lib ...) (require-libs bundle)]
+                [?imports
+                 (set-subtract (hash-keys (bundle-exports bundle))
+                               (structs-exports structs))]
+                [?names (hash-keys structs)])
+    #`(begin
+        (module require/safe corpse-reviver/private/lang/scv/untyped/base
+          (require ?lib ...)
+          ?prov)
+        (require/define 'require/safe ?imports ?names))))
 
 ;; Bundle Boolean → Syntax
 ;; Returns new provide syntax to be injected into a module according to the
@@ -152,15 +142,15 @@
 ;; anything which is why we use only-in.
 (define (provide-inject bundle with-contracts?)
   (define defn-hash (bundle-definitions bundle))
-  (with-syntax ([(exp ...)  (provide-exports bundle #t)]
-                [(ctc ...)  (if with-contracts?
-                                (hash-keys defn-hash)
-                                #'())]
-                [(dep ...)  (bundle-deps bundle)]
-                [(defn ...) (provide-defns defn-hash)])
-    #`(begin (provide exp ... ctc ...)
-             (require (only-in (combine-in dep ...)))
-             defn ...)))
+  (with-syntax ([(?exp ...)  (provide-exports bundle #t)]
+                [(?ctc ...)  (if with-contracts?
+                                 (hash-keys defn-hash)
+                                 #'())]
+                [(?dep ...)  (bundle-deps bundle)]
+                [(?defn ...) (provide-defns defn-hash)])
+    #`(begin (provide ?exp ... ?ctc ...)
+             (require (only-in (combine-in ?dep ...)))
+             ?defn ...)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; inject helpers
@@ -242,8 +232,8 @@
            racket/unsafe/ops
            rackunit
            soft-contract/main
-           "../test/path.rkt"
            "../test/expand.rkt"
+           "../test/path.rkt"
            "extract.rkt")
 
   (define (uncontract stx)

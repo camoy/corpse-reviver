@@ -63,15 +63,14 @@
   (require chk)
 
   (define correct-line (add1 (syntax-line #'_)))
-  (define stx (syntax-parent #'(-> g0 g1)
-                             'generated-contract0))
+  (define stx (syntax-parent #'(-> g0 g1) 'generated-contract0))
 
   (chk
    (contract-positions stx)
-   (hash (cons correct-line 40) 'generated-contract0
-         (cons correct-line 37) 'generated-contract0
-         (cons correct-line 33) 'generated-contract0
-         (cons correct-line 34) 'generated-contract0)
+   (hash (cons correct-line 38) 'generated-contract0
+         (cons correct-line 35) 'generated-contract0
+         (cons correct-line 31) 'generated-contract0
+         (cons correct-line 32) 'generated-contract0)
 
    (get-edges (contract-dependency stx))
    '((g0 generated-contract0) (g1 generated-contract0) (-> generated-contract0))

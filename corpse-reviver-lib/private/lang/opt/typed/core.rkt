@@ -19,7 +19,7 @@
                      syntax/strip-context
                      syntax/modresolve
                      syntax/parse
-                     "../../syntax.rkt")
+                     "../../../syntax.rkt")
          (only-in typed/racket/base require/typed require/typed/provide)
          typed/racket/unsafe
          racket/require)

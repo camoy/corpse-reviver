@@ -22,7 +22,7 @@
                      syntax/parse
                      syntax/strip-context
                      threading
-                     "../../util.rkt")
+                     "../../../util.rkt")
          racket/require)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;

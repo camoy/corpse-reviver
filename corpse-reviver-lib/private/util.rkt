@@ -16,7 +16,9 @@
   [flatten-cons (-> any/c set?)]
   [symbol->number (-> symbol? (or/c rational? #f))]
   [</id (-> symbol? symbol? boolean?)]
-  [make-struct-names (-> symbol? (listof symbol?) (listof symbol?))]))
+  [make-struct-names (-> symbol? (listof symbol?) (listof symbol?))]
+  [lang-scv (-> syntax? symbol?)]
+  [lang-opt (-> syntax? symbol?)]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; require
@@ -28,6 +30,7 @@
          racket/match
          racket/path
          racket/set
+         racket/syntax
          syntax/struct
          threading)
 
@@ -125,6 +128,29 @@
   (define struct-names
     (build-struct-names name* fields* #:constructor-name name* #f #f))
   (map syntax->datum struct-names))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; language
+
+;; Symbol → (Syntax → Symbol)
+;; Returns the name of the no-check language for the new module.
+(define ((make-lang kind) l)
+  (define (format-lib lang)
+    (format-symbol "corpse-reviver/private/lang/~a/~a" kind lang))
+  (match (syntax-e l)
+    ['racket/base (format-lib "untyped/base")]
+    ['racket (format-lib "untyped/full")]
+    ['typed/racket/base (format-lib "typed/base")]
+    ['typed/racket (format-lib "typed/full")]
+    [else (error 'make-lang "unknown language ~a" l)]))
+
+;; Syntax → Symbol
+;; Returns the language for analysis.
+(define lang-scv (make-lang 'scv))
+
+;; Syntax → Symbol
+;; Returns the language for optimization.
+(define lang-opt (make-lang 'opt))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; tests

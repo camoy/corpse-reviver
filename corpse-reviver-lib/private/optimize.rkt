@@ -126,7 +126,7 @@
     (syntax-parse (mod-raw m)
       #:datum-literals (module #%module-begin)
       [(module ?name ?lang (#%module-begin ?body ...))
-       #:with ?lang* (optimize-lang #'?lang)
+       #:with ?lang* (lang-opt #'?lang)
        (strip-context
         #`(module ?name ?lang*
             (#%module-begin
@@ -134,16 +134,6 @@
              ?body ...)))]))
   (debug "optimized ~a:\n~a" (mod-target m) stx)
   (struct-copy mod m [syntax stx]))
-
-;; Syntax → Syntax
-;; Returns the name of the SCV-CR language for the new module.
-(define (optimize-lang lang)
-  (match (syntax-e lang)
-    ['racket/base #'corpse-reviver/private/lang/untyped/base]
-    ['racket #'corpse-reviver/private/lang/untyped/full]
-    ['typed/racket/base #'corpse-reviver/private/lang/typed/base]
-    ['typed/racket #'corpse-reviver/private/lang/typed/full]
-    [else (error 'optimize-lang "unknown language ~a" lang)]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; unsafe
