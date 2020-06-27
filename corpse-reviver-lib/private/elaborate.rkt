@@ -13,8 +13,6 @@
 ;; require
 
 (require mischief/for
-         racket/contract
-         racket/list
          racket/match
          racket/set
          racket/syntax
@@ -84,7 +82,7 @@
       [(module ?name ?lang (?mb ?body ...))
        #:with ?lang/opt (opt-lang #'?lang)
        #:with ?prov (provide-inject prov-bundle #f)
-       #:with ?req  (require-inject ctcs #'?lang/nc)
+       #:with ?req  (require-inject ctcs)
        #:with ?bodies (mangle-provides #'(begin ?body ...))
        #`(module ?name ?lang/opt
            (module #%type-decl racket/base)
@@ -129,10 +127,10 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; inject
 
-;; Contracts Syntax Boolean → Syntax
+;; Contracts → Syntax
 ;; Returns new require syntax to be injected into a module according to the
 ;; bundle.
-(define (require-inject ctcs lang)
+(define (require-inject ctcs)
   (define bundle (contracts-require ctcs))
   (define prov (provide-inject bundle #t))
   (define libs (require-libs bundle))
@@ -203,7 +201,7 @@
     (define name* (protect (datum->syntax lib name)))
     (if (and ctc safe?)
         #`(contract-out
-           #,(syntax-property #`[#,name* #,ctc] 'parent-identifier name))
+           #,(syntax-parent #`[#,name* #,ctc] name))
         name*)))
 
 ;; Bundle Boolean → Syntax
@@ -219,9 +217,7 @@
     (define field+ctcs (map list fields contracts))
     (if safe?
         #`(contract-out
-           #,(syntax-property #`(struct #,id+parent #,field+ctcs)
-                              'parent-identifier
-                              name))
+           #,(syntax-parent #`(struct #,id+parent #,field+ctcs) name))
         #`(struct-out #,name*))))
 
 ;; Bundle → [Listof Syntax]
@@ -232,7 +228,7 @@
     (list->set
      (for/append ([v (in-hash-values (bundle-definitions bundle))])
        (syntax-deps v))))
-  (set-map dependencies (λ (x) (datum->syntax #f x))))
+  (set-map dependencies (λ~>> (datum->syntax #f))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; tests
@@ -240,14 +236,16 @@
 (module+ test
   (require chk
            racket/function
+           racket/list
            racket/path
            racket/port
            racket/unsafe/ops
            rackunit
            soft-contract/main
-           "extract.rkt"
            "../test/path.rkt"
-           "../test/expand.rkt")
+           "../test/expand.rkt"
+           "extract.rkt")
+
   (define (uncontract stx)
     (syntax-case stx (contract-out)
       [(contract-out x) (syntax->datum #'x)]

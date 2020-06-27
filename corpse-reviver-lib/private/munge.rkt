@@ -117,9 +117,7 @@
         ;; Catch-all
         [other #'other])))
 
-  (syntax-property (adjust-scopes stx* libs)
-                   'parent-identifier
-                   ctc-sym))
+  (syntax-parent (adjust-scopes stx* libs) ctc-sym))
 
 ;; Syntax Libs → Syntax
 ;; Strips context from identifiers that should be locally defined (references to

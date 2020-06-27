@@ -12,11 +12,9 @@
 ;; require
 
 (require mischief/for
-         racket/contract
          racket/match
          racket/sequence
          racket/set
-         racket/list
          syntax/parse
          syntax/strip-context
          threading
@@ -85,7 +83,7 @@
     [_ (values exports libs)]))
 
 ;; Exports Libs → Exports
-;; TODO
+;; Given exports, munge all the contracts.
 (define (munge-exports exports libs)
   (for/hash ([(name ctc) exports])
     (values name (munge name ctc libs))))
@@ -143,8 +141,8 @@
   (require chk
            racket/function
            racket/hash
-           "util.rkt"
-           "../test/expand.rkt")
+           "../test/expand.rkt"
+           "util.rkt")
 
   ;; [Hash Any Syntax] → [Hash Any SExpr]
   ;; Converts every value with syntax->datum.

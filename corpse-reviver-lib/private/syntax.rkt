@@ -17,6 +17,8 @@
 
   [protect (-> syntax? syntax?)]
   [protected? (-> syntax? boolean?)]
+  [syntax-parent (case-> (-> syntax? symbol? syntax?)
+                         (-> syntax? (or/c #f symbol?)))]
   [strip-context* (-> syntax? syntax?)]
   [lifted->l (-> syntax? (or/c syntax? #f))]
   [contains-id? (-> syntax? identifier? boolean?)]
@@ -175,6 +177,13 @@
 ;; Returns if the syntax has scopes protected.
 (define protected? (λ~> (syntax-property 'protect-scope)))
 
+;; Syntax {Syntax} → [Or #f Syntax]
+;; Sets the parent identifier of a piece of syntax, or returns it.
+(define (syntax-parent stx [parent #f])
+  (if parent
+      (syntax-property stx 'parent-identifier parent)
+      (syntax-property stx 'parent-identifier)))
+
 ;; Syntax → Syntax
 ;; Strip context from syntax, unless there is a protect-scope syntax property.
 (define (strip-context* stx)
@@ -293,6 +302,11 @@
     (chk
      #:! #:t (protected? #'_)
      #:t (protected? (protect #'_))))
+
+  (with-chk (['name "syntax-parent"])
+    (chk
+     (syntax-parent (syntax-parent #'_ 'foo))
+     'foo))
 
   (with-chk (['name "strip-context*"])
     (chk

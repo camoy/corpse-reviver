@@ -1,6 +1,7 @@
 #lang racket/base
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; provide
 
 (require racket/contract)
 (provide
@@ -9,15 +10,18 @@
   [contract-dependency (-> syntax? unweighted-graph?)]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; require
 
 (require graph
          racket/function
          racket/hash
          racket/list
          syntax/parse
-         threading)
+         threading
+         "syntax.rkt")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; functions
 
 ;; Syntax → [Hash [Cons Integer Integer] Symbol]
 ;; Returns a hash that maps line-column pairs to the contract definition that
@@ -28,7 +32,7 @@
              [stx stx])
       (syntax-parse stx
         [(x ...)
-         (define parent* (or (syntax-property stx 'parent-identifier) parent))
+         (define parent* (or (syntax-parent stx) parent))
          (define rest (append-map (λ~>> (go parent*)) (attribute x)))
          (if parent*
              `(((,(syntax-line stx) . ,(syntax-column stx)) . ,parent*) . ,rest)
@@ -47,20 +51,20 @@
              [stx stx])
       (syntax-parse stx
         [(x ...)
-         (define parent* (or (syntax-property stx 'parent-identifier) parent))
+         (define parent* (or (syntax-parent stx) parent))
          (append-map (λ~>> (go parent* )) (attribute x))]
         [x:id (if parent (list (list (syntax-e #'x) parent)) null)]
         [_ null]))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; tests
 
 (module+ test
   (require chk)
 
   (define correct-line (add1 (syntax-line #'_)))
-  (define stx (syntax-property #'(-> g0 g1)
-                               'parent-identifier
-                               'generated-contract0))
+  (define stx (syntax-parent #'(-> g0 g1)
+                             'generated-contract0))
 
   (chk
    (contract-positions stx)
