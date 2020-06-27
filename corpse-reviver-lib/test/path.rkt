@@ -42,6 +42,11 @@
   ut-ut-client "ut-ut/client.rkt"
   ut-ut-server "ut-ut/server.rkt"
 
+  good-struct-server "good-struct/server.rkt"
+  good-struct-main "good-struct/main.rkt"
+  bad-struct-server "bad-struct/server.rkt"
+  bad-struct-main "bad-struct/main.rkt"
+
   sieve-main "sieve-fast/main.rkt"
   streams "sieve-fast/streams.rkt"
 

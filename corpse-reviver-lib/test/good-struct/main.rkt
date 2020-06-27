@@ -1,5 +1,7 @@
 #lang racket/base
 
+(provide (struct-out posn))
+
 (require "server.rkt")
 
 (define (definitely-ok x)

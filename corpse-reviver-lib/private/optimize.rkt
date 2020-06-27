@@ -13,14 +13,12 @@
 
 (require graph
          mischief/for
-         racket/function
          racket/hash
          racket/list
          racket/match
          racket/math
          racket/pretty
          racket/set
-         racket/struct
          soft-contract/main
          soft-contract/parse/signatures
          syntax/parse
@@ -28,7 +26,6 @@
          threading
          "compile.rkt"
          "data.rkt"
-         "elaborate.rkt"
          "logging.rkt"
          "struct.rkt"
          "util.rkt")
@@ -43,9 +40,7 @@
 ;; are known false positives by Typed Racket's soundness).
 (define (optimize mods)
   (debug "optimize: ~a" (pretty-format mods))
-  (define mod-hash (mods->hash mods))
-
-  (with-continuation-mark 'mod-hash mod-hash
+  (with-continuation-mark 'mod-hash (mods->hash mods)
     (let ()
       ;; Without compiling modules with the elaborated source, SCV will give
       ;; mysterious missing identifier errors!
@@ -75,11 +70,10 @@
              (go opaques*)])])
         (measure 'analyze
           (with-continuation-mark 'opaques opaques
-            (with-continuation-mark 'scv? #t
-              ;; HACK: We need this only for the benchmark-dependent patches.
-              ;; Remove this once TR #837 is resolved.
-              (with-patched-typed-racket
-                (λ () (verify-modules targets stxs)))))))))
+            ;; HACK: We need this only for the benchmark-dependent patches.
+            ;; Remove this once TR #837 is resolved.
+            (with-patched-typed-racket
+              (λ () (verify-modules targets stxs))))))))
   (info 'blame -blms)
   (define blms (filter (untyped-blame? mods) -blms))
   (debug "blames (filtered): ~a" blms)
@@ -232,13 +226,13 @@
 (module+ test
   (require chk
            racket/list
-           racket/pretty
            racket/port
+           racket/pretty
            racket/unsafe/ops
            rackunit
-           "elaborate.rkt"
+           "../test/mod.rkt"
            "../test/path.rkt"
-           "../test/mod.rkt")
+           "elaborate.rkt")
 
   (cleanup-bytecode)
 
@@ -279,4 +273,22 @@
      (chk-optimize ty-ut-server-mod ty-ut-client-mod)
      (chk-optimize ut-ty-server-mod ut-ty-client-mod)
      (chk-optimize ut-ut-server-mod ut-ut-client-mod))
+
+   (with-chk (['name "optimize (good and bad struct)"])
+     (define (posn+posn-x server main)
+       (define mods (optimize (list server main)))
+       (define main-path (string->path (mod-target main)))
+       (compile-modules mods)
+       (parameterize ([current-namespace (make-base-namespace)])
+         (values (dynamic-require main-path 'posn)
+                 (dynamic-require main-path 'posn-x))))
+     (define-values (posn-chap posn-x-chap)
+       (posn+posn-x bad-struct-server-mod bad-struct-main-mod))
+     (define-values (posn-unchap posn-x-unchap)
+       (posn+posn-x good-struct-server-mod good-struct-main-mod))
+     (chk
+      #:t (chaperone? posn-chap)
+      #:t (chaperone? posn-x-chap)
+      #:! #:t (chaperone? posn-unchap)
+      #:! #:t (chaperone? posn-x-unchap)))
   )
