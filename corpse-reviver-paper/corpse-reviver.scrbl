@@ -24,4 +24,3 @@
 @include-section{evaluation.scrbl}
 @include-section{related.scrbl}
 @include-section{conclusion.scrbl}
-@include-section{documentation.scrbl}
