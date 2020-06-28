@@ -6,6 +6,10 @@
 @(define-runtime-path DATA "baseline")
 @(define paths (directory-list DATA #:build? DATA))
 
+@(define-runtime-path OPT-DATA "opt")
+@(define opt-paths (directory-list OPT-DATA #:build? OPT-DATA))
+
+
 @title{Evaluation}
 
 We claim that
@@ -201,6 +205,9 @@ and did not resample.
 
 @exact-grid[paths]
 
+@overhead-grid[opt-paths]
+
+@exact-grid[opt-paths]
 
 @;\begin{figure*}
 @;  {\renewcommand{\arraystretch}{5}
