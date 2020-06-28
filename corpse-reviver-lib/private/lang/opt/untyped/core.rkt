@@ -3,8 +3,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; provide
 
-(provide (rename-out [require racket:require])
-         (rename-out [-require require])
+(provide (rename-out [-require require])
          (rename-out [-provide provide])
          (all-from-out racket/require)
          register-unsafe-hash!)
@@ -49,10 +48,10 @@
          (hash-has-key? unsafe-hash src)
          (not (member src-id (hash-ref unsafe-hash src)))))
 
-  ;; Syntax → Syntax
+  ;; Syntax → (Syntax → Syntax)
   ;; Optimize a require spec by selectively importing safe bindings from the
   ;; unsafe submodule.
-  (define (optimize-spec spec)
+  (define ((optimize-spec stx) spec)
     (define-values (imports _) (expand-import spec))
     (define safe-imports (filter safe-import? imports))
     (define exclude (map import-local-id safe-imports))
@@ -64,9 +63,11 @@
     (define renames
       (for/list ([safe-import (in-list safe-imports)])
         (list (import-src-sym safe-import) (import-local-id safe-import))))
-    #`(combine-in
-       (except-in #,spec #,@exclude)
-       (only-in (combine-in #,@unsafe-mods) #,@renames))))
+    (replace-context
+     stx
+     #`(combine-in
+        (except-in #,spec #,@exclude)
+        (only-in (combine-in #,@unsafe-mods) #,@renames)))))
 
 ;; Registers the unsafe hash for use in the require form.
 (define-syntax (register-unsafe-hash! stx)
@@ -79,9 +80,8 @@
 (define-syntax (-require stx)
   (syntax-parse stx
     [(_ spec ...)
-     (replace-context
-      stx
-      #`(racket:require #,@(map optimize-spec (syntax->list #'(spec ...)))))]))
+     #`(require #,@(map (optimize-spec stx)
+                        (syntax->list #'(spec ...))))]))
 
 ;; Provide, but also with an unsafe submodule.
 (define-syntax (-provide stx)

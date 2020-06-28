@@ -58,7 +58,7 @@
   )
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; require macros
+;; require helpers
 
 (begin-for-syntax
   ;; Syntax → Syntax
@@ -259,6 +259,9 @@
                       (extract-struct-info (syntax-local-value #`#,binding)))))
       (eval 'cheater-x)))
   )
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; require macro
 
 ;; Need to check require forms for imports from opaque modules. If there are
 ;; imports from an opaque module, we need to filter them out and redefine them
