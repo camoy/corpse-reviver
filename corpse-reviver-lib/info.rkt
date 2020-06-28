@@ -20,7 +20,7 @@
     "graph"
     "lang-file"
     "mischief"
-    "git://github.com/camoy/soft-contract.git#for-scv-cr"
+    "git://github.com/philnguyen/soft-contract.git"
     "threading"
     "typed-racket-lib"
     "typed-racket-more"))

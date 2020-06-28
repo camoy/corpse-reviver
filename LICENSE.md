@@ -1,4 +1,4 @@
-Copyright (C) 2020 by Cameron Moy <camoy@ccs.neu.edu>
+Copyright (C) 2020 by Cameron Moy <mail@camoy.name>
 
 Permission to use, copy, modify, and/or distribute this software for any purpose
 with or without fee is hereby granted.
