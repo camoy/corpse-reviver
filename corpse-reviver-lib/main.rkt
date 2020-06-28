@@ -51,11 +51,16 @@
 (define (compile-files/scv-cr -targets)
   (measure 'total
     (define targets (map canonicalize-path -targets))
-    (for-each delete-bytecode targets)
-    (compile-files targets)
-    (define mods (sort-by-dep (map make-mod targets)))
-    (define opt-mods (optimize mods))
-    (compile-modules opt-mods)))
+    (with-handlers ([exn:fail?
+                     (λ (e)
+                       ;; Cleanup bad bytecode on an exception
+                       (for-each delete-bytecode targets)
+                       (raise e))])
+      (for-each delete-bytecode targets)
+      (compile-files targets)
+      (define mods (sort-by-dep (map make-mod targets)))
+      (define opt-mods (optimize mods))
+      (compile-modules opt-mods))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; test
