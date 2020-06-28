@@ -1,5 +1,7 @@
 #lang scribble/acmart @acmsmall
 
+@(require "private/cite.rkt")
+
 @title{Introduction}
 
 Gradual typing~\cite{local:siek2006gradual,dvanhorn:TobinHochstadt2006Interlanguage} has become a popular approach to
@@ -11,7 +13,7 @@ accommodating the existing idioms and programs of popular languages
 such as Ruby, PHP, JavaScript, and others.
 
 The key technology enabling this combination to be safe is @emph{higher-order
-contracts}~\cite{dvanhorn:Findler2002Contracts}, which allow the typed portion of
+contracts} \cite{dvanhorn:Findler2002Contracts}, which allow the typed portion of
 a program to protect its invariants, even when higher-order values such
 as functions, objects, or mutable arrays flow back and forth between
 components.
@@ -31,7 +33,7 @@ indirection,
 and checking.
 
 Recent large-scale studies, as well as significant anecdotal evidence,
-have found this cost to be unacceptably high~\cite{local:takikawa2016, local:greenman2019}.
+have found this cost to be unacceptably high@~local:cite{takikawa2016 greenman2019}.
 Some realistic programs, when migrated in a specific way,
 can exhibit slowdowns over $20\times$,
 likely rendering them unusable for their actual purpose.
@@ -43,7 +45,7 @@ up to $8\times$ slowdown~\cite{local:kuhlenschmidt2019toward}.
 Faced with this obstacle, many systems abandon some or all of
 the semantic advantages of gradual typing, in several cases giving up
 entirely on
-run-time enforcement of types~\cite{local:greenman2018spectrum}. TypeScript~\cite{local:ts}, Flow~\cite{local:flow},
+run-time enforcement of types @~local:cite{greenman2018spectrum}. TypeScript~\cite{local:ts}, Flow~\cite{local:flow},
 MyPy~\cite{local:mypy}, and others omit dynamic checks, making their type
 systems unsound. Others, such as Grace~\cite{local:grace} and
 Reticulated Python~\cite{local:vitousek2014design}, keep some dynamic checking, but give up the full

@@ -13,6 +13,7 @@
 (define deps
   '("base"
     "gtp-plot"
+    "pict-abbrevs"
     "scribble-lib"
     "threading-lib"))
 

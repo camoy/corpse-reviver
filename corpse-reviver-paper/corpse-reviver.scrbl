@@ -1,7 +1,8 @@
 #lang scribble/acmart @acmsmall @review @anonymous
 
 @(require scribble/core
-          scribble/html-properties)
+          scribble/html-properties
+          "private/cite.rkt")
 
 @(define style
    (make-style "style" (list (make-css-addition "style.css")
@@ -24,3 +25,4 @@
 @include-section{evaluation.scrbl}
 @include-section{related.scrbl}
 @include-section{conclusion.scrbl}
+@(local:generate-bibliography)

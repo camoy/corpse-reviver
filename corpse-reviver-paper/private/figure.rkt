@@ -14,6 +14,7 @@
          gtp-plot/plot
          gtp-plot/sample-info
          json
+         pict-abbrevs
          racket/hash
          racket/path
          racket/list
@@ -31,6 +32,8 @@
 (*OVERHEAD-MAX* 10)
 (*OVERHEAD-PLOT-HEIGHT* 200)
 (*OVERHEAD-PLOT-WIDTH* 400)
+#;(*BRUSH-COLOR-CONVERTER* (λ _ (hex-triplet->color% #xfdb863 #;#xb2abd2)))
+#;(*PEN-COLOR-CONVERTER* (λ _ (hex-triplet->color% #xfdb863 #;#xb2abd2)))
 (*GRID-NUM-COLUMNS* 2)
 
 ;(define analysis (make-paths->hash "analysis" paths))
