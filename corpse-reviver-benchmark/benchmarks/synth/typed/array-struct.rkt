@@ -39,16 +39,16 @@
     (cond
       [(= dims 0)  (f ds 0)]
       [else
-       (define js : Indexes (make-vector dims 0))
+       (define: js : Indexes (make-vector dims 0))
        (case dims
-         [(1)  (define d0 : Integer (vector-ref ds 0))
+         [(1)  (define: d0 : Integer (vector-ref ds 0))
                (let j0-loop : Void ([j0 : Integer  0])
                  (when (j0 . < . d0)
                    (vector-set! js 0 j0)
                    (f js j0)
                    (j0-loop (+ j0 1))))]
-         [(2)  (define d0 : Integer (vector-ref ds 0))
-               (define d1 : Integer (vector-ref ds 1))
+         [(2)  (define: d0 : Integer (vector-ref ds 0))
+               (define: d1 : Integer (vector-ref ds 1))
                (let j0-loop : Void ([j0 : Integer  0]
                                      [j : Integer  0])
                  (when (j0 . < . d0)
@@ -64,7 +64,7 @@
          [else  (let i-loop : Integer ([i : Integer  0]
                                                    [j : Integer  0])
                   (cond [(i . < . dims)
-                        (define di : Integer (vector-ref ds i))
+                        (define: di : Integer (vector-ref ds i))
                          (let ji-loop : Integer ([ji : Integer  0]
                                                              [j : Integer  j])
                            (cond [(ji . < . di)
@@ -83,16 +83,16 @@
     (cond
       [(= dims 0)  (f ds)]
       [else
-       (define js : Indexes (make-vector dims 0))
+       (define: js : Indexes (make-vector dims 0))
        (case dims
-         [(1)  (define d0 : Integer (vector-ref ds 0))
+         [(1)  (define: d0 : Integer (vector-ref ds 0))
                (let j0-loop : Void ([j0 : Integer  0])
                  (when (j0 . < . d0)
                    (vector-set! js 0 j0)
                    (f js)
                    (j0-loop (+ j0 1))))]
-         [(2)  (define d0 : Integer (vector-ref ds 0))
-               (define d1 : Integer (vector-ref ds 1))
+         [(2)  (define: d0 : Integer (vector-ref ds 0))
+               (define: d1 : Integer (vector-ref ds 1))
                (let j0-loop : Void ([j0 : Integer  0])
                  (when (j0 . < . d0)
                    (vector-set! js 0 j0)
@@ -105,7 +105,7 @@
                             (j0-loop (+ j0 1))]))))]
          [else  (let i-loop : Void ([i : Integer  0])
                   (cond [(i . < . dims)
-                         (define di : Integer (vector-ref ds i))
+                         (define: di : Integer (vector-ref ds i))
                          (let ji-loop : Void ([ji : Integer  0])
                            (when (ji . < . di)
                              (vector-set! js i ji)
@@ -122,13 +122,13 @@
       [(= dims 0)  (f 0)]
       [else
        (case dims
-         [(1)  (define d0 : Integer (vector-ref ds 0))
+         [(1)  (define: d0 : Integer (vector-ref ds 0))
                (let j0-loop : Void ([j0 : Integer  0])
                  (when (j0 . < . d0)
                    (f j0)
                    (j0-loop (+ j0 1))))]
-         [(2)  (define d0 : Integer (vector-ref ds 0))
-               (define d1 : Integer (vector-ref ds 1))
+         [(2)  (define: d0 : Integer (vector-ref ds 0))
+               (define: d1 : Integer (vector-ref ds 1))
                (let j0-loop : Void ([j0 : Integer  0]
                                      [j : Integer  0])
                  (when (j0 . < . d0)
@@ -142,7 +142,7 @@
          [else  (let i-loop : Integer ([i : Integer  0]
                                                    [j : Integer  0])
                   (cond [(i . < . dims)
-                         (define di : Integer (vector-ref ds i))
+                         (define: di : Integer (vector-ref ds i))
                          (let ji-loop : Integer ([ji : Integer  0]
                                                              [j : Integer  j])
                            (cond [(ji . < . di)
@@ -157,14 +157,14 @@
           [dims : Integer  (vector-length ds)])
     (define-syntax-rule (g js j)
       ((ann g-expr (Indexes Integer -> A)) js j))
-    (define size : Integer
+    (define: size : Integer
       (let loop : Integer ([k : Integer  0] [size : Integer  1])
         (cond [(k . < . dims)  (loop (+ k 1) (fx* size (vector-ref ds k)))]
               [else  size])))
     (cond [(= size 0)  (ann (vector) (Vectorof A))]
           [else
-           (define js0 : Indexes (make-vector dims 0))
-           (define vs : (Vectorof A) (make-vector size (g js0 0)))
+           (define: js0 : Indexes (make-vector dims 0))
+           (define: vs : (Vectorof A) (make-vector size (g js0 0)))
            (for-each-array+data-index ds (λ (js j) (vector-set! vs j (g js j))))
            vs])))
 

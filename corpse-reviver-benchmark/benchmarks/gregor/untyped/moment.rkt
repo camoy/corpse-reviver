@@ -6,7 +6,7 @@
  corpse-reviver/opaque
   corpse-reviver/require-typed-check
   racket/match
-  "../base/untyped.rkt"
+  "untyped.rkt"
   "gregor-structs.rkt"
   (only-in racket/math exact-round)
   "tzinfo-adapter.rkt"

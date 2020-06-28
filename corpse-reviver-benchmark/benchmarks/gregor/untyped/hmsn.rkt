@@ -16,7 +16,7 @@
  day-ns->hmsn)
 
 (require
-  "../base/untyped.rkt"
+  "untyped.rkt"
   "core-structs.rkt"
   racket/match)
 

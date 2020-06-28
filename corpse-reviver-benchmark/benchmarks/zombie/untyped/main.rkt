@@ -1,7 +1,7 @@
 #lang racket/base
 
 (require
-  "../base/untyped.rkt")
+  "untyped.rkt")
 (require (only-in "zombie.rkt"
   w0
   world-on-mouse

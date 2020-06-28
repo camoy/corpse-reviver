@@ -6,7 +6,7 @@
 ;; come lexically before their use
 (require
   corpse-reviver/require-typed-check
-  "../base/types.rkt"
+  "types.rkt"
   "gregor-adapter.rkt"
   racket/match
   (only-in racket/math exact-round)

@@ -24,7 +24,7 @@
 (require
   racket/match
   "core-structs.rkt"
-  "../base/untyped.rkt"
+  "untyped.rkt"
   (only-in racket/math exact-truncate exact-floor))
 
 ;; =============================================================================

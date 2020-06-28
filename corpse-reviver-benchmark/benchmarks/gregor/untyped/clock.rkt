@@ -26,7 +26,7 @@
 
 (require
   corpse-reviver/require-typed-check
-  "../base/untyped.rkt"
+  "untyped.rkt"
   "gregor-structs.rkt"
 )
 (require (only-in "moment.rkt"

@@ -83,7 +83,7 @@
 (define (ensure-tex filename)
   (define path (or (and (path? filename) filename)
                    (string->path filename)))
-  (unless (bytes=? (string->bytes/utf-8 "tex") (or (filename-extension path) #""))
+  (unless (bytes=? (string->bytes/utf-8 "tex") (or (filename-extension path) (string->bytes/utf-8 "")))
     (parse-error "Cannot parse module graph from non-tex file '~a'" filename))
   ;; Remove anything past the first hyphen in the project name
   (define project-name (path->project-name path))

@@ -72,7 +72,7 @@
                            [output #f]
                            [format 'tab])
   (define vec
-    (for/vector : (Vectorof (Listof Index)) ((x (in-vector (assert (file->value input-filename) vector?))))
+    (for/vector : (Vectorof (Listof Index)) ((x (in-list (vector->list (assert (file->value input-filename) vector?)))))
       (listof-index x)))
   (define suffix (symbol->extension format))
   (define out (or output (path-replace-suffix input-filename suffix)))

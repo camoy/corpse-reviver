@@ -14,7 +14,7 @@
 ;; ----------------------------------------------------------------------------
 
 (require
-  "../base/untyped.rkt"
+  "untyped.rkt"
   (only-in racket/file file->value)
   (only-in "bitstring.rkt" log2 natural->bitstring)
 )
@@ -66,7 +66,7 @@
                            [output #f]
                            [format 'tab])
   (define vec
-    (for/vector ((x (in-vector (assert (file->value input-filename) vector?))))
+    (for/vector ((x (in-list (vector->list (assert (file->value input-filename) vector?)))))
       (listof-index x)))
   (define suffix (symbol->extension format))
   (define out (or output (path-replace-suffix input-filename suffix)))

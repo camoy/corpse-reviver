@@ -21,7 +21,7 @@
 ;;; @end legal
 
 #lang racket/base
-(require "../base/untyped.rkt")
+(require "untyped.rkt")
 
 ;;; @section Introduction
 ;;;

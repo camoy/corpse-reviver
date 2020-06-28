@@ -15,7 +15,7 @@
          (only-in racket/unsafe/ops unsafe-fx+ unsafe-fx<)
          (only-in "array-utils.rkt" next-indexes!)
          (only-in racket/math exact-floor)
-         "../base/untyped.rkt")
+         "untyped.rkt")
 
 ;; --- from array-sequence.rkt
 

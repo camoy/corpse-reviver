@@ -8,7 +8,7 @@
  (struct-out HMSN)
 )
 
-(require "../base/types.rkt")
+(require "types.rkt")
 
 ;; TODO precise types for year, day, hour, second?
 ;; (the others are not feasible)

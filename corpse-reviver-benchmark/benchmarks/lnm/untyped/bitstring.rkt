@@ -10,7 +10,7 @@
 ;; -----------------------------------------------------------------------------
 
 (require
-  "../base/untyped.rkt"
+  "untyped.rkt"
   (only-in racket/math exact-ceiling)
   (only-in racket/list remove-duplicates)
   corpse-reviver/opaque

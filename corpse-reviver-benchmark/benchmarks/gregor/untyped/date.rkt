@@ -22,7 +22,7 @@
 
 (require
  corpse-reviver/opaque
-  "../base/untyped.rkt"
+  "untyped.rkt"
   "core-structs.rkt"
   "gregor-structs.rkt"
   corpse-reviver/require-typed-check

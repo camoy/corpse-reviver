@@ -10,7 +10,7 @@
          (only-in "array-broadcast.rkt" array-broadcast array-shape-broadcast)
          (only-in "array-utils.rkt" unsafe-vector-remove vector-copy-all unsafe-vector-insert)
          "data.rkt"
-         "../base/untyped.rkt")
+         "untyped.rkt")
 
 (provide array-append*)
 

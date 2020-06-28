@@ -2,7 +2,7 @@
 
 (require
   corpse-reviver/require-typed-check
-  "../base/types.rkt"
+  "types.rkt"
   "gregor-adapter.rkt"
   "tzinfo-adapter.rkt"
 )

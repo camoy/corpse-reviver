@@ -13,7 +13,7 @@
          (only-in racket/string string-join)
          (only-in racket/list empty? first rest)
          "data.rkt"
-         "../base/untyped.rkt")
+         "untyped.rkt")
 
 (provide array-broadcasting
          array-broadcast

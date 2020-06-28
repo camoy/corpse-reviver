@@ -1,6 +1,6 @@
 #lang racket/base
 
-(require "../base/untyped.rkt"
+(require "untyped.rkt"
          (only-in racket/performance-hint begin-encourage-inline)
          (for-syntax racket/base)
          (only-in racket/fixnum fx* fx+))

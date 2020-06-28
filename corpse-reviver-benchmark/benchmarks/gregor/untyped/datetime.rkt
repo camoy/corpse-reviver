@@ -6,7 +6,7 @@
 (require
   corpse-reviver/require-typed-check
   racket/match
-  "../base/untyped.rkt"
+  "untyped.rkt"
   "core-structs.rkt"
   "gregor-structs.rkt"
   (only-in racket/math exact-round exact-floor))

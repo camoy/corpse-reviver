@@ -5,7 +5,7 @@
 
 ;; =============================================================================
 (require corpse-reviver/require-typed-check
- "../base/untyped.rkt"
+ "untyped.rkt"
  "automata.rkt"
  "population.rkt"
  "utilities.rkt")
