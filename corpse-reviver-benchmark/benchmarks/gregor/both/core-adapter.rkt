@@ -9,7 +9,7 @@
 
 (require
   corpse-reviver/require-typed-check
-  "../base/types.rkt")
+  "types.rkt")
 
 (require/typed/check "core-structs.rkt"
   [#:struct YMD ([y : Natural]
