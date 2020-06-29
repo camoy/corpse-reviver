@@ -269,6 +269,8 @@
   (for ([_ (in-range iterations)])
     (parameterize ([current-namespace (make-base-namespace)])
       (with-handlers ([exn:fail? (make-error-handler running-times)])
+        ;; Collect garbage before running to have "clean" GC state
+        (collect-garbage 'major)
         (dynamic-require resolved-entry #f)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
