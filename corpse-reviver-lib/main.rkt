@@ -251,6 +251,11 @@
       (test-optimize "conflict-opaque"
                      "main.rkt"
                      '("main.rkt")))
+    (test-case
+      "Untyped module with macro definition."
+      (test-optimize "macro-untyped"
+                     "main.rkt"
+                     '("main.rkt")))
     (test-benchmark "sieve")
     (test-benchmark "fsm")
     (test-benchmark "morsecode")

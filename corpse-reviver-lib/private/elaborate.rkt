@@ -60,8 +60,11 @@
       #:datum-literals (module)
       [(module ?name ?lang (?mb ?body ...))
        #:with ?lang* (lang-scv #'?lang)
-       #'(module ?name ?lang* ?body ...)]))
-  (mod target raw-stx (strip-context* stx) #f #f (imports target) #f #f))
+       #:with ?bodies (move-provides #'(begin ?body ...))
+       #'(module ?name ?lang* ?bodies)]))
+  (mod target
+       raw-stx (strip-context* stx) #f #f (imports target)
+       #f #f))
 
 ;; [Listof Mod] → [Hash String Mod]
 ;; Returns a mapping from module paths to its module struct.
@@ -98,7 +101,11 @@
 ;; need a level of indirection (scv-cr:provide) to get around this.
 ;; Moving all provides to the end is needed to avoid problems when exporting
 ;; syntax (like types) before they're defined.
-(define (mangle-provides stx)
+(define mangle-provides (λ~> move-provides hide-provides))
+
+;; Syntax → Syntax
+;; Moves provides to the bottom of the module.
+(define (move-provides stx)
   (define provides '())
   (define stx*
     (let go ([e stx])
@@ -106,13 +113,27 @@
         [(syntax? e) (datum->syntax e (go (syntax-e e)) e e)]
         [(and (pair? e))
          (cond
+           ;; Don't go inside submodules. This is fragile and won't work if the
+           ;; submodule itself defines syntax.
            [(and (eq? (syntax-e (car e)) 'module)) e]
            [(eq? (syntax-e (car e)) 'provide)
-            (set! provides (cons #`(scv-cr:provide #,@(cdr e)) provides))
+            (set! provides (cons e provides))
             '(void)]
            [else (cons (go (car e)) (go (cdr e)))])]
         [else e])))
   #`(begin #,stx* #,@provides))
+
+;; Syntax → Syntax
+;; Change provide to indirect SCV-CR version of provide.
+(define (hide-provides stx)
+  (let go ([e stx])
+    (cond
+      [(syntax? e) (datum->syntax e (go (syntax-e e)) e e)]
+      [(and (pair? e))
+       (cond
+         [(eq? (syntax-e (car e)) 'provide) #`(scv-cr:provide #,@(cdr e))]
+         [else (cons (go (car e)) (go (cdr e)))])]
+      [else e])))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; inject
