@@ -84,8 +84,9 @@
 (: validate-dataset (-> Any (Vectorof (Listof Index))))
 (define (validate-dataset vec0)
   (define vec
-    (for/vector : (Vectorof (Listof Index)) ((x (in-list (vector->list (assert vec0 vector?)))))
-      (listof-index x)))
+    (list->vector
+     (for/list : (Listof (Listof Index)) ((x (in-list (vector->list (assert vec0 vector?)))))
+       (listof-index x))))
   (unless (< 0 (vector-length vec)) (parse-error "Dataset is an empty vector, does not contain any entries"))
   ;; Record the number of runs in the first vector, match against other lengths
   (: num-runs (Boxof (U #f Index)))

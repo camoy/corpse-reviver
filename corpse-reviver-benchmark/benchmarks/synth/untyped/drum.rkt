@@ -28,15 +28,12 @@
     (define ds
       (check-array-shape ds*
                          (λ () (raise-argument-error 'name "Indexes" ds))))
-    (define vs
-      (for/vector
-                  #:length (array-shape-size ds)
-                  #:fill 0.0
-                  ([i      (in-range n-different-samples)]
-                   [sample (in-producer random-sample)]
-                   #:when #t
-                   [j      (in-range 12)])
-                  sample))
+    (define vs (make-vector (array-shape-size ds) 0.0))
+    (for ([i      (in-range n-different-samples)]
+          [sample (in-producer random-sample)]
+          #:when #t
+          [j      (in-range 12)])
+      (vector-set! vs (+ (* i 12) j) sample))
     (unsafe-vector->array ds vs)))
 
 (define snare

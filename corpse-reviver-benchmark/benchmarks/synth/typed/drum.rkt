@@ -42,15 +42,12 @@
       (check-array-shape ds*
                          (λ () (raise-argument-error 'name "Indexes" ds))))
     (: vs (Vectorof Flonum))
-    (define vs
-      (for/vector : (Vectorof Flonum)
-                  #:length (array-shape-size ds)
-                  #:fill 0.0
-                  ([i      : Natural (in-range n-different-samples)]
-                   [sample : Flonum  (in-producer random-sample)]
-                   #:when #t
-                   [j      : Natural (in-range 12)])
-                  sample))
+    (define vs (make-vector (array-shape-size ds) 0.0))
+    (for ([i      : Natural (in-range n-different-samples)]
+          [sample : Flonum  (in-producer random-sample)]
+          #:when #t
+          [j      : Natural (in-range 12)])
+      (vector-set! vs (+ (* i 12) j) sample))
     (unsafe-vector->array ds vs)))
 
 (: snare Array)

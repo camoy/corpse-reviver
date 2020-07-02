@@ -133,12 +133,13 @@
   (define unsorted-variations (box (all-variations summary)))
   ;; For each integer-overhead-range [0, 1] [1, 2] ... [max-1, max]
   ;; save the variations within that overhead to a cache entry
-  (for/vector ([i (in-range (add1 max-overhead))])
-    (define good? (make-variation->good? summary (* i base-overhead) L))
-    (define-values (good-vars rest)
-      (stream-partition good? (unbox unsorted-variations)))
-    (set-box! unsorted-variations rest)
-    (stream->list good-vars)))
+  (list->vector
+    (for/list ([i (in-range (add1 max-overhead))])
+      (define good? (make-variation->good? summary (* i base-overhead) L))
+      (define-values (good-vars rest)
+        (stream-partition good? (unbox unsorted-variations)))
+      (set-box! unsorted-variations rest)
+      (stream->list good-vars))))
 
 ;; Count the number of variations with running time less than `overhead`.
 ;; Use `test-fun` to manually check variations we aren't sure about
