@@ -107,15 +107,17 @@
 ;; Moves provides to the bottom of the module.
 (define (move-provides stx)
   (define provides '())
+  (define (stop-on? e)
+    (memq e '(module define-syntax-rule quote quasiquote quote-syntax)))
   (define stx*
     (let go ([e stx])
       (cond
         [(syntax? e) (datum->syntax e (go (syntax-e e)) e e)]
         [(and (pair? e))
          (cond
-           ;; Don't go inside submodules. This is fragile and won't work if the
-           ;; submodule itself defines syntax.
-           [(and (eq? (syntax-e (car e)) 'module)) e]
+           ;; Don't go inside submodules or literals. This is fragile and won't
+           ;; work if the submodule itself defines syntax.
+           [(stop-on? (syntax-e (car e))) e]
            [(eq? (syntax-e (car e)) 'provide)
             (set! provides (cons e provides))
             '(void)]
