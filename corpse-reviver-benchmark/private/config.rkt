@@ -27,7 +27,8 @@
    sample
    benchmark
    analyses
-   runtimes)
+   runtimes
+   cfg-id)
   #:prefab
   #:mutable)
 

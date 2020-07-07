@@ -90,8 +90,9 @@
         (target->params/init target)))
   (define-values (analyses runtimes)
     (values (make-queue) (make-queue)))
+  (set-config-cfg-id! cfg 1)
   (for*/fold
-      ([n 0])
+      ([n 1])
       ([pre-subtask (in-list (in-pre-subtasks task))]
        #:when #t
        [subtask (in-list (pre-subtask->subtask* pre-subtask gtp-config))])
@@ -180,8 +181,7 @@
       (write-lang! out-port "typed-untyped")
       (with-input-from-file in
         (λ ()
-          (for ([config-id (in-lines)]
-                [cfg-i (in-naturals 1)])
+          (for ([config-id (in-lines)])
             (copy-configuration! config-id tu-dir config-dir)
             (define-values (config-in config-out) (make-pipe))
             (define-values (analysis-times base-running-times)
@@ -199,7 +199,8 @@
             (enqueue! (config-analyses cfg) analysis-times)
             (when (empty? running-times)
               (enqueue! (config-runtimes cfg) base-running-times))
-            (close-input-port config-in)))))
+            (close-input-port config-in)
+            (set-config-cfg-id! cfg (add1 (config-cfg-id cfg)))))))
     (make-gtp-measure-subtask out thunk config)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -208,11 +209,12 @@
 ;; Path Config Path Natural → [Hash Symbol Any] [Hash Symbol Any]
 ;; Given subtask information, populates hashs containing information from running
 ;; that subtask. This is for both analysis and run-time.
-(define (typed-untyped-run! entry config config-out config-id)
+(define (typed-untyped-run! entry config config-out config-str)
   (define dir (path-only entry))
   (define targets (filter relevant-target? (directory-list dir #:build? dir)))
   (define base `((benchmark . ,(config-benchmark cfg))
-                 (config . ,config-id)
+                 (config . ,config-str)
+                 (config-id . ,(config-cfg-id cfg))
                  (sample . ,(config-sample cfg))
                  (error . #f)))
   (define analysis-times (make-hash base))
