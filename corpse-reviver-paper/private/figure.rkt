@@ -20,6 +20,8 @@
          racket/list
          racket/match
          racket/set
+         rebellion/collection/multidict
+         rebellion/collection/entry
          threading)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -80,15 +82,17 @@
 
 (define (runtime-paths->performance-info benchmark paths)
   (define h (runtime-paths->hash paths))
-  (define units (string-length (first (hash-keys h))))
-  (define baseline-runtimes (hash-ref h (make-string units #\0)))
-  (define typed-runtimes (hash-ref h (make-string units #\1)))
+  (define units (string-length (set-first (multidict-unique-keys h))))
+  (define baseline-runtimes
+    (set-first (multidict-ref h (make-string units #\0))))
+  (define typed-runtimes
+    (set-first (multidict-ref h (make-string units #\1))))
   (define config-infos (hash->configuration-infos h))
   (make-performance-info
    (string->symbol benchmark)
    #:src "."
    #:num-units units
-   #:num-configurations (hash-count h)
+   #:num-configurations (set-count (multidict-unique-keys h))
    #:baseline-runtime* baseline-runtimes
    #:untyped-runtime* baseline-runtimes
    #:typed-runtime* typed-runtimes
@@ -136,7 +140,7 @@
   (define hi (count-hi-bits str))
   (or (= hi 0) (= hi n)))
 
-;; [Listof Path] → [Hash String [Listof Natural]]
+;; [Listof Path] → [Multidict String [Listof Natural]]
 ;;
 (define (runtime-paths->hash paths)
   (define run-hashes (append-map json->hashes paths))
@@ -144,21 +148,24 @@
 
 ;;
 ;;
-(define (hash-collapse run-hashes)
-  (define hashes
-    (for/list ([run-hash (in-list run-hashes)])
-      (match-define
-        (hash-table ['config config] ['real real] ['error err] _ ...)
-        run-hash)
-      (when err
-        (raise (exn:fail:benchmark err (current-continuation-marks))))
-      (hash config (list real))))
-  (apply hash-union #:combine append hashes))
+(define (hash-collapse hashes)
+  (define grouped-hashes (group-by (λ~> (hash-ref 'config-id)) hashes))
+  (for/multidict ([run-hashes (in-list grouped-hashes)])
+    (define config (hash-ref (first run-hashes) 'config))
+    (define times
+      (for/list ([h (in-list run-hashes)])
+        (match-define (hash-table ['real real] ['error err] _ ...) h)
+        (when err
+          (raise (exn:fail:benchmark err (current-continuation-marks))))
+        real))
+    (entry config times)))
 
 ;;
 ;;
 (define (hash->configuration-infos h)
-  (for/list ([(config runtimes) (in-hash h)])
+  (for/list ([e (in-multidict-entries h)])
+    (define-values (config runtimes)
+      (values (entry-key e) (entry-value e)))
     (configuration-info config (count-hi-bits config) runtimes)))
 
 ;; Path → [Listof [Hash Any Any]]
