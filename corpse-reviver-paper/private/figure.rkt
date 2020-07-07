@@ -16,6 +16,7 @@
          json
          pict-abbrevs
          racket/hash
+         racket/function
          racket/path
          racket/list
          racket/runtime-path
@@ -29,35 +30,35 @@
 ;; const
 
 (define DATA-FILENAME-RX #rx".*_(.*)_(.*)\\.json")
-#;(define COLOR-SCHEME (list #xfdb863 #xb2abd2))
 (define COLOR-SCHEME (list #xa6dba0 #xc2a5cf))
 (define DARK-COLOR-SCHEME (list #x008837 #x7b3294))
 
-(*OVERHEAD-PLOT-HEIGHT* 250)
+(*OVERHEAD-PLOT-HEIGHT* 275)
 (*OVERHEAD-PLOT-WIDTH* 800)
 (*OVERHEAD-SHOW-RATIO* #f)
 (*OVERHEAD-SAMPLES* 100)
 (*OVERHEAD-MAX* 10)
 (*OVERHEAD-FONT-FACE* "CMU Concrete")
 (*TITLE-FACE* "Linux Libertine")
+(*POINT-COLOR* 1)
 (*POINT-SIZE* 6)
-(*POINT-ALPHA* 0.9)
+(*POINT-ALPHA* 1)
 (*AUTO-POINT-ALPHA?* #f)
 (*GRID-X* #f)
 (*GRID-Y* #f)
-(*GRID-X-SKIP* 50)
-(*GRID-Y-SKIP* 20)
-(*FONT-SIZE* 22)
+(*GRID-X-SKIP* 75)
+(*GRID-Y-SKIP* 50)
+(*FONT-SIZE* 32)
 (*GRID-NUM-COLUMNS* 2)
 (*OVERHEAD-COLOR-LEGEND?* #f)
 (*COLOR-LEGEND?* #f)
 
-(define ((scheme-converter scheme) k)
+(define ((color-converter scheme) k)
   (define k* (modulo k (length scheme)))
   (hex-triplet->color% (list-ref scheme k*)))
 
-(*BRUSH-COLOR-CONVERTER* (scheme-converter COLOR-SCHEME))
-(*PEN-COLOR-CONVERTER* (scheme-converter DARK-COLOR-SCHEME))
+(*BRUSH-COLOR-CONVERTER* (color-converter COLOR-SCHEME))
+(*PEN-COLOR-CONVERTER* (color-converter DARK-COLOR-SCHEME))
 
 (define-runtime-path BASELINE-PATH "../baseline")
 (define BASELINE (directory-list BASELINE-PATH #:build? BASELINE-PATH))
@@ -69,22 +70,24 @@
 ;; public
 
 (define ((make-grid-figure pi-fun plot) . datasets)
-  (define dataset-pis
-    (for/list ([dataset (in-list datasets)])
-      (define runtimes (make-paths->hash "runtime" dataset))
-      (define benchmarks (sort (hash-keys runtimes) string<=?))
-      (define pis
-        (for/list ([benchmark (in-list benchmarks)])
-          (define paths (hash-ref runtimes benchmark))
-          (with-handlers
-            ([exn:fail:benchmark?
-              (λ _ (error 'overhead-grid "benchmark ~a failed" benchmark))])
-            (pi-fun (runtime-paths->performance-info benchmark paths)
-                    benchmark
-                    paths))))
-      pis))
-  (define dataset-pis* (apply map list dataset-pis))
-  (grid-plot plot dataset-pis*))
+  (define pis*
+    (apply map list (datasets->pis pi-fun datasets)))
+  (grid-plot plot pis*))
+
+(define (datasets->pis pi-fun datasets)
+  (for/list ([dataset (in-list datasets)])
+    (define runtimes (make-paths->hash "runtime" dataset))
+    (define benchmarks (sort (hash-keys runtimes) string<=?))
+    (define pis
+      (for/list ([benchmark (in-list benchmarks)])
+        (define paths (hash-ref runtimes benchmark))
+        (with-handlers
+          ([exn:fail:benchmark?
+            (λ _ (error 'overhead-grid "benchmark ~a failed" benchmark))])
+          (pi-fun (runtime-paths->performance-info benchmark paths)
+                  benchmark
+                  paths))))
+    pis))
 
 ;;
 ;;
@@ -118,7 +121,7 @@
     (set-first (multidict-ref h (make-string units #\0))))
   (define typed-runtimes
     (set-first (multidict-ref h (make-string units #\1))))
-  (define config-infos (hash->configuration-infos h))
+  (define config-infos (exhaustive-configuration-infos h))
   (make-performance-info
    (string->symbol benchmark)
    #:src "."
@@ -144,7 +147,8 @@
     1))
 
 ;; [Listof Path] → [Listof [Listof Configuration-Info]]
-;; TODO
+;; TODO: Shouldn't remove baseline since may actually be in sample
+;; only remove the first ones
 (define (runtime-paths->samples paths)
   (define run-hashes (append-map json->hashes paths))
   (define -hashes
@@ -154,7 +158,7 @@
       (hash-update acc sample (λ~>> (cons run-hash)) null)))
   (define hashes (remove-baseline -hashes))
   (for/list ([(k v) (in-hash hashes)])
-    (hash->configuration-infos (hash-collapse v))))
+    (sample-configuration-infos (hash-collapse v))))
 
 ;;
 ;;
@@ -193,11 +197,18 @@
 
 ;;
 ;;
-(define (hash->configuration-infos h)
+(define (sample-configuration-infos h)
   (for/list ([e (in-multidict-entries h)])
     (define-values (config runtimes)
       (values (entry-key e) (entry-value e)))
     (configuration-info config (count-hi-bits config) runtimes)))
+
+(define (exhaustive-configuration-infos h)
+  (define h* (multidict->hash h))
+  (for/list ([(config runtimes*) (in-hash h*)])
+    (define runtimes (apply append (set->list runtimes*)))
+    (configuration-info config (count-hi-bits config) runtimes)))
+
 
 ;; Path → [Listof [Hash Any Any]]
 ;; Convert a JSON file to a list of hashes with keys based on the header.
@@ -227,16 +238,164 @@
   (and matches (cdr matches)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; summary CDF
+
+#|
+(define SLOWDOWN-X-MAX 10)
+(define SLOWDOWN-GRANULARITY 0.1)
+
+(define (slowdown-plot benchmarks samples baselines)
+  (define slowdown-path0
+    (build-path figures-dir "slowdown-only-baseline"))
+  (define slowdown-path
+    (build-path figures-dir "slowdown"))
+  (define-values (sample-points baseline-points configs)
+    (values (slowdown-points benchmarks samples)
+            (slowdown-points benchmarks baselines)
+            (all-configs samples)))
+  (define slowdown-pict0
+    (parameterize ([*OVERHEAD-LABEL?* #t]
+                   [*OVERHEAD-PLOT-HEIGHT* 300]
+                   [*OVERHEAD-PLOT-WIDTH* 800]
+                   [*OVERHEAD-SHOW-RATIO* #f]
+                   [*OVERHEAD-MAX* 10]
+                   [*FONT-SIZE* PLOT-LABEL-SIZE])
+    (overhead-plot*
+     (list (car baselines))
+     (list (make-lines baseline-points BASELINE-LABEL (first COLOR-SCHEME)))
+     '||
+     configs)))
+  (define slowdown-pict
+    (parameterize ([*OVERHEAD-LABEL?* #t]
+                   [*OVERHEAD-PLOT-HEIGHT* 300]
+                   [*OVERHEAD-PLOT-WIDTH* 800]
+                   [*OVERHEAD-SHOW-RATIO* #f]
+                   [*OVERHEAD-MAX* 10]
+                   [*FONT-SIZE* PLOT-LABEL-SIZE])
+      (overhead-plot*
+       (list (car baselines) (car samples))
+       (list (make-lines sample-points SCV-LABEL (second COLOR-SCHEME))
+             (make-lines baseline-points BASELINE-LABEL (first COLOR-SCHEME)))
+       '||
+       configs)))
+  (save-pict* slowdown-path0 slowdown-pict0)
+  (save-pict* slowdown-path slowdown-pict))
+
+(define (->x-axis pts)
+  (map (λ (p) (list (car p) 0)) pts))
+
+(define (make-lines pts label color)
+  (lines-interval (->x-axis pts)
+                  pts
+                  #:x-min 1
+                  #:x-max SLOWDOWN-X-MAX
+                  #:y-min 0
+                  #:y-max 100
+                  #:alpha 0.5
+                  #:color color
+                  #:line1-style 'transparent
+                  #:line2-color color
+                  #:line2-width (*OVERHEAD-LINE-WIDTH*)
+                  #:line2-style 'solid))
+
+(define ((ticks-format/units units) ax-min ax-max pre-ticks)
+  (for/list ([pt (in-list pre-ticks)])
+    (define v (pre-tick-value pt))
+    (if (= v ax-max)
+      (format "~a~a" (rnd+ v) units)
+      (rnd+ v))))
+
+(define (rnd+ n)
+  (if (exact-integer? n)
+    (number->string n)
+    (rnd n)))
+
+(define (slowdown-points benchmarks within)
+  (for/list ([x (in-range 1
+                          (+ SLOWDOWN-X-MAX SLOWDOWN-GRANULARITY)
+                          SLOWDOWN-GRANULARITY)])
+    (list x
+          (* (/ 100 (length benchmarks))
+             (for/sum ([sample within])
+               (percent-k-deliverable x sample))))))
+
+(define (all-configs samples)
+  (for/sum ([s samples])
+    (count-configurations s (const #t))))
+
+(define (percent-k-deliverable k sample)
+  (/ ((deliverable k) sample)
+     (count-configurations sample (const #t))))
+|#
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; figures
 
 (define fig:overhead-grid
-  (overhead-grid BASELINE))
+  (overhead-grid BASELINE OPT))
 
 (define fig:exact-grid
-  (exact-grid BASELINE))
+  (exact-grid BASELINE OPT))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; test
+
+(define *SUMMARY-GRANULARITY* (make-parameter 1/100))
+
+(define (slowdown-points pis)
+  (define interval
+    (in-range 1 (*OVERHEAD-MAX*) (*SUMMARY-GRANULARITY*)))
+  (define size (/ (sub1 (*OVERHEAD-MAX*)) (*SUMMARY-GRANULARITY*)))
+  (define inv (adjusted-inverse-cdf pis interval))
+  (for/list ([ind (in-naturals 1)]
+             [k interval])
+    (define p (/ ind size))
+    (configuration-info "" 0 (list (inv p)))))
+
+(define (percent-k-deliverable k pi)
+  (/ ((deliverable k) pi)
+     (count-configurations pi (const #t))))
+
+(define (adjusted-inverse-cdf pis x-vals)
+  (define graph
+    (for/list ([xy (in-list (adjusted-cdf pis x-vals))])
+      (cons (cdr xy) (car xy))))
+  (λ (x)
+    (define p (assf (λ (v) (>= v x)) graph))
+    (if p (cdr p) 100)))
+
+(define (adjusted-cdf pis x-vals)
+  (for/list ([k x-vals])
+    (cons k
+          (/ (for/sum ([pi (in-list pis)])
+               (percent-k-deliverable k pi))
+             (length pis)))))
+
+(define pis*
+  (datasets->pis (λ (x . _) x)
+                 (list
+                  (list (build-path BASELINE-PATH "2020-06-16T04:05:29_sieve_runtime.json")
+                        (build-path BASELINE-PATH "2020-06-16T04:09:31_fsm_runtime.json"))
+                  #;(list (build-path OPT-PATH "2020-06-28T00:09:46_sieve_runtime.json")
+                          (build-path OPT-PATH "2020-06-28T12:56:44_fsm_runtime.json")))))
+
+(define pis**
+  (for/list ([pis (in-list pis*)])
+    (define points (slowdown-points pis))
+    (make-performance-info
+     'benchmarks
+     #:src "."
+     #:num-units 0
+     #:num-configurations (length points)
+     #:baseline-runtime* '(1)
+     #:untyped-runtime* '(1)
+     #:typed-runtime* '(1)
+     #:make-in-configurations
+     (λ _ points))))
+
+(overhead-plot (first pis**))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (module+ test
   (require chk)
