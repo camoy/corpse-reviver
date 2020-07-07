@@ -1,6 +1,7 @@
 #lang scribble/acmart @acmsmall
 
-@(require "private/cite.rkt")
+@(require "private/cite.rkt"
+          "private/figure.rkt")
 
 @title{Introduction}
 

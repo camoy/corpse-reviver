@@ -3,8 +3,8 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; provide
 
-(provide overhead-grid
-         exact-grid)
+(provide fig:overhead-grid
+         fig:exact-grid)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; require
@@ -18,6 +18,7 @@
          racket/hash
          racket/path
          racket/list
+         racket/runtime-path
          racket/match
          racket/set
          rebellion/collection/multidict
@@ -28,49 +29,79 @@
 ;; const
 
 (define DATA-FILENAME-RX #rx".*_(.*)_(.*)\\.json")
+#;(define COLOR-SCHEME (list #xfdb863 #xb2abd2))
+(define COLOR-SCHEME (list #xa6dba0 #xc2a5cf))
+(define DARK-COLOR-SCHEME (list #x008837 #x7b3294))
 
+(*OVERHEAD-PLOT-HEIGHT* 250)
+(*OVERHEAD-PLOT-WIDTH* 800)
+(*OVERHEAD-SHOW-RATIO* #f)
+(*OVERHEAD-SAMPLES* 100)
+(*OVERHEAD-MAX* 10)
+(*OVERHEAD-FONT-FACE* "CMU Concrete")
+(*TITLE-FACE* "Linux Libertine")
+(*POINT-SIZE* 6)
+(*POINT-ALPHA* 0.9)
+(*AUTO-POINT-ALPHA?* #f)
 (*GRID-X* #f)
 (*GRID-Y* #f)
-(*OVERHEAD-MAX* 10)
-(*OVERHEAD-PLOT-HEIGHT* 200)
-(*OVERHEAD-PLOT-WIDTH* 400)
-#;(*BRUSH-COLOR-CONVERTER* (λ _ (hex-triplet->color% #xfdb863 #;#xb2abd2)))
-#;(*PEN-COLOR-CONVERTER* (λ _ (hex-triplet->color% #xfdb863 #;#xb2abd2)))
+(*GRID-X-SKIP* 50)
+(*GRID-Y-SKIP* 20)
+(*FONT-SIZE* 22)
 (*GRID-NUM-COLUMNS* 2)
+(*OVERHEAD-COLOR-LEGEND?* #f)
+(*COLOR-LEGEND?* #f)
 
-;(define analysis (make-paths->hash "analysis" paths))
+(define ((scheme-converter scheme) k)
+  (define k* (modulo k (length scheme)))
+  (hex-triplet->color% (list-ref scheme k*)))
+
+(*BRUSH-COLOR-CONVERTER* (scheme-converter COLOR-SCHEME))
+(*PEN-COLOR-CONVERTER* (scheme-converter DARK-COLOR-SCHEME))
+
+(define-runtime-path BASELINE-PATH "../baseline")
+(define BASELINE (directory-list BASELINE-PATH #:build? BASELINE-PATH))
+
+(define-runtime-path OPT-PATH "../opt")
+(define OPT (directory-list OPT-PATH #:build? OPT-PATH))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; public
 
-;;
-;;
-(define (overhead-grid paths)
-  (define runtimes (make-paths->hash "runtime" paths))
-  (define (overhead-or-samples pi)
-    (if (sample-info? pi)
-        (samples-plot pi)
-        (overhead-plot pi)))
-  (define pis
-    (for/list ([(benchmark paths) (in-hash runtimes)])
-      (with-handlers
-        ([exn:fail:benchmark?
-          (λ _ (error 'overhead-grid "benchmark ~a failed" benchmark))])
-        (define pi (runtime-paths->performance-info benchmark paths))
-        (if (exhaustive? pi) pi (runtime-paths->sample-info pi paths)))))
-  (grid-plot overhead-or-samples pis))
+(define ((make-grid-figure pi-fun plot) . datasets)
+  (define dataset-pis
+    (for/list ([dataset (in-list datasets)])
+      (define runtimes (make-paths->hash "runtime" dataset))
+      (define benchmarks (sort (hash-keys runtimes) string<=?))
+      (define pis
+        (for/list ([benchmark (in-list benchmarks)])
+          (define paths (hash-ref runtimes benchmark))
+          (with-handlers
+            ([exn:fail:benchmark?
+              (λ _ (error 'overhead-grid "benchmark ~a failed" benchmark))])
+            (pi-fun (runtime-paths->performance-info benchmark paths)
+                    benchmark
+                    paths))))
+      pis))
+  (define dataset-pis* (apply map list dataset-pis))
+  (grid-plot plot dataset-pis*))
 
 ;;
 ;;
-(define (exact-grid paths)
-  (define runtimes (make-paths->hash "runtime" paths))
-  (define pis
-    (for/list ([(benchmark paths) (in-hash runtimes)])
-      (with-handlers
-        ([exn:fail:benchmark?
-          (λ _ (error 'exact-grid "benchmark ~a failed" benchmark))])
-        (runtime-paths->performance-info benchmark paths))))
-  (grid-plot exact-runtime-plot pis))
+(define overhead-grid
+  (make-grid-figure
+   (λ (pi benchmark paths)
+     (if (exhaustive? pi) pi (runtime-paths->sample-info pi paths)))
+   overhead-plot))
+
+(define (overhead-or-samples pis)
+  (if (sample-info? (first pis))
+      (samples-plot pis)
+      (overhead-plot pis)))
+
+;;
+;;
+(define exact-grid (make-grid-figure (λ (pi . _) pi) exact-runtime-plot))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; private
@@ -194,6 +225,15 @@
   (define matches
     (~>> path file-name-from-path path->string (regexp-match DATA-FILENAME-RX)))
   (and matches (cdr matches)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; figures
+
+(define fig:overhead-grid
+  (overhead-grid BASELINE))
+
+(define fig:exact-grid
+  (exact-grid BASELINE))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; test

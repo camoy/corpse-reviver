@@ -1,14 +1,6 @@
 #lang scribble/acmart @acmsmall
 
-@(require racket/runtime-path
-          "private/figure.rkt")
-
-@(define-runtime-path DATA "baseline")
-@(define paths (directory-list DATA #:build? DATA))
-
-@(define-runtime-path OPT-DATA "opt")
-@(define opt-paths (directory-list OPT-DATA #:build? OPT-DATA))
-
+@(require "private/figure.rkt")
 
 @title{Evaluation}
 
@@ -201,13 +193,9 @@ we used the same configurations
 for the baseline and \tool measurements
 and did not resample.
 
-@overhead-grid[paths]
+@fig:overhead-grid
 
-@exact-grid[paths]
-
-@overhead-grid[opt-paths]
-
-@exact-grid[opt-paths]
+@fig:exact-grid
 
 @;\begin{figure*}
 @;  {\renewcommand{\arraystretch}{5}
