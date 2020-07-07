@@ -157,10 +157,11 @@
 ;; [Listof Path-String] → Any
 ;; Compiles all of the given files.
 (define (compile-files files)
-  (parameterize ([current-namespace (make-base-namespace)])
-    (with-module-reading-parameterization
-      (λ ()
-        (for-each compile-file files)))))
+  (with-module-reading-parameterization
+    (λ ()
+      ;; HACK: Remove this once TR #837 is resolved.
+      (with-patched-typed-racket
+        (λ () (for-each compile-file files))))))
 
 ;; Path-String → Any
 ;; Delete bytecode associated with target if it exists.
