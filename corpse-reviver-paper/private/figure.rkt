@@ -1,9 +1,11 @@
-#lang racket/base
+#lang at-exp racket/base
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; provide
 
-(provide fig:overhead-grid
+(provide fig:overhead-summary
+         fig:lattices
+         fig:overhead-grid
          fig:exact-grid)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -13,10 +15,15 @@
          gtp-plot/performance-info
          gtp-plot/plot
          gtp-plot/sample-info
+         (only-in gtp-util natural->bitstring)
          json
+         math/statistics
+         pict
          pict-abbrevs
+         racket/string
          racket/hash
          racket/function
+         racket/format
          racket/path
          racket/list
          racket/runtime-path
@@ -24,15 +31,19 @@
          racket/set
          rebellion/collection/multidict
          rebellion/collection/entry
-         threading)
+         threading
+         "lattice.rkt"
+         "read.rkt")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; const
 
-(define DATA-FILENAME-RX #rx".*_(.*)_(.*)\\.json")
-(define COLOR-SCHEME (list #xa6dba0 #xc2a5cf))
-(define DARK-COLOR-SCHEME (list #x008837 #x7b3294))
 
+(define COLOR-SCHEME (list #xfdb863 #xb2abd2))
+(define DARK-COLOR-SCHEME (list #xe66101 #x5e3c99))
+
+(*SAMPLE-INTERVAL-ALPHA* 0.6)
+(*MULTI-INTERVAL-ALPHA* 0.6)
 (*OVERHEAD-PLOT-HEIGHT* 275)
 (*OVERHEAD-PLOT-WIDTH* 800)
 (*OVERHEAD-SHOW-RATIO* #f)
@@ -52,6 +63,11 @@
 (*GRID-NUM-COLUMNS* 2)
 (*OVERHEAD-COLOR-LEGEND?* #f)
 (*COLOR-LEGEND?* #f)
+
+(*LATTICE-BOX-HEIGHT* 26)
+(*LATTICE-LEVEL-MARGIN* 14)
+(*LATTICE-BOX-WIDTH* 14)
+(*LATTICE-FONT-SIZE* 14)
 
 (define ((color-converter scheme) k)
   (define k* (modulo k (length scheme)))
@@ -74,29 +90,6 @@
     (apply map list (datasets->pis pi-fun datasets)))
   (grid-plot plot pis*))
 
-(define (datasets->pis pi-fun datasets)
-  (for/list ([dataset (in-list datasets)])
-    (define runtimes (make-paths->hash "runtime" dataset))
-    (define benchmarks (sort (hash-keys runtimes) string<=?))
-    (define pis
-      (for/list ([benchmark (in-list benchmarks)])
-        (define paths (hash-ref runtimes benchmark))
-        (with-handlers
-          ([exn:fail:benchmark?
-            (λ _ (error 'overhead-grid "benchmark ~a failed" benchmark))])
-          (pi-fun (runtime-paths->performance-info benchmark paths)
-                  benchmark
-                  paths))))
-    pis))
-
-;;
-;;
-(define overhead-grid
-  (make-grid-figure
-   (λ (pi benchmark paths)
-     (if (exhaustive? pi) pi (runtime-paths->sample-info pi paths)))
-   overhead-plot))
-
 (define (overhead-or-samples pis)
   (if (sample-info? (first pis))
       (samples-plot pis)
@@ -104,243 +97,40 @@
 
 ;;
 ;;
+(define overhead-grid
+  (make-grid-figure
+   (λ (pi benchmark paths)
+     (if (exhaustive? pi) pi (runtime-paths->sample-info pi paths)))
+   overhead-or-samples))
+
+;;
+;;
 (define exact-grid (make-grid-figure (λ (pi . _) pi) exact-runtime-plot))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; private
-
-(struct exn:fail:benchmark exn:fail ())
-
-(define (runtime-paths->sample-info pi paths)
-  (make-sample-info pi (runtime-paths->samples paths)))
-
-(define (runtime-paths->performance-info benchmark paths)
-  (define h (runtime-paths->hash paths))
-  (define units (string-length (set-first (multidict-unique-keys h))))
-  (define baseline-runtimes
-    (set-first (multidict-ref h (make-string units #\0))))
-  (define typed-runtimes
-    (set-first (multidict-ref h (make-string units #\1))))
-  (define config-infos (exhaustive-configuration-infos h))
-  (make-performance-info
-   (string->symbol benchmark)
-   #:src "."
-   #:num-units units
-   #:num-configurations (set-count (multidict-unique-keys h))
-   #:baseline-runtime* baseline-runtimes
-   #:untyped-runtime* baseline-runtimes
-   #:typed-runtime* typed-runtimes
-   #:make-in-configurations (λ _ config-infos)))
-
-;;
-;;
-(define (exhaustive? pi)
-  (define num-units (performance-info->num-units pi))
-  (define num-configs (performance-info->num-configurations pi))
-  (= num-configs (expt 2 (performance-info->num-units pi))))
-
-;; String → Natural
-;;
-(define (count-hi-bits cfg)
-  (for/sum ([c (in-string cfg)]
-            #:when (eq? c #\1))
-    1))
-
-;; [Listof Path] → [Listof [Listof Configuration-Info]]
-;; TODO: Shouldn't remove baseline since may actually be in sample
-;; only remove the first ones
-(define (runtime-paths->samples paths)
-  (define run-hashes (append-map json->hashes paths))
-  (define -hashes
-    (for/fold ([acc (hash)])
-              ([run-hash (in-list run-hashes)])
-      (define sample (hash-ref run-hash 'sample))
-      (hash-update acc sample (λ~>> (cons run-hash)) null)))
-  (define hashes (remove-baseline -hashes))
-  (for/list ([(k v) (in-hash hashes)])
-    (sample-configuration-infos (hash-collapse v))))
-
-;;
-;;
-(define (remove-baseline hashes)
-  (for/hash ([(k v) (in-hash hashes)]
-             #:when (not (andmap baseline? v)))
-    (values k v)))
-
-;;
-;;
-(define (baseline? h)
-  (define str (hash-ref h 'config))
-  (define n (string-length str))
-  (define hi (count-hi-bits str))
-  (or (= hi 0) (= hi n)))
-
-;; [Listof Path] → [Multidict String [Listof Natural]]
-;;
-(define (runtime-paths->hash paths)
-  (define run-hashes (append-map json->hashes paths))
-  (hash-collapse run-hashes))
-
-;;
-;;
-(define (hash-collapse hashes)
-  (define grouped-hashes (group-by (λ~> (hash-ref 'config-id)) hashes))
-  (for/multidict ([run-hashes (in-list grouped-hashes)])
-    (define config (hash-ref (first run-hashes) 'config))
-    (define times
-      (for/list ([h (in-list run-hashes)])
-        (match-define (hash-table ['real real] ['error err] _ ...) h)
-        (when err
-          (raise (exn:fail:benchmark err (current-continuation-marks))))
-        real))
-    (entry config times)))
-
-;;
-;;
-(define (sample-configuration-infos h)
-  (for/list ([e (in-multidict-entries h)])
-    (define-values (config runtimes)
-      (values (entry-key e) (entry-value e)))
-    (configuration-info config (count-hi-bits config) runtimes)))
-
-(define (exhaustive-configuration-infos h)
-  (define h* (multidict->hash h))
-  (for/list ([(config runtimes*) (in-hash h*)])
-    (define runtimes (apply append (set->list runtimes*)))
-    (configuration-info config (count-hi-bits config) runtimes)))
-
-
-;; Path → [Listof [Hash Any Any]]
-;; Convert a JSON file to a list of hashes with keys based on the header.
-(define (json->hashes path)
-  (with-input-from-file path read-json))
-
-;; String [Listof Path] → [Hash String [List Path]]
-;; Given the kind of data we're interested, creates a hash mapping benchmark
-;; names to the paths providing that kind of data.
-(define (make-paths->hash kind paths)
-  (define hashes (map (make-path->hash kind) paths))
-  (apply hash-union #:combine set-union hashes))
-
-;; Path → [Hash Symbol [Set Path]]
-;; Returns a hash mapping benchmarks and
-(define ((make-path->hash kind) path)
-  (define benchmark+kind (path->benchmark path))
-  (if (and benchmark+kind (equal? kind (second benchmark+kind)))
-      (hash (first benchmark+kind) (list path))
-      (hash)))
-
-;; Path → [Or #f [List String String]]
-;; Returns the benchmark name and what kind of data it is.
-(define (path->benchmark path)
-  (define matches
-    (~>> path file-name-from-path path->string (regexp-match DATA-FILENAME-RX)))
-  (and matches (cdr matches)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; summary CDF
 
-#|
-(define SLOWDOWN-X-MAX 10)
-(define SLOWDOWN-GRANULARITY 0.1)
-
-(define (slowdown-plot benchmarks samples baselines)
-  (define slowdown-path0
-    (build-path figures-dir "slowdown-only-baseline"))
-  (define slowdown-path
-    (build-path figures-dir "slowdown"))
-  (define-values (sample-points baseline-points configs)
-    (values (slowdown-points benchmarks samples)
-            (slowdown-points benchmarks baselines)
-            (all-configs samples)))
-  (define slowdown-pict0
-    (parameterize ([*OVERHEAD-LABEL?* #t]
-                   [*OVERHEAD-PLOT-HEIGHT* 300]
-                   [*OVERHEAD-PLOT-WIDTH* 800]
-                   [*OVERHEAD-SHOW-RATIO* #f]
-                   [*OVERHEAD-MAX* 10]
-                   [*FONT-SIZE* PLOT-LABEL-SIZE])
-    (overhead-plot*
-     (list (car baselines))
-     (list (make-lines baseline-points BASELINE-LABEL (first COLOR-SCHEME)))
-     '||
-     configs)))
-  (define slowdown-pict
-    (parameterize ([*OVERHEAD-LABEL?* #t]
-                   [*OVERHEAD-PLOT-HEIGHT* 300]
-                   [*OVERHEAD-PLOT-WIDTH* 800]
-                   [*OVERHEAD-SHOW-RATIO* #f]
-                   [*OVERHEAD-MAX* 10]
-                   [*FONT-SIZE* PLOT-LABEL-SIZE])
-      (overhead-plot*
-       (list (car baselines) (car samples))
-       (list (make-lines sample-points SCV-LABEL (second COLOR-SCHEME))
-             (make-lines baseline-points BASELINE-LABEL (first COLOR-SCHEME)))
-       '||
-       configs)))
-  (save-pict* slowdown-path0 slowdown-pict0)
-  (save-pict* slowdown-path slowdown-pict))
-
-(define (->x-axis pts)
-  (map (λ (p) (list (car p) 0)) pts))
-
-(define (make-lines pts label color)
-  (lines-interval (->x-axis pts)
-                  pts
-                  #:x-min 1
-                  #:x-max SLOWDOWN-X-MAX
-                  #:y-min 0
-                  #:y-max 100
-                  #:alpha 0.5
-                  #:color color
-                  #:line1-style 'transparent
-                  #:line2-color color
-                  #:line2-width (*OVERHEAD-LINE-WIDTH*)
-                  #:line2-style 'solid))
-
-(define ((ticks-format/units units) ax-min ax-max pre-ticks)
-  (for/list ([pt (in-list pre-ticks)])
-    (define v (pre-tick-value pt))
-    (if (= v ax-max)
-      (format "~a~a" (rnd+ v) units)
-      (rnd+ v))))
-
-(define (rnd+ n)
-  (if (exact-integer? n)
-    (number->string n)
-    (rnd n)))
-
-(define (slowdown-points benchmarks within)
-  (for/list ([x (in-range 1
-                          (+ SLOWDOWN-X-MAX SLOWDOWN-GRANULARITY)
-                          SLOWDOWN-GRANULARITY)])
-    (list x
-          (* (/ 100 (length benchmarks))
-             (for/sum ([sample within])
-               (percent-k-deliverable x sample))))))
-
-(define (all-configs samples)
-  (for/sum ([s samples])
-    (count-configurations s (const #t))))
-
-(define (percent-k-deliverable k sample)
-  (/ ((deliverable k) sample)
-     (count-configurations sample (const #t))))
-|#
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; figures
-
-(define fig:overhead-grid
-  (overhead-grid BASELINE OPT))
-
-(define fig:exact-grid
-  (exact-grid BASELINE OPT))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; test
-
+;; TODO: this is slower than it should be
 (define *SUMMARY-GRANULARITY* (make-parameter 1/100))
+
+(define (overhead-summary . datasets)
+  (define pis*
+    (datasets->pis (λ (x . _) x) datasets))
+  (define pis**
+    (for/list ([pis (in-list pis*)])
+      (define points (slowdown-points pis))
+      (make-performance-info
+       '||
+       #:src "."
+       #:num-units 0
+       #:num-configurations (length points)
+       #:baseline-runtime* '(1)
+       #:untyped-runtime* '(1)
+       #:typed-runtime* '(1)
+       #:make-in-configurations
+       (λ _ points))))
+  (parameterize ([*OVERHEAD-SHOW-CONFIGURATIONS* #f])
+    (overhead-plot pis**)))
 
 (define (slowdown-points pis)
   (define interval
@@ -351,10 +141,6 @@
              [k interval])
     (define p (/ ind size))
     (configuration-info "" 0 (list (inv p)))))
-
-(define (percent-k-deliverable k pi)
-  (/ ((deliverable k) pi)
-     (count-configurations pi (const #t))))
 
 (define (adjusted-inverse-cdf pis x-vals)
   (define graph
@@ -368,62 +154,119 @@
   (for/list ([k x-vals])
     (cons k
           (/ (for/sum ([pi (in-list pis)])
-               (percent-k-deliverable k pi))
+               (define n (count-configurations pi (const #t)))
+               (percent-k-deliverable k n pi))
              (length pis)))))
 
-(define pis*
-  (datasets->pis (λ (x . _) x)
-                 (list
-                  (list (build-path BASELINE-PATH "2020-06-16T04:05:29_sieve_runtime.json")
-                        (build-path BASELINE-PATH "2020-06-16T04:09:31_fsm_runtime.json"))
-                  #;(list (build-path OPT-PATH "2020-06-28T00:09:46_sieve_runtime.json")
-                          (build-path OPT-PATH "2020-06-28T12:56:44_fsm_runtime.json")))))
+(define (percent-k-deliverable k n pi)
+  (/ ((deliverable k) pi) n))
 
-(define pis**
-  (for/list ([pis (in-list pis*)])
-    (define points (slowdown-points pis))
-    (make-performance-info
-     'benchmarks
-     #:src "."
-     #:num-units 0
-     #:num-configurations (length points)
-     #:baseline-runtime* '(1)
-     #:untyped-runtime* '(1)
-     #:typed-runtime* '(1)
-     #:make-in-configurations
-     (λ _ points))))
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; table
 
-(overhead-plot (first pis**))
+(define *LATTICE-RED-THRESHOLD* (make-parameter 3))
+(define *LATTICE-GREEN-THRESHOLD* (make-parameter 1.25))
+
+(define (color x)
+  (if (number? x)
+      (let ([x* (real->decimal-string x 1)])
+        (cond
+          [(<= x (*LATTICE-GREEN-THRESHOLD*))
+           @~a{\cellcolor{rktpalegreen} @x*}]
+          [(>= x (*LATTICE-RED-THRESHOLD*))
+           @~a{\cellcolor{rktpink} @x*}]
+          [else
+           x*]))
+      x))
+
+;;          (hash-ref (make-paths->hash "runtime" eg-all) "sieve")
+
+(define (summary-template results)
+  (define results*
+    (string-join (map (λ (x)
+                        (string-join (map color x) " & "))
+                      results)
+                 "\\\\"))
+  @~a{\begin{tabular}{ c | c c | c c }
+  & \multicolumn{2}{c|}{Racket Overhead}
+  & \multicolumn{2}{c}{\tool Overhead} \\
+  Benchmark
+  & \hspace{0.65em}Max\hspace{0.65em} & Mean
+  & \hspace{0.65em}Max\hspace{0.65em} & Mean \\
+  \hline
+  @results* \\
+  \end{tabular}})
+
+(define (summary-table baseline opt)
+  (match-define (list baseline-pis opt-pis)
+    (datasets->pis (λ (pi benchmark _) (cons benchmark pi))
+                   (list baseline opt)))
+  (define analysis-hashes (opt->analyses opt))
+  (with-output-to-file "summary.tex"
+    #:exists 'replace
+    (λ ()
+      (displayln
+       (summary-template
+        (for/list ([baseline-pi (in-list baseline-pis)]
+                   [opt-pi (in-list opt-pis)])
+          (define benchmark (car baseline-pi))
+          (list (format "\\textsc{~a}" benchmark)
+                (max-overhead (cdr baseline-pi))
+                (mean-overhead (cdr baseline-pi))
+                (max-overhead (cdr opt-pi))
+                (mean-overhead (cdr opt-pi))))))))
+  "")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(module+ test
-  (require chk)
+(define (lattices baseline opt benchmarks [spacing 40])
+  (define-values (baseline* opt*)
+    (values (filter-benchmark baseline benchmarks)
+            (filter-benchmark opt benchmarks)))
+  (apply hc-append spacing (lattices-list baseline* opt*)))
 
-  (define eg-data
-    (string->path "somewhere/2020-05-19T11:05:10_sieve_analysis.json"))
-  (define eg-runtime-0
-    (string->path "somewhere/2020-05-19T11:05:10_sieve_runtime.json"))
-  (define eg-runtime-1
-    (string->path "somewhere/2020-05-19T11:05:15_sieve_runtime.json"))
-  (define eg-all (list eg-data eg-runtime-0 eg-runtime-1))
+(define (lattices-list baseline opt)
+  (match-define (list baseline-pis opt-pis)
+    (datasets->pis (λ (pi . _) pi)
+                   (list baseline opt)))
+  (for/list ([baseline-pi (in-list baseline-pis)]
+             [opt-pi (in-list opt-pis)])
+    (define height (performance-info->num-units baseline-pi))
+    (make-performance-lattice (average-results baseline-pi)
+                              (average-results opt-pi))))
 
-  (with-chk (['name "path->benchmark"])
-    (chk
-     (path->benchmark eg-data)
-     '("sieve" "analysis")))
+(define (average-results pi)
+  (define h
+    (for/hash ([cfg (in-configurations pi)])
+      (values (configuration-info->id cfg) cfg)))
+  (define units (performance-info->num-units pi))
+  (define total-cfgs (expt 2 units))
+  (define sorted-cfgs
+    (for/list ([k (in-range (sub1 total-cfgs) -1 -1)])
+      (hash-ref h (natural->bitstring k #:bits units))))
+  (for/vector ([cfg (in-list sorted-cfgs)])
+    (define runtimes (configuration-info->runtime* cfg))
+    (cons (mean runtimes)
+          (stddev runtimes))))
 
-  (with-chk (['name "make-path->hash"])
-    (chk
-     ((make-path->hash "analysis") eg-data)
-     (hash "sieve" (list eg-data))
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; figures
 
-     ((make-path->hash "runtime") eg-data)
-     (hash)))
+(define fig:overhead-summary
+  #f #;(overhead-summary BASELINE OPT))
 
-  (with-chk (['name "make-paths->hash"])
-    (chk
-     #:eq set=?
-     (hash-ref (make-paths->hash "runtime" eg-all) "sieve")
-     (list eg-runtime-0 eg-runtime-1)))
-  )
+(define fig:lattices
+  #f #;(lattices BASELINE OPT '("sieve" "zombie")))
+
+(define fig:overhead-grid
+  (overhead-grid BASELINE OPT))
+
+(define fig:exact-grid
+  (exact-grid BASELINE OPT))
+
+(define table:summary
+  (summary-table BASELINE OPT))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+fig:overhead-grid
