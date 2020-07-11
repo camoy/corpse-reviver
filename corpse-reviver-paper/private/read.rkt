@@ -26,6 +26,12 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; private
 
+(define (opt->analyses opt)
+  (define analyses (make-paths->hash "analysis" opt))
+  (define benchmarks (sort (hash-keys analyses) string<=?))
+  (for/list ([benchmark (in-list benchmarks)])
+    (json->hashes (first (hash-ref analyses benchmark)))))
+
 (define (filter-benchmark paths benchmarks)
   (define (only-benchmark? path)
     (for/or ([benchmark (in-list benchmarks)])
@@ -175,7 +181,6 @@
   (define matches
     (~>> path file-name-from-path path->string (regexp-match DATA-FILENAME-RX)))
   (and matches (cdr matches)))
-
 
 (module+ test
   (require chk)

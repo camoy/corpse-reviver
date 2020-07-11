@@ -1,5 +1,7 @@
 #lang scribble/acmart @acmsmall
 
+@(require "private/figure.rkt")
+
 @title{Examples and intuition}
 
 This section explains how sound type enforcement significantly slows down
@@ -188,6 +190,8 @@ and the latter is wrapped in higher-order contract {\tt (-> stream?)}.
 Consequently, {\tt count-from} returns a {\tt stream} containing a natural number,
 and a guarded thunk whose return value
 will be monitored to satisfy {\tt stream?}.
+
+@fig:lattices
 
 \begin{figure}
 \begin{minipage}{0.45\textwidth}

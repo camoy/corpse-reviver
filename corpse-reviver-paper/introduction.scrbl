@@ -58,6 +58,7 @@ and Dart~\cite{local:dart}
 limit the interoperability possible in the
 language to avoid some expensive checks.
 
+@fig:overhead-summary
 \begin{wrapfigure}{r}{0.55\textwidth}
   \includegraphics[width=0.55\textwidth]{figs/slowdown.ps}
   \caption{Overhead of gradual typing over the whole benchmark

@@ -1,6 +1,6 @@
 #lang racket/base
 
-(provide stats:mean-overhead-baseline
+(provide stats:median-overhead-baseline
          stats:mean-overhead-opt
          stats:worst-case-baseline
          stats:worst-case-opt
@@ -46,6 +46,14 @@
       (define pi (cdr benchmark+pi))
       (mean-overhead pi)))
   (mean overheads))
+
+(define (median-case pis)
+  (define overheads
+    (for/append ([benchmark+pi (in-list pis)])
+      (define pi (cdr benchmark+pi))
+      (for/list ([cfg (in-configurations pi)])
+        (overhead pi cfg))))
+  (median < overheads))
 
 (define (overhead pi cfg)
   (define baseline (performance-info->baseline-runtime pi))
@@ -98,8 +106,8 @@
 (define (fmt-overhead n) (string-append (~r n #:precision 1) "×"))
 (define (fmt-percent n) (string-append (~r n #:precision 0) "%"))
 
-(define stats:mean-overhead-baseline
-  (fmt-overhead (mean-case baseline-pis)))
+(define stats:median-overhead-baseline
+  (fmt-overhead (median-case baseline-pis)))
 
 (define stats:mean-overhead-opt
   (fmt-overhead (mean-case opt-pis)))
@@ -134,3 +142,7 @@
 
 (define stats:zombie-mean-overhead
   (fmt-overhead (benchmark-mean-overhead baseline-pis "zombie")))
+
+
+(fmt-percent (percent-overhead<= baseline-pis 1.07))
+(fmt-percent (percent-overhead<= opt-pis 1.07))

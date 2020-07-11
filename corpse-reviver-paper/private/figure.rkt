@@ -43,7 +43,6 @@
 (define DARK-COLOR-SCHEME (list #xe66101 #x5e3c99))
 
 (*SAMPLE-INTERVAL-ALPHA* 0.6)
-(*MULTI-INTERVAL-ALPHA* 0.6)
 (*OVERHEAD-PLOT-HEIGHT* 275)
 (*OVERHEAD-PLOT-WIDTH* 800)
 (*OVERHEAD-SHOW-RATIO* #f)
@@ -181,18 +180,26 @@
 
 ;;          (hash-ref (make-paths->hash "runtime" eg-all) "sieve")
 
+(define (approx x)
+  (~r (/ x 1000) #:precision 0))
+
 (define (summary-template results)
   (define results*
     (string-join (map (λ (x)
-                        (string-join (map color x) " & "))
+                        (string-join (append (map color (take x 5)) (drop x 5))
+                                     " & "))
                       results)
                  "\\\\"))
-  @~a{\begin{tabular}{ c | c c | c c }
+  @~a{\begin{tabular}{ c | c c | c c | c | c}
   & \multicolumn{2}{c|}{Racket Overhead}
-  & \multicolumn{2}{c}{\tool Overhead} \\
+  & \multicolumn{2}{c|}{\tool Overhead}
+  & \multicolumn{1}{c}{\tool Analyze}
+  & \multicolumn{1}{c}{\tool Compile} \\
   Benchmark
   & \hspace{0.65em}Max\hspace{0.65em} & Mean
-  & \hspace{0.65em}Max\hspace{0.65em} & Mean \\
+  & \hspace{0.65em}Max\hspace{0.65em} & Mean
+  & \hspace{0.65em}Mean $\pm~\sigma$ (s)
+  & \hspace{0.65em}Mean $\pm~\sigma$ (s)  \\
   \hline
   @results* \\
   \end{tabular}})
@@ -208,13 +215,27 @@
       (displayln
        (summary-template
         (for/list ([baseline-pi (in-list baseline-pis)]
-                   [opt-pi (in-list opt-pis)])
+                   [opt-pi (in-list opt-pis)]
+                   [analysis (in-list analysis-hashes)])
+          (define-values (analysis-totals compile-totals)
+            (for/fold ([a null] [b null])
+                      ([h (in-list analysis)])
+              (values (cons (hash-ref h 'analyze-real) a)
+                      (cons (+ (hash-ref h 'compile-real)
+                               (hash-ref h 'expand-real))
+                            b))))
           (define benchmark (car baseline-pi))
           (list (format "\\textsc{~a}" benchmark)
                 (max-overhead (cdr baseline-pi))
                 (mean-overhead (cdr baseline-pi))
                 (max-overhead (cdr opt-pi))
-                (mean-overhead (cdr opt-pi))))))))
+                (mean-overhead (cdr opt-pi))
+                (format "~a $\\pm$ ~a"
+                        (approx (mean analysis-totals))
+                        (approx (stddev analysis-totals)))
+                (format "~a $\\pm$ ~a"
+                        (approx (mean compile-totals))
+                        (approx (stddev compile-totals)))))))))
   "")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -253,10 +274,10 @@
 ;; figures
 
 (define fig:overhead-summary
-  #f #;(overhead-summary BASELINE OPT))
+  (overhead-summary BASELINE OPT))
 
 (define fig:lattices
-  #f #;(lattices BASELINE OPT '("sieve" "zombie")))
+  (lattices BASELINE OPT '("sieve" "zombie")))
 
 (define fig:overhead-grid
   (overhead-grid BASELINE OPT))
@@ -268,5 +289,3 @@
   (summary-table BASELINE OPT))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-fig:overhead-grid
