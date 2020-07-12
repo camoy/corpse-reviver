@@ -159,6 +159,7 @@
   (define/for/lists (in-files out-files)
     ([in-file (in-list (pre-typed-untyped-subtask-in-file* pst))]
      [out-file (in-list (pre-typed-untyped-subtask-out-file* pst))])
+    ;; Get rid of results (otherwise the task won't run)
     (when (file-exists? out-file)
       (delete-file out-file))
     (values in-file out-file))
@@ -257,6 +258,7 @@
                (sum-times 'compile times)
                (sum-times 'expand times)
                (sum-times 'analyze times)
+               (sum-times 'total times)
                (hash 'blame (and~>> times (findf (has-tag? 'blame)) cdr))
                gc-hash
                #:combine (λ (_ x) x))
