@@ -21,8 +21,7 @@
          racket/path
          racket/set
          racket/hash
-         rebellion/collection/entry
-         rebellion/collection/multidict)
+         mischief/for)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; consts
@@ -50,8 +49,6 @@
   (for/list ([k (in-list ks)])
     (hash-ref h k)))
 
-(require racket/pretty)
-
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; private
 
@@ -60,16 +57,16 @@
 ;; performance info structure for that benchmark.
 (define (path->pi path benchmark)
   (define run-hashes (json-path->hashes path))
-  (define runtime-dict (hashes->runtime-dict run-hashes))
-  (define units
-    (~> runtime-dict multidict-unique-keys set-first string-length))
+  (define-values (typed-run-hashes untyped-run-hashes run-hashes*)
+    (unpack-run-hashes run-hashes))
+  (define units (~> run-hashes* first (hash-ref 'config) string-length))
   (define num-configurations
-    (set-count (multidict-unique-keys runtime-dict)))
-  (define baseline-runtimes
-    (set-first (multidict-ref runtime-dict (make-string units #\0))))
-  (define typed-runtimes
-    (set-first (multidict-ref runtime-dict (make-string units #\1))))
-  (define cis (runtime-dict->cis runtime-dict))
+    (set-count
+     (for/set ([run-hash (in-list run-hashes*)])
+       (hash-ref run-hash 'config))))
+  (define typed-runtimes (run-hashes->runtimes typed-run-hashes))
+  (define untyped-runtimes (run-hashes->runtimes untyped-run-hashes))
+  (define cis (run-hashes->cis run-hashes*))
   (define exhaustive? (= (expt 2 units) num-configurations))
   (define pi
     (make-performance-info
@@ -77,23 +74,52 @@
      #:src "."
      #:num-units units
      #:num-configurations num-configurations
-     #:baseline-runtime* baseline-runtimes
-     #:untyped-runtime* baseline-runtimes
+     #:baseline-runtime* untyped-runtimes
+     #:untyped-runtime* untyped-runtimes
      #:typed-runtime* typed-runtimes
      #:make-in-configurations (const cis)))
   (if exhaustive?
       pi
-      (make-sample-info pi (run-hashes->sample-cis run-hashes))))
+      (make-sample-info pi (run-hashes->sample-cis run-hashes*))))
+
+;; [Listof Hash] → [Listof Hash] [Listof Hash] [Listof Hash]
+;; Partitions out run hashes into the "guaranteed" configurations for the typed
+;; and untyped variants, and then the rest of the runs.
+(define (unpack-run-hashes run-hashes)
+  (define/for/fold ([typed-run-hashes null]
+                    [untyped-run-hashes null]
+                    [run-hashes* null])
+                   ([run-hash (in-list run-hashes)])
+    (define k (hash-ref run-hash 'sample))
+    (values (if (= k 0) (cons run-hash typed-run-hashes) typed-run-hashes)
+            (if (= k 1) (cons run-hash untyped-run-hashes) untyped-run-hashes)
+            (if (> k 1) (cons run-hash run-hashes*) run-hashes*)))
+  (values typed-run-hashes untyped-run-hashes (reverse run-hashes*)))
 
 ;; [Listof Hash] → [Listof [Listof Configuration-Info]]
-;; Given a list of run hashes, returns a partition of configuration infos. We
-;; filter out the baseline samples. Those should always be sample 0 and 1.
+;; Partitions the run hashes based on the sample.
 (define (run-hashes->sample-cis run-hashes)
-  (define sample (λ~> (hash-ref 'sample)))
-  (define run-hashes*
-    (filter (λ (x) (>= (sample x) 2)) run-hashes))
-  (map (λ~> hashes->runtime-dict runtime-dict->cis)
-       (group-by sample run-hashes*)))
+  (map run-hashes->cis
+       (group-by (λ~> (hash-ref 'sample)) run-hashes)))
+
+;; [Listof Hash] → [Listof Configuration-Info]
+;; Returns configuration info structures given run hashes.
+(define (run-hashes->cis run-hashes)
+  (define grouped-hashes (group-by (λ~> (hash-ref 'config-id)) run-hashes))
+  (for/list ([run-hashes (in-list grouped-hashes)])
+    (define config (hash-ref (first run-hashes) 'config))
+    (configuration-info config
+                        (count-one-bits config)
+                        (run-hashes->runtimes run-hashes))))
+
+;; [Listof Hash] → [Listof Real]
+;; Given a list of run hashes for the same configuration, returns all the
+;; runtimes performance numbers.
+(define (run-hashes->runtimes run-hashes)
+  (for/list ([run-hash (in-list run-hashes)])
+    (match-define (hash-table ['real real] ['error err] _ ...) run-hash)
+    (when err (error 'list->performance-hash "runtime error ~a" err))
+    real))
 
 ;; String → Natural
 ;; Returns the number of "one" bits in a bitstring.
@@ -101,29 +127,6 @@
   (for/sum ([c (in-string str)]
             #:when (eq? c #\1))
     1))
-
-;; [Multidict String [Listof Real]] → [Listof Configuration-Info]
-;; Given a runtime multidict, returns a list of configuration infos .
-(define (runtime-dict->cis runtime-dict)
-  (for/list ([e (in-multidict-entries runtime-dict)])
-    (define-values (config runtimes)
-      (values (entry-key e) (entry-value e)))
-    (configuration-info config (count-one-bits config) runtimes)))
-
-;; [Listof Hash] → [Multidict String [Listof Real]]
-;; Given a list of runtime hashes, returns that information as a runtime
-;; multidict (since in sampling we can repeat the same configuration).
-(define (hashes->runtime-dict runtimes)
-  (define grouped-hashes (group-by (λ~> (hash-ref 'config-id)) runtimes))
-  (for/multidict ([run-hashes (in-list grouped-hashes)])
-    (define config (hash-ref (first run-hashes) 'config))
-    (define times
-      (for/list ([h (in-list run-hashes)])
-        (match-define (hash-table ['real real] ['error err] _ ...) h)
-        (when err
-          (error 'list->performance-hash "runtime error ~a" err))
-        real))
-    (entry config times)))
 
 ;; Path → [Listof Hash]
 ;; Convert a JSON file to a list of hashes with keys based on the header.
@@ -179,86 +182,3 @@
      "sieve"
      #:! #:t (path->benchmark eg-data "runtime")))
   )
-
-
-#|
-(define (filter-benchmark paths benchmarks)
-  (define (only-benchmark? path)
-    (for/or ([benchmark (in-list benchmarks)])
-      (string-contains? (path->string path) benchmark)))
-  (filter only-benchmark? paths))
-
-;; TODO: memoize this calculation
-
-(define (runtime-paths->sample-info pi paths)
-  (make-sample-info pi (runtime-paths->samples paths)))
-
-(define (runtime-paths->performance-info benchmark paths)
-  (define h (runtime-paths->hash paths))
-  (define units (string-length (set-first (multidict-unique-keys h))))
-  (define baseline-runtimes
-    (set-first (multidict-ref h (make-string units #\0))))
-  (define typed-runtimes
-    (set-first (multidict-ref h (make-string units #\1))))
-  (define config-infos (exhaustive-configuration-infos h))
-  (make-performance-info
-   (string->symbol benchmark)
-   #:src "."
-   #:num-units units
-   #:num-configurations (set-count (multidict-unique-keys h))
-   #:baseline-runtime* baseline-runtimes
-   #:untyped-runtime* baseline-runtimes
-   #:typed-runtime* typed-runtimes
-   #:make-in-configurations (λ _ config-infos)))
-
-;;
-;;
-(define (exhaustive? pi)
-  (define num-units (performance-info->num-units pi))
-  (define num-configs (performance-info->num-configurations pi))
-  (= num-configs (expt 2 (performance-info->num-units pi))))
-
-;; String → Natural
-;;
-(define (count-hi-bits cfg)
-  (for/sum ([c (in-string cfg)]
-            #:when (eq? c #\1))
-    1))
-
-;; [Listof Path] → [Listof [Listof Configuration-Info]]
-;; TODO: Shouldn't remove baseline since may actually be in sample
-;; only remove the first ones
-(define (runtime-paths->samples paths)
-  (define run-hashes (append-map json->hashes paths))
-  (define -hashes
-    (for/fold ([acc (hash)])
-              ([run-hash (in-list run-hashes)])
-      (define sample (hash-ref run-hash 'sample))
-      (hash-update acc sample (λ~>> (cons run-hash)) null)))
-  (define hashes (remove-baseline -hashes))
-  (for/list ([(k v) (in-hash hashes)])
-    (sample-configuration-infos (hash-collapse v))))
-
-;;
-;;
-(define (remove-baseline hashes)
-  (for/hash ([(k v) (in-hash hashes)]
-             #:when (not (andmap baseline? v)))
-    (values k v)))
-
-;;
-;;
-(define (baseline? h)
-  (define str (hash-ref h 'config))
-  (define n (string-length str))
-  (define hi (count-hi-bits str))
-  (or (= hi 0) (= hi n)))
-
-;;
-;;
-(define (sample-configuration-infos h)
-  (for/list ([e (in-multidict-entries h)])
-    (define-values (config runtimes)
-      (values (entry-key e) (entry-value e)))
-    (configuration-info config (count-hi-bits config) runtimes)))
-|#
