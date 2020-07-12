@@ -235,22 +235,23 @@
   (define targets (map path->string -targets))
   (for-each delete-bytecode targets)
   (define (execute-thunk)
-    ;; HACK: Remove this (and all of private/benchmark-typed-racket) once TR
-    ;; #837 is resolved.
-    (with-patched-typed-racket
-      (λ ()
-        (with-handlers ([exn:fail? (make-error-handler analysis-times)])
-          (if (config-baseline? cfg)
-              (compile-files targets)
-              (compile-files/scv-cr targets))))
-      PROXY-HASH))
+    (with-handlers ([exn:fail? (make-error-handler analysis-times)])
+      (if (config-baseline? cfg)
+          ;; HACK: Remove this (and all of private/benchmark-typed-racket) once TR
+          ;; #837 is resolved.
+          (with-patched-typed-racket
+            (λ () (compile-files targets))
+            PROXY-HASH)
+          (compile-files/scv-cr targets))))
   (define interceptor (make-log-interceptor scv-cr-logger))
+  (define (run)
+    (define-values (_ logs)
+      (interceptor execute-thunk))
+    logs)
   (define-values (logs gc-hash)
-    (measure-gc
-     (λ ()
-       (define-values (_ logs)
-         (interceptor execute-thunk))
-       logs)))
+    (if (config-gc-log? cfg)
+        (measure-gc run)
+        (values (run) (hash))))
   (define times (map read-message (hash-ref logs 'info)))
   (hash-union! analysis-times
                (sum-times 'compile times)

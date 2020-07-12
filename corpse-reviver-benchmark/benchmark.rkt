@@ -63,6 +63,7 @@
    10  ; num-samples
    10  ; sample-factor
    1   ; worker-count
+   #f  ; gc-log?
    "." ; output-dir
    0   ; sample
    #f  ; benchmark
@@ -132,6 +133,10 @@
     worker-count
     "Number of parallel workers"
     (set-config-worker-count! cfg (string->number worker-count))]
+
+   [("-g" "--gc-log")
+    "Log GC statistics during analysis"
+    (set-config-gc-log?! cfg #t)]
 
    #:args targets
    targets))

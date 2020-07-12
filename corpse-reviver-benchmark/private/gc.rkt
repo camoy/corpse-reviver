@@ -6,6 +6,11 @@
 (provide measure-gc)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; require
+
+(require racket/logging)
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; data
 
 (struct gc-info (major? pre-amount pre-admin-amount code-amount
@@ -22,28 +27,22 @@
 ;; thunk.
 (define (measure-gc thunk)
   (define buf (box null))
-  (define thd (thread (make-gc-handler buf)))
   (define-values (initial-times)
     (cons (current-process-milliseconds)
           (current-inexact-milliseconds)))
-  (define result (thunk))
+  (define result
+    (with-intercepted-logging
+      (λ (v)
+        (when (eq? 'gc-info (prefab-struct-key (vector-ref v 2)))
+          (set-box! buf (cons v (unbox buf)))))
+      thunk
+      'debug
+      #:logger (current-logger)))
   (define-values (final-times)
     (cons (current-process-milliseconds)
           (current-inexact-milliseconds)))
-  (kill-thread thd)
   (values result
           (summarize (unbox buf) initial-times final-times)))
-
-;; [Box List] → (→ Any)
-;; Constructs a thread handler for monitoring GC logs and storing it in the
-;; given box.
-(define ((make-gc-handler buf))
-  (define recv (make-log-receiver (current-logger) 'debug))
-  (let go ()
-    (define v (sync recv))
-    (when (eq? 'gc-info (prefab-struct-key (vector-ref v 2)))
-      (set-box! buf (cons v (unbox buf))))
-    (go)))
 
 ;; List [Cons Number Number] [Cons Number Number] → Hash
 ;; Given a list of GC results and start and end times, constructs the summary
@@ -59,21 +58,7 @@
         v))
 
     (unless (pair? gc-results)
-      (return (hash 'gc-alloc #f
-                    'gc-collected #f
-                    'gc-max-heap-size #f
-                    'gc-max-slop #f
-                    'gc-peak-total-memory #f
-                    'gc-num-minor #f
-                    'gc-minor-gc-time #f
-                    'gc-minor-gc-elapsed-time #f
-                    'gc-num-major #f
-                    'gc-major-gc-time #f
-                    'gc-major-gc-elapsed-time #f
-                    'gc-max-pause #f
-                    'gc-percent-time #f
-                    'gc-percent-elapsed #f
-                    'gc-alloc-rate #f)))
+      (return (hash)))
 
     (define num-major (for/sum ([e gc-results] #:when (gc-info-major? e)) 1))
     (define num-minor (for/sum ([e gc-results] #:unless (gc-info-major? e)) 1))

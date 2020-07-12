@@ -23,6 +23,7 @@
    num-samples
    sample-factor
    worker-count
+   gc-log?
    output-dir
    sample
    benchmark
