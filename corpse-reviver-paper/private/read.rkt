@@ -42,9 +42,9 @@
     (values benchmark
             (path->pi path benchmark))))
 
-;; [Hash A Any] (A → A) → [Listof Any]
+;; [Hash A Any] {(A → A)} → [Listof Any]
 ;; Given a hash, returns a list of values sorted by key.
-(define (hash->sorted-list h <:)
+(define (hash->sorted-list h [<: string<=?])
   (define ks (sort (hash-keys h) <:))
   (for/list ([k (in-list ks)])
     (hash-ref h k)))

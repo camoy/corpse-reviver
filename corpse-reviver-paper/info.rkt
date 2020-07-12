@@ -14,7 +14,7 @@
   '("base"
     "gtp-plot"
     "pict-abbrevs"
-    "rebellion"
+    "mischief"
     "scribble-lib"
     "threading-lib"))
 

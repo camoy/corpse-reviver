@@ -3,7 +3,7 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; provide
 
-(provide fig:overhead-summary
+#;(provide fig:overhead-summary
          fig:lattices
          fig:overhead-grid
          fig:exact-grid)
@@ -20,27 +20,35 @@
          math/statistics
          pict
          pict-abbrevs
+         racket/stream
          racket/string
          racket/hash
          racket/function
+         racket/sequence
          racket/format
          racket/path
          racket/list
          racket/runtime-path
          racket/match
          racket/set
-         rebellion/collection/multidict
-         rebellion/collection/entry
          threading
          "lattice.rkt"
          "read.rkt")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; const
-
+;; consts
 
 (define COLOR-SCHEME (list #xfdb863 #xb2abd2))
 (define DARK-COLOR-SCHEME (list #xe66101 #x5e3c99))
+
+(define-runtime-path BASELINE-DIR "../baseline")
+(define-runtime-path OPT-DIR "../opt")
+
+(define BASELINE-PIS (hash->sorted-list (dir->pi-hash BASELINE-DIR)))
+(define OPT-PIS (hash->sorted-list (dir->pi-hash OPT-DIR)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; parameters
 
 (*SAMPLE-INTERVAL-ALPHA* 0.6)
 (*OVERHEAD-PLOT-HEIGHT* 275)
@@ -68,98 +76,119 @@
 (*LATTICE-BOX-WIDTH* 14)
 (*LATTICE-FONT-SIZE* 14)
 
-(define ((color-converter scheme) k)
+;; [Listof Number] → (Natural → Color%)
+;; Constructs a cyclical color converter.
+(define ((make-color-converter scheme) k)
   (define k* (modulo k (length scheme)))
   (hex-triplet->color% (list-ref scheme k*)))
 
-(*BRUSH-COLOR-CONVERTER* (color-converter COLOR-SCHEME))
-(*PEN-COLOR-CONVERTER* (color-converter DARK-COLOR-SCHEME))
-
-(define-runtime-path BASELINE-PATH "../baseline")
-(define BASELINE (directory-list BASELINE-PATH #:build? BASELINE-PATH))
-
-(define-runtime-path OPT-PATH "../opt")
-(define OPT (directory-list OPT-PATH #:build? OPT-PATH))
+(*BRUSH-COLOR-CONVERTER* (make-color-converter COLOR-SCHEME))
+(*PEN-COLOR-CONVERTER* (make-color-converter DARK-COLOR-SCHEME))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; public
+;; grid figures
 
-(define ((make-grid-figure pi-fun plot) . datasets)
-  (define pis*
-    (apply map list (datasets->pis pi-fun datasets)))
-  (grid-plot plot pis*))
+(define ((make-grid-figure plot) . pis*)
+  (define pis-grouped (apply map list pis*))
+  (grid-plot plot pis-grouped))
 
-(define (overhead-or-samples pis)
-  (if (sample-info? (first pis))
-      (samples-plot pis)
-      (overhead-plot pis)))
-
-;;
-;;
-(define overhead-grid
-  (make-grid-figure
-   (λ (pi benchmark paths)
-     (if (exhaustive? pi) pi (runtime-paths->sample-info pi paths)))
-   overhead-or-samples))
-
-;;
-;;
-(define exact-grid (make-grid-figure (λ (pi . _) pi) exact-runtime-plot))
+(define overhead-grid (make-grid-figure overhead-plot))
+(define exact-grid (make-grid-figure exact-runtime-plot))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; summary CDF
+;; summary figure
 
-;; TODO: this is slower than it should be
+;; [Parameterof Real]
+;;
 (define *SUMMARY-GRANULARITY* (make-parameter 1/100))
 
-(define (overhead-summary . datasets)
-  (define pis*
-    (datasets->pis (λ (x . _) x) datasets))
-  (define pis**
+;;
+;; TODO
+(define (overhead-summary . pis*)
+  (define cdf-pis
     (for/list ([pis (in-list pis*)])
-      (define points (slowdown-points pis))
+      (define cis (pis->cdf-cis pis))
       (make-performance-info
        '||
        #:src "."
        #:num-units 0
-       #:num-configurations (length points)
+       #:num-configurations (length cis)
        #:baseline-runtime* '(1)
        #:untyped-runtime* '(1)
        #:typed-runtime* '(1)
-       #:make-in-configurations
-       (λ _ points))))
+       #:make-in-configurations (const cis))))
   (parameterize ([*OVERHEAD-SHOW-CONFIGURATIONS* #f])
-    (overhead-plot pis**)))
+    (overhead-plot cdf-pis)))
 
-(define (slowdown-points pis)
-  (define interval
-    (in-range 1 (*OVERHEAD-MAX*) (*SUMMARY-GRANULARITY*)))
+;;
+;; TODO
+(define (pis->cdf-cis pis)
+  (define interval (in-range 1 (*OVERHEAD-MAX*) (*SUMMARY-GRANULARITY*)))
   (define size (/ (sub1 (*OVERHEAD-MAX*)) (*SUMMARY-GRANULARITY*)))
-  (define inv (adjusted-inverse-cdf pis interval))
+  (define inv (norm-inverse-cdf pis interval))
   (for/list ([ind (in-naturals 1)]
              [k interval])
-    (define p (/ ind size))
-    (configuration-info "" 0 (list (inv p)))))
+    (configuration-info "" 0 (list (inv (/ ind size))))))
 
-(define (adjusted-inverse-cdf pis x-vals)
+;;
+;; TODO
+(define (norm-inverse-cdf pis Ds)
+  (define graph*
+    (for/list ([(D %) (in-hash (norm-cdf Ds pis))])
+      (cons % D)))
   (define graph
-    (for/list ([xy (in-list (adjusted-cdf pis x-vals))])
-      (cons (cdr xy) (car xy))))
+    (sort graph*
+          (λ (x y)
+            (define-values (x* y*) (values (car x) (car y)))
+            (if (= x* y*) (< (cdr x) (cdr y)) (< x* y*)))))
   (λ (x)
     (define p (assf (λ (v) (>= v x)) graph))
     (if p (cdr p) 100)))
 
-(define (adjusted-cdf pis x-vals)
-  (for/list ([k x-vals])
-    (cons k
-          (/ (for/sum ([pi (in-list pis)])
-               (define n (count-configurations pi (const #t)))
-               (percent-k-deliverable k n pi))
-             (length pis)))))
+;;
+;; TODO
+(define (norm-cdf Ds pis)
+  (define N (length pis))
+  (define cdfs (map (norm-cdf* Ds) pis))
+  (define non-normal-cdfs (apply hash-union #:combine + cdfs))
+  (for/hash ([(D %) (in-hash non-normal-cdfs)])
+    (values D (/ % N))))
 
-(define (percent-k-deliverable k n pi)
-  (/ ((deliverable k) pi) n))
+;;
+;; TODO
+(define ((norm-cdf* Ds) pi)
+  (define N (count-configurations pi (const #t)))
+  (define overheads
+    (sort (for/list ([cfg (in-configurations pi)])
+            (overhead pi (configuration-info->mean-runtime cfg)))
+          <))
 
+  ;; Calculate total counts
+  (define D+k*
+    (let go ([k 0]
+             [Ds Ds]
+             [overheads overheads]
+             [result (hash)])
+      (cond
+        ;; Domain is finished, we're done.
+        [(stream-empty? Ds) result]
+        ;; All overheads must be under remaining Ds.
+        [(stream-empty? overheads)
+         (define result* (hash-set result (stream-first Ds) k))
+         (go k (stream-rest Ds) overheads result*)]
+        ;; Flip-flop between recursion on D and overheads.
+        [else
+         (define-values (D overhead)
+           (values (stream-first Ds) (stream-first overheads)))
+         (if (<= overhead D)
+             (go (add1 k) Ds (stream-rest overheads) result)
+             (go k (stream-rest Ds) overheads (hash-set result D k)))])))
+
+  ;; Normalize by N
+  (for/hash ([(D k) (in-hash D+k*)])
+    (values D (/ k N))))
+
+#|
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; table
 
@@ -289,3 +318,11 @@
   (summary-table BASELINE OPT))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+|#
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; figures
+
+(define fig:overhead-summary (overhead-summary BASELINE-PIS OPT-PIS))
+(define fig:overhead-grid (overhead-grid BASELINE-PIS OPT-PIS))
+(define fig:exact-grid (exact-grid BASELINE-PIS OPT-PIS))
