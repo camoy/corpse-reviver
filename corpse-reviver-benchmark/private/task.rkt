@@ -90,7 +90,7 @@
         (target->params/init target)))
   (define-values (analyses runtimes)
     (values (make-queue) (make-queue)))
-  (set-config-cfg-id! cfg 1)
+  (set-config-cfg-id! cfg 0)
   (for*/fold
       ([n 1])
       ([pre-subtask (in-list (in-pre-subtasks task))]
