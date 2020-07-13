@@ -3,10 +3,11 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; provide
 
-#;(provide fig:overhead-summary
+(provide fig:overhead-summary
          fig:lattices
          fig:overhead-grid
-         fig:exact-grid)
+         fig:exact-grid
+         table:summary)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; require
@@ -31,6 +32,7 @@
          racket/runtime-path
          racket/match
          racket/set
+         scribble/base
          threading
          "lattice.rkt"
          "read.rkt")
@@ -40,12 +42,6 @@
 
 (define COLOR-SCHEME (list #xfdb863 #xb2abd2))
 (define DARK-COLOR-SCHEME (list #xe66101 #x5e3c99))
-
-(define-runtime-path BASELINE-DIR "../baseline")
-(define-runtime-path OPT-DIR "../opt")
-
-(define BASELINE-PIS (hash->sorted-list (dir->pi-hash BASELINE-DIR)))
-(define OPT-PIS (hash->sorted-list (dir->pi-hash OPT-DIR)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; parameters
@@ -84,16 +80,6 @@
 
 (*BRUSH-COLOR-CONVERTER* (make-color-converter COLOR-SCHEME))
 (*PEN-COLOR-CONVERTER* (make-color-converter DARK-COLOR-SCHEME))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; grid figures
-
-(define ((make-grid-figure plot) . pis*)
-  (define pis-grouped (apply map list pis*))
-  (grid-plot plot pis-grouped))
-
-(define overhead-grid (make-grid-figure overhead-plot))
-(define exact-grid (make-grid-figure exact-runtime-plot))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; summary figure
@@ -188,104 +174,23 @@
   (for/hash ([(D k) (in-hash D+k*)])
     (values D (/ k N))))
 
-#|
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; table
+;; lattice figures
 
-(define *LATTICE-RED-THRESHOLD* (make-parameter 3))
-(define *LATTICE-GREEN-THRESHOLD* (make-parameter 1.25))
+;;
+;; TODO
+(define (lattices baseline-pis opt-pis benchmarks [spacing 40])
+  (define lattice-picts
+    (for/list ([baseline-pi (in-list baseline-pis)]
+               [opt-pi (in-list opt-pis)]
+               #:when (member (performance-info->name baseline-pi)
+                              benchmarks))
+      (make-performance-lattice (pi->vector baseline-pi) (pi->vector opt-pi))))
+  (apply hc-append spacing lattice-picts))
 
-(define (color x)
-  (if (number? x)
-      (let ([x* (real->decimal-string x 1)])
-        (cond
-          [(<= x (*LATTICE-GREEN-THRESHOLD*))
-           @~a{\cellcolor{rktpalegreen} @x*}]
-          [(>= x (*LATTICE-RED-THRESHOLD*))
-           @~a{\cellcolor{rktpink} @x*}]
-          [else
-           x*]))
-      x))
-
-;;          (hash-ref (make-paths->hash "runtime" eg-all) "sieve")
-
-(define (approx x)
-  (~r (/ x 1000) #:precision 0))
-
-(define (summary-template results)
-  (define results*
-    (string-join (map (λ (x)
-                        (string-join (append (map color (take x 5)) (drop x 5))
-                                     " & "))
-                      results)
-                 "\\\\"))
-  @~a{\begin{tabular}{ c | c c | c c | c | c}
-  & \multicolumn{2}{c|}{Racket Overhead}
-  & \multicolumn{2}{c|}{\tool Overhead}
-  & \multicolumn{1}{c}{\tool Analyze}
-  & \multicolumn{1}{c}{\tool Compile} \\
-  Benchmark
-  & \hspace{0.65em}Max\hspace{0.65em} & Mean
-  & \hspace{0.65em}Max\hspace{0.65em} & Mean
-  & \hspace{0.65em}Mean $\pm~\sigma$ (s)
-  & \hspace{0.65em}Mean $\pm~\sigma$ (s)  \\
-  \hline
-  @results* \\
-  \end{tabular}})
-
-(define (summary-table baseline opt)
-  (match-define (list baseline-pis opt-pis)
-    (datasets->pis (λ (pi benchmark _) (cons benchmark pi))
-                   (list baseline opt)))
-  (define analysis-hashes (opt->analyses opt))
-  (with-output-to-file "summary.tex"
-    #:exists 'replace
-    (λ ()
-      (displayln
-       (summary-template
-        (for/list ([baseline-pi (in-list baseline-pis)]
-                   [opt-pi (in-list opt-pis)]
-                   [analysis (in-list analysis-hashes)])
-          (define-values (analysis-totals compile-totals)
-            (for/fold ([a null] [b null])
-                      ([h (in-list analysis)])
-              (values (cons (hash-ref h 'analyze-real) a)
-                      (cons (+ (hash-ref h 'compile-real)
-                               (hash-ref h 'expand-real))
-                            b))))
-          (define benchmark (car baseline-pi))
-          (list (format "\\textsc{~a}" benchmark)
-                (max-overhead (cdr baseline-pi))
-                (mean-overhead (cdr baseline-pi))
-                (max-overhead (cdr opt-pi))
-                (mean-overhead (cdr opt-pi))
-                (format "~a $\\pm$ ~a"
-                        (approx (mean analysis-totals))
-                        (approx (stddev analysis-totals)))
-                (format "~a $\\pm$ ~a"
-                        (approx (mean compile-totals))
-                        (approx (stddev compile-totals)))))))))
-  "")
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-(define (lattices baseline opt benchmarks [spacing 40])
-  (define-values (baseline* opt*)
-    (values (filter-benchmark baseline benchmarks)
-            (filter-benchmark opt benchmarks)))
-  (apply hc-append spacing (lattices-list baseline* opt*)))
-
-(define (lattices-list baseline opt)
-  (match-define (list baseline-pis opt-pis)
-    (datasets->pis (λ (pi . _) pi)
-                   (list baseline opt)))
-  (for/list ([baseline-pi (in-list baseline-pis)]
-             [opt-pi (in-list opt-pis)])
-    (define height (performance-info->num-units baseline-pi))
-    (make-performance-lattice (average-results baseline-pi)
-                              (average-results opt-pi))))
-
-(define (average-results pi)
+;;
+;; TODO
+(define (pi->vector pi)
   (define h
     (for/hash ([cfg (in-configurations pi)])
       (values (configuration-info->id cfg) cfg)))
@@ -296,33 +201,105 @@
       (hash-ref h (natural->bitstring k #:bits units))))
   (for/vector ([cfg (in-list sorted-cfgs)])
     (define runtimes (configuration-info->runtime* cfg))
-    (cons (mean runtimes)
-          (stddev runtimes))))
+    (cons (mean runtimes) (stddev runtimes))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; figures
+;; grid figures
 
-(define fig:overhead-summary
-  (overhead-summary BASELINE OPT))
+(define ((make-grid-figure plot) . pis*)
+  (define pis-grouped (apply map list pis*))
+  (grid-plot plot pis-grouped))
 
-(define fig:lattices
-  (lattices BASELINE OPT '("sieve" "zombie")))
-
-(define fig:overhead-grid
-  (overhead-grid BASELINE OPT))
-
-(define fig:exact-grid
-  (exact-grid BASELINE OPT))
-
-(define table:summary
-  (summary-table BASELINE OPT))
+(define overhead-grid (make-grid-figure overhead-plot))
+(define exact-grid (make-grid-figure exact-runtime-plot))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-|#
+;; table
+
+;; [Parameter Real]
+;; TODO
+(define *LATTICE-RED-THRESHOLD* (make-parameter 3))
+
+;; [Parameter Real]
+;; TODO
+(define *LATTICE-GREEN-THRESHOLD* (make-parameter 1.25))
+
+;;
+;;
+(define HEADER0
+  '(""
+    "Racket Overhead" cont
+    "SCV-CR Overhead" cont
+    "SCV-CR Analyze"
+    "SCV-CR Compile"))
+
+;;
+;;
+(define HEADER1
+  '("Benchmark"
+    "Max" "Mean"
+    "Max" "Mean"
+    "Mean ± 𝜎 (s)"
+    "Mean ± 𝜎 (s)"))
+
+;;
+;;
+(define FORMATTERS
+  (list symbol->string
+        format-overhead
+        format-overhead
+        format-overhead
+        format-overhead
+        format-interval
+        format-interval))
+
+;;
+;; TODO
+(define (table-summary baseline-pis opt-pis analyses)
+  (define data
+    (for/list ([baseline-pi (in-list baseline-pis)]
+               [opt-pi (in-list opt-pis)]
+               [analysis (in-list analyses)])
+      (define as (analyze-times analysis))
+      (define cs (compile-times analysis))
+      (applies FORMATTERS
+               (list (performance-info->name baseline-pi)
+                     (max-overhead baseline-pi)
+                     (mean-overhead baseline-pi)
+                     (max-overhead opt-pi)
+                     (mean-overhead opt-pi)
+                     (cons (mean as) (stddev as))
+                     (cons (mean cs) (stddev cs))))))
+  (tabular
+   #:style 'boxed
+   #:row-properties '(center)
+   (cons HEADER0 (cons HEADER1 data))))
+
+;;
+;; TODO
+(define (analyze-times analysis)
+  (for/list ([h (in-list analysis)])
+    (hash-ref h 'analyze-real)))
+
+;;
+;; TODO
+(define (compile-times analysis)
+  (for/list ([h (in-list analysis)])
+    (+ (hash-ref h 'compile-real)
+       (hash-ref h 'expand-real))))
+
+;;
+;; TODO
+(define (applies fs xs)
+  (for/list ([f (in-list fs)]
+             [x (in-list xs)])
+    (f x)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; figures
 
 (define fig:overhead-summary (overhead-summary BASELINE-PIS OPT-PIS))
+(define fig:lattices (lattices BASELINE-PIS OPT-PIS '(sieve zombie)))
 (define fig:overhead-grid (overhead-grid BASELINE-PIS OPT-PIS))
 (define fig:exact-grid (exact-grid BASELINE-PIS OPT-PIS))
+(define table:summary (table-summary BASELINE-PIS OPT-PIS ANALYSES))

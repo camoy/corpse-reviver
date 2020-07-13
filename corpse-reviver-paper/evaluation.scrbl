@@ -2,8 +2,6 @@
 
 @(require "private/figure.rkt")
 
-
-
 @title{Evaluation}
 
 We claim that
@@ -245,6 +243,8 @@ and did not resample.
 @;\pagebreak
 
 @section{Results}
+
+@table:summary
 
 \begin{wrapfigure}{r}{0.55\textwidth}
 \definecolor{rktpink}{RGB}{255, 192, 203}

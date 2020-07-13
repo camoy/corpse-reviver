@@ -3,8 +3,13 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; provide
 
-(provide dir->pi-hash
-         hash->sorted-list)
+(provide BASELINE-PIS
+         OPT-PIS
+         ANALYSES
+
+         format-overhead
+         format-percent
+         format-interval)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; require
@@ -14,10 +19,12 @@
          gtp-plot/configuration-info
          json
          threading
+         racket/runtime-path
          racket/list
          racket/function
          racket/match
          racket/string
+         racket/format
          racket/path
          racket/set
          racket/hash
@@ -29,6 +36,14 @@
 ;; Regexp
 ;; Regular expression for recognizing benchmark output JSON files.
 (define DATA-FILENAME-RX #rx".*_(.*)_(.*)\\.json")
+
+;; Path
+;; TODO
+(define-runtime-path BASELINE-DIR "../baseline")
+
+;; Path
+;; TODO
+(define-runtime-path OPT-DIR "../opt")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; public
@@ -156,6 +171,39 @@
      (match-define (list _ benchmark kind*) matches)
      (and (equal? kind kind*) benchmark)]
     [else #f]))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; formatters
+
+;;
+;; TODO
+(define (format-overhead n)
+  (string-append (~r n #:precision 1) "×"))
+
+;;
+;; TODO
+(define (format-percent n)
+  (string-append (~r n #:precision 0) "%"))
+
+;;
+;; TODO
+(define (format-interval  μ+σ)
+  (match-define (cons μ σ) μ+σ)
+  (format "~a ± ~a" (ms-approx μ) (ms-approx σ)))
+
+;;
+;; TODO
+(define (ms-approx x)
+  (~r (/ x 1000) #:precision 0))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; performance infos
+
+(define BASELINE-PIS (hash->sorted-list (dir->pi-hash BASELINE-DIR)))
+(define OPT-PIS (hash->sorted-list (dir->pi-hash OPT-DIR)))
+(define ANALYSES
+  (map json-path->hashes
+       (hash->sorted-list (dir->benchmark-hash OPT-DIR "analysis"))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; test

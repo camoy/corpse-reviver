@@ -1,5 +1,7 @@
 #lang racket/base
 
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
 (provide stats:median-overhead-baseline
          stats:mean-overhead-opt
          stats:worst-case-baseline
@@ -10,7 +12,11 @@
          stats:sieve-large-overhead
          stats:sieve-small-overhead
          stats:morsecode-max-overhead
-         stats:zombie-mean-overhead)
+         stats:zombie-mean-overhead
+         stats:baseline-7%
+         stats:opt-7%)
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (require racket/runtime-path
          racket/match
@@ -21,128 +27,95 @@
          gtp-plot/configuration-info
          "read.rkt")
 
-;; DRY
-(define-runtime-path BASELINE-PATH "../baseline")
-(define BASELINE (directory-list BASELINE-PATH #:build? BASELINE-PATH))
-
-(define-runtime-path OPT-PATH "../opt")
-(define OPT (directory-list OPT-PATH #:build? OPT-PATH))
-
-(match-define (list baseline-pis opt-pis)
-  (datasets->pis (λ (pi benchmark _) (cons benchmark pi))
-                 (list BASELINE OPT)))
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (define (worst-case pis)
-  (for/fold ([overhead -1])
-            ([benchmark+pi (in-list pis)])
-    (define pi (cdr benchmark+pi))
-    (max overhead (max-overhead pi))))
-
-(define MOST-PERCENT 0.8)
+  (apply max (map max-overhead pis)))
 
 (define (mean-case pis)
-  (define overheads
-    (for/list ([benchmark+pi (in-list pis)])
-      (define pi (cdr benchmark+pi))
-      (mean-overhead pi)))
-  (mean overheads))
+  (mean (map mean-overhead pis)))
 
 (define (median-case pis)
-  (define overheads
-    (for/append ([benchmark+pi (in-list pis)])
-      (define pi (cdr benchmark+pi))
-      (for/list ([cfg (in-configurations pi)])
-        (overhead pi cfg))))
-  (median < overheads))
-
-(define (overhead pi cfg)
-  (define baseline (performance-info->baseline-runtime pi))
-  (define x (configuration-info->mean-runtime cfg))
-  (/ x baseline))
+  (median < (pis-overheads pis)))
 
 (define (percent-overhead<= pis target-overhead)
   (define count 0)
   (define total 0)
-  (for ([benchmark+pi (in-list pis)])
-    (define pi (cdr benchmark+pi))
-    (for ([cfg (in-configurations pi)])
+  (for ([pi (in-list pis)])
+    (for ([ci (in-configurations pi)])
       (set! total (add1 total))
-      (when (<= (overhead pi cfg) target-overhead)
+      (when (<= (ci-overhead ci pi) target-overhead)
         (set! count (add1 count)))))
   (* (/ count total) 100))
 
 (define (overhead-percentile pis percentile)
-  (define overheads
-    (for/append ([benchmark+pi (in-list pis)])
-      (define pi (cdr benchmark+pi))
-      (for/list ([cfg (in-configurations pi)])
-        (overhead pi cfg))))
-  (define overheads* (sort overheads <))
+  (define overheads (sort (pis-overheads pis) <))
   (define k (inexact->exact (ceiling (* percentile (length overheads)))))
-  (list-ref overheads* k))
+  (list-ref overheads k))
 
-(define (configuration-overhead pis benchmark cfg-id)
-  (for/first ([benchmark+pi (in-list pis)]
-              #:when (equal? (car benchmark+pi) benchmark))
-    (define pi (cdr benchmark+pi))
-    (for/first ([cfg (in-configurations pi)]
-                #:when (equal? (configuration-info->id cfg) cfg-id))
-      (overhead pi cfg))))
+(define (configuration-overhead pi cfg-id)
+  (for/first ([ci (in-configurations pi)]
+              #:when (equal? (configuration-info->id ci) cfg-id))
+    (ci-overhead ci pi)))
 
-;; TODO dry
+(define (pis-overheads pis)
+  (for/append ([pi (in-list pis)])
+    (for/list ([ci (in-configurations pi)])
+      (ci-overhead ci pi))))
 
-(define (benchmark-max-overhead pis benchmark)
-  (for/first ([benchmark+pi (in-list pis)]
-              #:when (equal? (car benchmark+pi) benchmark))
-    (define pi (cdr benchmark+pi))
-    (max-overhead pi)))
+(define (ci-overhead ci pi)
+  (define baseline (performance-info->baseline-runtime pi))
+  (define x (configuration-info->mean-runtime ci))
+  (/ x baseline))
 
-(define (benchmark-mean-overhead pis benchmark)
-  (for/first ([benchmark+pi (in-list pis)]
-              #:when (equal? (car benchmark+pi) benchmark))
-    (define pi (cdr benchmark+pi))
-    (mean-overhead pi)))
+(define (benchmark pis b)
+  (for/first ([pi (in-list pis)]
+              #:when (equal? (performance-info->name pi) b))
+    pi))
 
-(define (fmt-overhead n) (string-append (~r n #:precision 1) "×"))
-(define (fmt-percent n) (string-append (~r n #:precision 0) "%"))
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (define stats:median-overhead-baseline
-  (fmt-overhead (median-case baseline-pis)))
+  (format-overhead (median-case BASELINE-PIS)))
 
 (define stats:mean-overhead-opt
-  (fmt-overhead (mean-case opt-pis)))
+  (format-overhead (mean-case OPT-PIS)))
 
 (define stats:worst-case-baseline
-  (fmt-overhead (worst-case baseline-pis)))
+  (format-overhead (worst-case BASELINE-PIS)))
 
 (define stats:worst-case-opt
-  (fmt-overhead (worst-case opt-pis)))
+  (format-overhead (worst-case OPT-PIS)))
 
 (define stats:percent-two-times-overhead-baseline
-  (fmt-percent (percent-overhead<= baseline-pis 2)))
+  (format-percent (percent-overhead<= BASELINE-PIS 2)))
 
 (define stats:95-percentile-overhead-opt
-  (fmt-overhead (overhead-percentile opt-pis 0.95)))
+  (format-overhead (overhead-percentile OPT-PIS 0.95)))
 
 (define stats:percent-baseline-within-worst-case-opt
-  (fmt-percent (percent-overhead<= baseline-pis (worst-case opt-pis))))
+  (format-percent (percent-overhead<= BASELINE-PIS (worst-case OPT-PIS))))
 
-(define-values (sieve-01-overhead sieve-10-overhead)
-  (values (configuration-overhead baseline-pis "sieve" "01")
-          (configuration-overhead baseline-pis "sieve" "10")))
+(define sieve-01-overhead
+  (configuration-overhead (benchmark BASELINE-PIS 'sieve) "01"))
+
+(define sieve-10-overhead
+  (configuration-overhead (benchmark BASELINE-PIS 'sieve) "10"))
 
 (define stats:sieve-large-overhead
-  (fmt-overhead (max sieve-01-overhead sieve-10-overhead)))
+  (format-overhead (max sieve-01-overhead sieve-10-overhead)))
 
 (define stats:sieve-small-overhead
-  (fmt-overhead (min sieve-01-overhead sieve-10-overhead)))
+  (format-overhead (min sieve-01-overhead sieve-10-overhead)))
 
 (define stats:morsecode-max-overhead
-  (fmt-overhead (benchmark-max-overhead baseline-pis "morsecode")))
+  (format-overhead (max-overhead (benchmark BASELINE-PIS 'morsecode))))
 
 (define stats:zombie-mean-overhead
-  (fmt-overhead (benchmark-mean-overhead baseline-pis "zombie")))
+  (format-overhead (max-overhead (benchmark BASELINE-PIS 'zombie))))
 
+(define stats:baseline-7%
+  (format-percent (percent-overhead<= BASELINE-PIS 1.07)))
 
-(fmt-percent (percent-overhead<= baseline-pis 1.07))
-(fmt-percent (percent-overhead<= opt-pis 1.07))
+(define stats:opt-7%
+  (format-percent (percent-overhead<= OPT-PIS 1.07)))
