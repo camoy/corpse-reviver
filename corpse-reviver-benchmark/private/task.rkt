@@ -12,6 +12,7 @@
          corpse-reviver
          corpse-reviver/private/compile
          corpse-reviver/private/logging
+         corpse-reviver/private/util
          data/queue
          gtp-measure/private/configure
          gtp-measure/private/parse
@@ -212,7 +213,9 @@
 ;; that subtask. This is for both analysis and run-time.
 (define (typed-untyped-run! entry config config-out config-str)
   (define dir (path-only entry))
-  (define targets (filter relevant-target? (directory-list dir #:build? dir)))
+  (define targets
+    (filter (λ~> (relevant-target? (config-no-skip? cfg)))
+            (directory-list dir #:build? dir)))
   (define base `((benchmark . ,(config-benchmark cfg))
                  (config . ,config-str)
                  (config-id . ,(config-cfg-id cfg))
@@ -372,15 +375,3 @@
 ;; Make an exception handler that sets up an error entry in a hash.
 (define ((make-error-handler hash) e)
   (hash-set! hash 'error (exn->string e)))
-
-;; Path → Boolean
-;; Returns if a target is relevant (i.e. is a Racket file and unless
-;; `current-no-skip?` is `#t`, ignores _ prefixed files).
-(define (relevant-target? target)
-  (and (path-has-extension? target #".rkt")
-       (or (config-no-skip? cfg) (not (underscore-prefixed? target)))))
-
-;; Path → Boolean
-;; Returns if the filename at the given path has an underscore prefix.
-(define (underscore-prefixed? target)
-  (~> target file-name-from-path path->string (string-prefix? "_")))

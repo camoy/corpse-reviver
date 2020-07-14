@@ -18,7 +18,8 @@
   [</id (-> symbol? symbol? boolean?)]
   [make-struct-names (-> symbol? (listof symbol?) (listof symbol?))]
   [lang-scv (-> syntax? symbol?)]
-  [lang-opt (-> syntax? symbol?)]))
+  [lang-opt (-> syntax? symbol?)]
+  [relevant-target? (->* (path-string?) (boolean?) boolean?)]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; require
@@ -30,6 +31,7 @@
          racket/match
          racket/path
          racket/set
+         racket/string
          racket/syntax
          syntax/struct
          threading)
@@ -151,6 +153,21 @@
 ;; Syntax → Symbol
 ;; Returns the language for optimization.
 (define lang-opt (make-lang 'opt))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; path relevance
+
+;; Path {Boolean} → Boolean
+;; Returns if a target is relevant (i.e. is a Racket file and unless
+;; no-skip? is #t, ignores _ prefixed files).
+(define (relevant-target? target [no-skip? #f])
+  (and (path-has-extension? target #".rkt")
+       (or no-skip? (not (underscore-prefixed? target)))))
+
+;; Path → Boolean
+;; Returns if the filename at the given path has an underscore prefix.
+(define (underscore-prefixed? target)
+  (~> target file-name-from-path path->string (string-prefix? "_")))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; tests

@@ -13,6 +13,8 @@
 
 (require racket/cmdline
          racket/contract
+         racket/path
+         racket/string
          soft-contract/main
          threading
          "private/compile.rkt"
@@ -20,14 +22,20 @@
          "private/elaborate.rkt"
          "private/logging.rkt"
          "private/optimize.rkt"
-         "private/syntax.rkt")
+         "private/syntax.rkt"
+         "private/util.rkt")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; main
 
+;; [Parameter Boolean]
+;; Determines if _ files are skipped or not.
+(define current-no-skip? (make-parameter #f))
+
 (module+ main
   (define args (parse (current-command-line-arguments)))
-  (compile-files/scv-cr args))
+  (define args* (filter (λ~> (relevant-target? (current-no-skip?))) args))
+  (compile-files/scv-cr args*))
 
 ;; [Vector String] → List
 ;; Converts command line arguments into arguments suitable for a call to
@@ -37,6 +45,10 @@
    #:program "scv-cr"
    #:argv argv
    #:once-each
+   [("-n" "--no-skip")
+    "Don't skip analysis of modules prefixed with _"
+    (current-no-skip? #t)]
+
    [("-w" "--write-contracts")
     "Write contracted modules to a file"
     (current-write-contracts? #t)]

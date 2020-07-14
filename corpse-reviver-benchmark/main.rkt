@@ -4,7 +4,6 @@
 ;; provide
 
 (require racket/contract)
-(provide benchmark/scv-cr)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; require
@@ -96,47 +95,47 @@
     "Don't optimize with SCV-CR"
     (set-config-baseline?! cfg #t)]
 
-   [("-r" "--resume")
-    "Run an existing setup"
-    (set-config-resume?! cfg #t)]
+   [("-c" "--cutoff")
+    cutoff
+    "Maximum number of components to measure exhaustively"
+    (set-config-cutoff! cfg (string->number cutoff))]
+
+   [("-g" "--gc-log")
+    "Log GC statistics during analysis"
+    (set-config-gc-log?! cfg #t)]
 
    [("-i" "--iterations")
     iters
     "Number of iterations"
     (set-config-iterations! cfg (string->number iters))]
 
-   [("-c" "--cutoff")
-    cutoff
-    "Maximum number of components to measure exhaustively"
-    (set-config-cutoff! cfg (string->number cutoff))]
-
    [("-n" "--no-skip")
     "Don't skip analysis of modules prefixed with _"
     (set-config-no-skip?! cfg #t)]
-
-   [("-S" "--sample-factor")
-    sample-factor
-    "Sample factor for calculating the sample size"
-    (set-config-sample-factor! cfg (string->number sample-factor))]
-
-   [("-R" "--num-samples")
-    num-samples
-    "Number of samples"
-    (set-config-num-samples! cfg (string->number num-samples))]
 
    [("-o" "--output")
     output-dir
     "Result output directory"
     (set-config-output-dir! cfg output-dir)]
 
+   [("-r" "--resume")
+    "Run an existing setup"
+    (set-config-resume?! cfg #t)]
+
    [("-w" "--worker-count")
     worker-count
     "Number of parallel workers"
     (set-config-worker-count! cfg (string->number worker-count))]
 
-   [("-g" "--gc-log")
-    "Log GC statistics during analysis"
-    (set-config-gc-log?! cfg #t)]
+   [("-R" "--num-samples")
+    num-samples
+    "Number of samples"
+    (set-config-num-samples! cfg (string->number num-samples))]
+
+   [("-S" "--sample-factor")
+    sample-factor
+    "Sample factor for calculating the sample size"
+    (set-config-sample-factor! cfg (string->number sample-factor))]
 
    #:args targets
    targets))
