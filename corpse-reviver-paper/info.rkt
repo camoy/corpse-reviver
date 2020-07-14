@@ -2,7 +2,6 @@
 
 ;; General
 
-(define name "corpse-reviver-paper")
 (define collection "corpse-reviver-paper")
 (define version "0.0")
 (define scribblings

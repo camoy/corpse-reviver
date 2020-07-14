@@ -2,7 +2,6 @@
 
 ;; General
 
-(define name "corpse-reviver-benchmark")
 (define collection "corpse-reviver-benchmark")
 (define version "0.0")
 (define raco-commands
@@ -16,7 +15,7 @@
 
 (define deps
   '("base"
-    "corpse-reviver-lib"
+    "corpse-reviver"
     "gtp-measure"
     "gtp-util"
     "make-log-interceptor"
