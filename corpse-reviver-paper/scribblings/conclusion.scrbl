@@ -44,7 +44,7 @@ adhere to a particular static type system, type abstractions may still
 be validated by other means.  Contract verification appears to be a
 fruitful approach.
 
-@section{On benchmark selection}
+@section[#:style 'unnumbered]{On benchmark selection}
 
 We began with the hypothesis that in many gradually-typed programs,
 the untyped as well as the typed can be shown not to have run-time type errors,

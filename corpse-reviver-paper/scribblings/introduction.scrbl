@@ -5,7 +5,7 @@
           "../private/figure.rkt"
           "../private/util.rkt")
 
-@title{Introduction}
+@title{Static verification to avoid dynamic costs}
 
 Gradual typing~\cite{local:siek2006gradual,dvanhorn:TobinHochstadt2006Interlanguage} has become a popular approach to
 integrate static types into existing dynamically-typed programming
