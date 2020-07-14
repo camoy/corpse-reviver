@@ -1,10 +1,7 @@
 #lang info
 
-;; HACK: Invalidate cache (1242).
-
 ;; General
 
-(define name "corpse-reviver-lib")
 (define collection "corpse-reviver")
 (define version "0.0")
 (define raco-commands
