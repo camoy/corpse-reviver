@@ -1,11 +1,12 @@
 #lang racket/base
 
 (provide
+ (prefix-out figure: (all-from-out "private/figure.rkt"))
+ (prefix-out stat: (all-from-out "private/stat.rkt"))
  (all-from-out
   scribble/acmart
   scribble/acmart/lang
   scriblib/figure
-  "private/stats.rkt"
   "private/cite.rkt")
  CORPSE-REVIVER-PAPER-STYLE)
 
@@ -15,8 +16,9 @@
          scribble/core
          scriblib/figure
          scribble/html-properties
-         "private/stats.rkt"
-         "private/cite.rkt")
+         "private/cite.rkt"
+         "private/figure.rkt"
+         "private/stat.rkt")
 
 (define-runtime-path CWD ".")
 (define CSS (build-path CWD "static" "css"))
