@@ -1,7 +1,9 @@
 #lang scribble/acmart @acmsmall
 
-@(require "private/cite.rkt"
-          "private/figure.rkt")
+@(require scriblib/figure
+          "../private/cite.rkt"
+          "../private/figure.rkt"
+          "../private/util.rkt")
 
 @title{Introduction}
 
@@ -58,19 +60,18 @@ and Dart~\cite{local:dart}
 limit the interoperability possible in the
 language to avoid some expensive checks.
 
+@figure["fig:overhead-summary"]{
+@elem{
+Overhead of gradual typing over the whole benchmark suite.
+The purple curve is Typed Racket and the orange curve is @|scv-cr|.
+The log-scaled x-axis indicates slowdown factor compared against the
+fully-untyped configuration, while the y-axis indicates the
+percent of configurations incurring that slowdown.
+Each benchmark is allocated an equal proportion of the y-axis.
+Higher is better.
+}
 @fig:overhead-summary
-\begin{wrapfigure}{r}{0.55\textwidth}
-  \includegraphics[width=0.55\textwidth]{figs/slowdown.ps}
-  \caption{Overhead of gradual typing over the whole benchmark
-    suite. The purple ($\vcenter{\hbox{\protect\includegraphics[height=1em]{figs/key0.ps}}}$) curve is Typed Racket and the orange ($\vcenter{\hbox{\protect\includegraphics[height=1em]{figs/key1.ps}}}$) curve is \tool.
-    The log-scaled x-axis indicates slowdown factor compared against the
-    fully-untyped configuration, while the y-axis indicates the
-    percent of configurations incurring that slowdown. Each benchmark
-    is allocated an equal proportion of the y-axis. Higher is better.}
-\Description{CDF showing overall overhead is significantly better with
-  SVC-CR compared to Typed Racket.}
-  \label{fig:overall}
-\end{wrapfigure}
+}
 
 \paragraph{Our key idea is that dynamic contracts are statically useful.}
 We show that the dilemma of gradual type enforcement can be resolved

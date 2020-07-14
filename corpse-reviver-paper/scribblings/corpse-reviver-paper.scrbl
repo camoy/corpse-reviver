@@ -1,11 +1,15 @@
 #lang scribble/acmart @acmsmall @review @anonymous
 
-@(require scribble/core
+@(require racket/runtime-path
+          scribble/core
           scribble/html-properties
-          "private/cite.rkt")
+          "../private/cite.rkt")
+
+@(define-runtime-path ROOT "..")
+@(define CSS (build-path ROOT "static" "css"))
 
 @(define style
-   (make-style "style" (list (make-css-addition "style.css")
+   (make-style "style" (list (make-css-addition (build-path CSS "style.css"))
                              (render-convertible-as '(svg-bytes png-bytes)))))
 
 @title[#:style style]{

@@ -1,6 +1,7 @@
 #lang scribble/acmart @acmsmall
 
-@(require "private/figure.rkt")
+@(require scriblib/figure
+          "../private/figure.rkt")
 
 @title{Evaluation}
 
@@ -193,66 +194,35 @@ we used the same configurations
 for the baseline and \tool measurements
 and did not resample.
 
+@figure["fig:overhead-grid"]{
+@elem{
+Overhead of gradual typing for each benchmark individually.
+The purple curve is Typed Racket and the orange curve is \tool.
+Each point $(x, y)$ indicates an $x$-factor slowdown over the fully-untyped configuration for $y\%$ of configurations.
+The dashed lines between $1$ and $2$ occur at increments of $0.2$ and between $2$ and $10$ at increments of $2$.
+}
 @fig:overhead-grid
+}
 
+@figure["fig:exact-grid"]{
+@elem{
+Exact time it takes each configuration to execute.
+The purple curve is Typed Racket and the orange curve is \tool.
+The x-axis is binned by the number of typed modules in a configuration.
+The y-axis is time to execute in seconds.
+}
 @fig:exact-grid
-
-@;\begin{figure*}
-@;  {\renewcommand{\arraystretch}{5}
-@;  \begin{tabular}{c@{\hskip 3em} c}
-@;    \includegraphics[width=0.45\textwidth]{figs/fsm-overhead.ps} &
-@;    \includegraphics[width=0.45\textwidth]{figs/gregor-overhead.ps} \\
-@;    \includegraphics[width=0.45\textwidth]{figs/kcfa-overhead.ps} &
-@;    \includegraphics[width=0.45\textwidth]{figs/lnm-overhead.ps} \\
-@;    \includegraphics[width=0.45\textwidth]{figs/morsecode-overhead.ps} &
-@;    \includegraphics[width=0.45\textwidth]{figs/sieve-overhead.ps} \\
-@;    \includegraphics[width=0.45\textwidth]{figs/snake-overhead.ps} &
-@;    \includegraphics[width=0.45\textwidth]{figs/suffixtree-overhead.ps} \\
-@;    \includegraphics[width=0.45\textwidth]{figs/synth-overhead.ps} &
-@;    \includegraphics[width=0.45\textwidth]{figs/tetris-overhead.ps} \\
-@;    \includegraphics[width=0.45\textwidth]{figs/zombie-overhead.ps} &
-@;    \includegraphics[width=0.45\textwidth]{figs/zordoz-overhead.ps}
-@;  \end{tabular}
-@;  }
-@;  %\caption{The purple (\scalerel*{\protect\includegraphics{figs/key0.ps}}{B}) curve is Typed Racket and the orange (\scalerel*{\protect\includegraphics{figs/key1.ps}}{B}) curve is \tool. Overhead of gradual typing for each benchmark individually. Each point $(x, y)$ indicates an $x$-factor slowdown over the fully untyped configuration for $y\%$ of configurations. The dashed lines between $1$ and $2$ occur at increments of $0.2$ and between $2$ and $10$ at increments of $2$.}
-@;  \caption{Overhead of gradual typing for each benchmark individually. The purple ($\vcenter{\hbox{\protect\includegraphics[height=1em]{figs/key0.ps}}}$) curve is Typed Racket and the orange ($\vcenter{\hbox{\protect\includegraphics[height=1em]{figs/key1.ps}}}$) curve is \tool. Each point $(x, y)$ indicates an $x$-factor slowdown over the fully-untyped configuration for $y\%$ of configurations. The dashed lines between $1$ and $2$ occur at increments of $0.2$ and between $2$ and $10$ at increments of $2$.}
-@;  \label{fig:overhead}
-@;\end{figure*}
-@;
-@;\begin{figure*}
-@;  {\renewcommand{\arraystretch}{5}
-@;  \begin{tabular}{c@{\hskip 3em} c}
-@;    \includegraphics[width=0.45\textwidth]{figs/fsm-exact.ps} &
-@;    \includegraphics[width=0.45\textwidth]{figs/gregor-exact.ps} \\
-@;    \includegraphics[width=0.45\textwidth]{figs/kcfa-exact.ps} &
-@;    \includegraphics[width=0.45\textwidth]{figs/lnm-exact.ps} \\
-@;    \includegraphics[width=0.45\textwidth]{figs/morsecode-exact.ps} &
-@;    \includegraphics[width=0.45\textwidth]{figs/sieve-exact.ps} \\
-@;    \includegraphics[width=0.45\textwidth]{figs/snake-exact.ps} &
-@;    \includegraphics[width=0.45\textwidth]{figs/suffixtree-exact.ps} \\
-@;    \includegraphics[width=0.45\textwidth]{figs/synth-exact.ps} &
-@;    \includegraphics[width=0.45\textwidth]{figs/tetris-exact.ps} \\
-@;    \includegraphics[width=0.45\textwidth]{figs/zombie-exact.ps} &
-@;    \includegraphics[width=0.45\textwidth]{figs/zordoz-exact.ps}
-@;  \end{tabular}
-@;  }
-@;  \caption{Exact time it takes each configuration to execute. The purple ($\vcenter{\hbox{\protect\includegraphics[height=1em]{figs/key0.ps}}}$) curve is Typed Racket and the orange ($\vcenter{\hbox{\protect\includegraphics[height=1em]{figs/key1.ps}}}$) curve is \tool. The x-axis is binned by the number of typed modules in a configuration. The y-axis is time to execute in seconds.}
-@;  \label{fig:exact}
-@;\end{figure*}
-@;
-@;\pagebreak
+}
 
 @section{Results}
 
+@figure["table:summary"]{
+@elem{
+Maximum and mean overhead for Racket $7.4$ and \tool for each benchmark.
+Red indicates a slowdown $\geq 3\times$ while green indicates a slowdown $\leq 1.25\times$.
+}
 @table:summary
-
-\begin{wrapfigure}{r}{0.55\textwidth}
-\definecolor{rktpink}{RGB}{255, 192, 203}
-\definecolor{rktpalegreen}{RGB}{152, 251, 152}
-\input{figs/summary.tex}
-  \caption{Maximum and mean overhead for Racket $7.4$ and \tool for each benchmark. Red indicates a slowdown $\geq 3\times$ while green indicates a slowdown $\leq 1.25\times$.}
-  \label{fig:summary-table}
-\end{wrapfigure}
+}
 
 Figure~\ref{fig:overall} summarizes
 the results of our performance evaluation

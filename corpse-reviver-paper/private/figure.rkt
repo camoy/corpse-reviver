@@ -35,7 +35,8 @@
          scribble/base
          threading
          "lattice.rkt"
-         "read.rkt")
+         "read.rkt"
+         "util.rkt")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; consts
@@ -227,11 +228,11 @@
 ;;
 ;;
 (define HEADER0
-  '(""
+  `(""
     "Racket Overhead" cont
-    "SCV-CR Overhead" cont
-    "SCV-CR Analyze"
-    "SCV-CR Compile"))
+    ,(elem scv-cr " Overhead") cont
+    ,(elem scv-cr " Analyze")
+    ,(elem scv-cr " Compile")))
 
 ;;
 ;;
@@ -245,7 +246,7 @@
 ;;
 ;;
 (define FORMATTERS
-  (list symbol->string
+  (list format-benchmark
         format-overhead
         format-overhead
         format-overhead

@@ -3,12 +3,13 @@
 ;; General
 
 (define name "corpse-reviver-benchmark")
-(define collection "corpse-reviver")
+(define collection "corpse-reviver-benchmark")
 (define version "0.0")
 (define raco-commands
-  '(("scv-cr-benchmark" (submod corpse-reviver/benchmark main)
+  '(("scv-cr-benchmark" (submod corpse-reviver-benchmark main)
                         "Benchmark the performance of SCV-CR optimized programs."
                         #f)))
+(define scribblings '(("scribblings/corpse-reviver-benchmark.scrbl" ())))
 (define compile-omit-paths '("benchmarks"))
 
 ;; Dependencies
@@ -25,4 +26,5 @@
     "typed-racket-lib"
     "typed-racket-more"))
 
-(define build-deps '())
+(define build-deps
+   '("scribble-lib"))

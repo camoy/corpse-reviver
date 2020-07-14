@@ -1,0 +1,16 @@
+.versionbox {
+  display: none;
+}
+
+.Figure {
+  border: 1px solid grey !important;
+  padding: 1em;
+}
+
+.Figure .Legend .ssansserif {
+    font-weight: normal;
+}
+
+.Figure .FigureInside img {
+    max-width: 100%;
+}

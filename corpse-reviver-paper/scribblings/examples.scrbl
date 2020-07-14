@@ -1,6 +1,7 @@
 #lang scribble/acmart @acmsmall
 
-@(require "private/figure.rkt")
+@(require scriblib/figure
+          "../private/figure.rkt")
 
 @title{Examples and intuition}
 
@@ -191,7 +192,15 @@ Consequently, {\tt count-from} returns a {\tt stream} containing a natural numbe
 and a guarded thunk whose return value
 will be monitored to satisfy {\tt stream?}.
 
+@figure["fig:lattices"]{
+@elem{
+Performance lattices for \textsc{sieve} and \textsc{zombie}.
+Each point in the lattice is a configuration of the benchmark, where a white box is an untyped module and a black box is a typed module.
+The numbers below indicate the slowdown factor for Typed Racket $7.4$ on the left and \tool on the right.
+Red indicates a slowdown $\geq 3\times$ and green indicates a slowdown $\leq 1.25\times$.
+}
 @fig:lattices
+}
 
 \begin{figure}
 \begin{minipage}{0.45\textwidth}
@@ -221,7 +230,7 @@ will be monitored to satisfy {\tt stream?}.
   \begin{subfigure}{0.80\textwidth}
   \includegraphics[width=\textwidth]{figs/zombie-lattice.ps}
   \end{subfigure}
-  \caption{Performance lattices for \textsc{sieve} and \textsc{zombie}. Each point in the lattice is a configuration of the benchmark, where a white box is an untyped module and a black box is a typed module. The numbers below indicate the slowdown factor for Typed Racket $7.4$ on the left and \tool on the right. Red indicates a slowdown $\geq 3\times$ and green indicates a slowdown $\leq 1.25\times$.}
+  \caption{}
   \label{fig:lattices}
 \end{minipage}
 \end{figure}

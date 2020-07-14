@@ -11,6 +11,7 @@
   '(("scv-cr" (submod corpse-reviver main)
               "Optimize a Typed Racket program with SCV."
               #f)))
+(define scribblings '(("scribblings/corpse-reviver.scrbl" ())))
 (define compile-omit-paths '("test"))
 
 ;; Dependencies
@@ -27,4 +28,5 @@
 
 (define build-deps
   '("rackunit-lib"
+    "scribble-lib"
     "chk"))

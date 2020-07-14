@@ -7,6 +7,7 @@
          OPT-PIS
          ANALYSES
 
+         format-benchmark
          format-overhead
          format-percent
          format-interval)
@@ -28,7 +29,8 @@
          racket/path
          racket/set
          racket/hash
-         mischief/for)
+         mischief/for
+         "util.rkt")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; consts
@@ -39,11 +41,11 @@
 
 ;; Path
 ;; TODO
-(define-runtime-path BASELINE-DIR "../baseline")
+(define-runtime-path BASELINE-DIR "../data/baseline")
 
 ;; Path
 ;; TODO
-(define-runtime-path OPT-DIR "../opt")
+(define-runtime-path OPT-DIR "../data/opt")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; public
@@ -174,6 +176,9 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; formatters
+
+(define (format-benchmark x)
+  (sc (symbol->string x)))
 
 ;;
 ;; TODO

@@ -24,7 +24,7 @@ and reduce it by multiple orders of magnitude.
 
 @; REMOVE
 
-@(require "private/stats.rkt")
+@(require "../private/stats.rkt")
 
 We evaluate this approach on a dozen existing gradually-typed
 programs previously shown to have prohibitive performance
