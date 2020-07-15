@@ -13,9 +13,9 @@
 @include-abstract{abstract.scrbl}
 @table-of-contents[]
 @include-section{introduction.scrbl}
-@include-section{examples.scrbl}
-@include-section{implementation.scrbl}
-@include-section{evaluation.scrbl}
-@include-section{related.scrbl}
-@include-section{conclusion.scrbl}
-@local:generate-bibliography[]
+@;@include-section{examples.scrbl}
+@;@include-section{implementation.scrbl}
+@;@include-section{evaluation.scrbl}
+@;@include-section{related.scrbl}
+@;@include-section{conclusion.scrbl}
+@generate-bibliography[]

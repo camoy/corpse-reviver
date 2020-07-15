@@ -1,14 +1,20 @@
 #lang racket/base
 
-(provide
- (prefix-out figure: (all-from-out "private/figure.rkt"))
- (prefix-out stat: (all-from-out "private/stat.rkt"))
- (all-from-out
-  scribble/acmart
-  scribble/acmart/lang
-  scriblib/figure
-  "private/cite.rkt")
- CORPSE-REVIVER-PAPER-STYLE)
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; provide
+
+(provide (prefix-out fig: (all-from-out "private/figure.rkt"))
+         (prefix-out stat: (all-from-out "private/stat.rkt"))
+         (all-from-out
+          scribble/acmart
+          scribble/acmart/lang
+          scriblib/figure
+          "private/bib.rkt"
+          "private/util.rkt")
+         CORPSE-REVIVER-PAPER-STYLE)
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; require
 
 (require racket/runtime-path
          scribble/acmart
@@ -16,9 +22,13 @@
          scribble/core
          scriblib/figure
          scribble/html-properties
-         "private/cite.rkt"
+         "private/bib.rkt"
          "private/figure.rkt"
-         "private/stat.rkt")
+         "private/stat.rkt"
+         "private/util.rkt")
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; style
 
 (define-runtime-path CWD ".")
 (define CSS (build-path CWD "static" "css"))

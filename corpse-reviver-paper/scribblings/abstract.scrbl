@@ -29,7 +29,7 @@ and can be applied to any portion of a program.
 
 We evaluate this approach on a dozen existing gradually-typed programs
 previously shown to have prohibitive performance overhead---with
-a median overhead of @stat:median-overhead-baseline
-and up to @stat:worst-case-baseline in the worst case---and
+a median overhead of @stat:median-baseline
+and up to @stat:max-baseline in the worst case---and
 eliminate all overhead in most cases,
-suffering only @stat:worst-case-opt overhead in the worst case.
+suffering only @stat:max-opt overhead in the worst case.

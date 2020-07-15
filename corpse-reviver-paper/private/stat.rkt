@@ -22,45 +22,47 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; require
 
-(require racket/runtime-path
-         racket/match
-         racket/format
-         racket/list
-         mischief/for
+(require gtp-plot/configuration-info
+         gtp-plot/performance-info
+         gtp-plot/sample-info
          math/base
          math/distributions
          math/statistics
-         gtp-plot/performance-info
-         gtp-plot/sample-info
-         gtp-plot/configuration-info
-         "read.rkt")
+         mischief/for
+         racket/format
+         racket/list
+         racket/match
+         racket/runtime-path
+         "read.rkt"
+         "util.rkt")
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; functions
 
-;;
-;; TODO
+;; Procedure → ([Listof Performance-Info] Any ... → [Listof Performance-Info])
+;; Constructs a function that calculates weighted statistics over all benchmark
+;; overheads.
 (define ((make-overhead f) pis . rest)
   (define-values (xs ws)
     (pis-overheads pis))
   (apply f xs ws rest))
 
 ;; [Listof Performance-Info] → Real
-;; TODO
+;; Returns the maximum overhead of all configurations.
 (define max-overhead
   (make-overhead (λ (xs _) (apply max xs))))
 
 ;; [Listof Performance-Info] → Real
-;; TODO
+;; Returns the weighted mean overhead of all configurations.
 (define mean-overhead (make-overhead mean))
 
 ;; [Listof Performance-Info] → Real
-;; TODO
+;; Returns the weighted median overhead of all configurations.
 (define median-overhead
   (make-overhead (λ (xs ws) (median < xs ws))))
 
 ;; Real [Listof Performance-Info] → Real
-;;
+;; Returns the weighted percent of configurations within a given overhead.
 (define %-overhead<=
   (make-overhead
    (λ (xs ws x)
@@ -68,12 +70,13 @@
                      xs ws))))
 
 ;; [Listof Performance-Info] → Real
-;; TODO
+;; Returns the weighted quantile overhead of all configurations.
 (define quantile-overhead
   (make-overhead (λ (xs ws q) (quantile q < xs ws))))
 
 ;; [Listof Performance-Info] → [Listof Real] [Listof Real]
-;; TODO
+;; Given a list of performance infos, returns the overhead over all
+;; configurations and their weights to count all benchmarks equally.
 (define (pis-overheads pis)
   (for/fold ([xs null]
              [ws null])
@@ -87,21 +90,21 @@
             (append ws (make-list n (/ 1 n))))))
 
 ;; Performance-Info String → Real
-;; TODO
+;; Returns the overhead of a specific configuration in a performance info.
 (define (configuration-overhead pi cfg-id)
   (for/first ([ci (in-configurations pi)]
               #:when (equal? (configuration-info->id ci) cfg-id))
     (ci-overhead ci pi)))
 
 ;; Configuration-Info Performance-Info → Real
-;; TODO
+;; Returns the overhead for a given configuration info.
 (define (ci-overhead ci pi)
   (define baseline (performance-info->baseline-runtime pi))
   (define x (configuration-info->mean-runtime ci))
   (/ x baseline))
 
 ;; Symbol [Listof Performance-Info] → Performance-Info
-;; TODO
+;; Returns the first performance info that matches the given benchmark name.
 (define (benchmark b pis)
   (for/first ([pi (in-list pis)]
               #:when (equal? (performance-info->name pi) b))

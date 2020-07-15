@@ -5,12 +5,7 @@
 
 (provide BASELINE-PIS
          OPT-PIS
-         ANALYSES
-
-         format-benchmark
-         format-overhead
-         format-percent
-         format-interval)
+         ANALYSES)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; require
@@ -173,33 +168,6 @@
      (match-define (list _ benchmark kind*) matches)
      (and (equal? kind kind*) benchmark)]
     [else #f]))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; formatters
-
-(define (format-benchmark x)
-  (sc (symbol->string x)))
-
-;;
-;; TODO
-(define (format-overhead n)
-  (string-append (~r n #:precision 1) "×"))
-
-;;
-;; TODO
-(define (format-percent n)
-  (string-append (~r n #:precision 0) "%"))
-
-;;
-;; TODO
-(define (format-interval  μ+σ)
-  (match-define (cons μ σ) μ+σ)
-  (format "~a ± ~a" (ms-approx μ) (ms-approx σ)))
-
-;;
-;; TODO
-(define (ms-approx x)
-  (~r (/ x 1000) #:precision 0))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; performance infos

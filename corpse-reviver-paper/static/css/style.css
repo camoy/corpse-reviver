@@ -14,3 +14,15 @@
 .Figure .FigureInside img {
     max-width: 100%;
 }
+
+/*
+  Bibliography
+*/
+
+td {
+    vertical-align: top;
+}
+
+td:first-child {
+    padding-right: 0.5rem;
+}

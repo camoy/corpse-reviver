@@ -3,11 +3,11 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; provide
 
-(provide fig:overhead-summary
-         fig:lattices
-         fig:overhead-grid
-         fig:exact-grid
-         table:summary)
+(provide overhead-summary
+         lattices
+         overhead-grid
+         exact-grid
+         table-summary)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; require
@@ -91,7 +91,7 @@
 
 ;;
 ;; TODO
-(define (overhead-summary . pis*)
+(define (make-overhead-summary . pis*)
   (define cdf-pis
     (for/list ([pis (in-list pis*)])
       (define cis (pis->cdf-cis pis))
@@ -180,7 +180,7 @@
 
 ;;
 ;; TODO
-(define (lattices baseline-pis opt-pis benchmarks [spacing 40])
+(define (make-lattices baseline-pis opt-pis benchmarks [spacing 40])
   (define lattice-picts
     (for/list ([baseline-pi (in-list baseline-pis)]
                [opt-pi (in-list opt-pis)]
@@ -211,8 +211,8 @@
   (define pis-grouped (apply map list pis*))
   (grid-plot plot pis-grouped))
 
-(define overhead-grid (make-grid-figure overhead-plot))
-(define exact-grid (make-grid-figure exact-runtime-plot))
+(define make-overhead-grid (make-grid-figure overhead-plot))
+(define make-exact-grid (make-grid-figure exact-runtime-plot))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; table
@@ -256,7 +256,7 @@
 
 ;;
 ;; TODO
-(define (table-summary baseline-pis opt-pis analyses)
+(define (make-table-summary baseline-pis opt-pis analyses)
   (define data
     (for/list ([baseline-pi (in-list baseline-pis)]
                [opt-pi (in-list opt-pis)]
@@ -299,8 +299,8 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; figures
 
-(define fig:overhead-summary (overhead-summary BASELINE-PIS OPT-PIS))
-(define fig:lattices (lattices BASELINE-PIS OPT-PIS '(sieve zombie)))
-(define fig:overhead-grid (overhead-grid BASELINE-PIS OPT-PIS))
-(define fig:exact-grid (exact-grid BASELINE-PIS OPT-PIS))
-(define table:summary (table-summary BASELINE-PIS OPT-PIS ANALYSES))
+(define overhead-summary (make-overhead-summary BASELINE-PIS OPT-PIS))
+(define lattices (make-lattices BASELINE-PIS OPT-PIS '(sieve zombie)))
+(define overhead-grid (make-overhead-grid BASELINE-PIS OPT-PIS))
+(define exact-grid (make-exact-grid BASELINE-PIS OPT-PIS))
+(define table-summary (make-table-summary BASELINE-PIS OPT-PIS ANALYSES))
