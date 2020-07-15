@@ -11,6 +11,10 @@
     font-weight: normal;
 }
 
+.Figure p {
+    text-align: left;
+}
+
 .Figure .FigureInside img {
     max-width: 100%;
 }
