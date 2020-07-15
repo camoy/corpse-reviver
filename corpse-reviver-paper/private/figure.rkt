@@ -1,4 +1,4 @@
-#lang at-exp racket/base
+#lang racket/base
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; provide
@@ -7,7 +7,10 @@
          lattices
          overhead-grid
          exact-grid
-         table-summary)
+         table-summary
+
+         orange-key
+         purple-key)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; require
@@ -19,6 +22,7 @@
          (only-in gtp-util natural->bitstring)
          json
          math/statistics
+         ppict/pict
          pict
          pict-abbrevs
          racket/stream
@@ -41,8 +45,13 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; consts
 
-(define COLOR-SCHEME (list #xfdb863 #xb2abd2))
-(define DARK-COLOR-SCHEME (list #xe66101 #x5e3c99))
+(define ORANGE #xfdb863)
+(define PURPLE #xb2abd2)
+(define DARK-ORANGE #xe66101)
+(define DARK-PURPLE #x5e3c99)
+
+(define COLOR-SCHEME (list ORANGE PURPLE))
+(define DARK-COLOR-SCHEME (list DARK-ORANGE DARK-PURPLE))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; parameters
@@ -297,6 +306,19 @@
     (f x)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; keys
+
+;; Number → Pict
+;; TODO
+(define (key color)
+  (ppict-do
+   (blank 15)
+   #:go (coord 1/2 1/2 'cc)
+   (filled-rounded-rectangle 13 13
+                             #:color (hex-triplet->color% color)
+                             #:draw-border? #f)))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; figures
 
 (define overhead-summary (make-overhead-summary BASELINE-PIS OPT-PIS))
@@ -304,3 +326,6 @@
 (define overhead-grid (make-overhead-grid BASELINE-PIS OPT-PIS))
 (define exact-grid (make-exact-grid BASELINE-PIS OPT-PIS))
 (define table-summary (make-table-summary BASELINE-PIS OPT-PIS ANALYSES))
+
+(define orange-key (key ORANGE))
+(define purple-key (key PURPLE))

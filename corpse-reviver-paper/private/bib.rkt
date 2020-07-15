@@ -208,3 +208,24 @@
                                 #:number "POPL"
                                 #:pages '(51:1 51:30))
    #:date 2018))
+
+(define darais-2017
+  (make-bib
+   #:title "Abstracting Definitional Interpreters (Functional Pearl)"
+   #:author (authors "David Darais"
+                     "Nicholas Labich"
+                     (author-name "Phúc C." "Nguyễn")
+                     (author-name "David" "Van Horn"))
+   #:location (journal-location pacmpl
+                                #:volume "1"
+                                #:number "ICFP"
+                                #:pages '(12:1 12:25))
+   #:date 2017))
+
+(define van-horn-2010
+  (make-bib
+   #:title "Abstracting Abstract Machines"
+   #:author (authors (author-name "David" "Van Horn")
+                     "Matthew Might")
+   #:location (proceedings-location icfp #:pages '(51 62))
+   #:date 2010))

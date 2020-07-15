@@ -13,7 +13,7 @@
 @include-abstract{abstract.scrbl}
 @table-of-contents[]
 @include-section{introduction.scrbl}
-@;@include-section{examples.scrbl}
+@include-section{examples.scrbl}
 @;@include-section{implementation.scrbl}
 @;@include-section{evaluation.scrbl}
 @;@include-section{related.scrbl}

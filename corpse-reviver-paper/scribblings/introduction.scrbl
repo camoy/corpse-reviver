@@ -143,8 +143,8 @@ for making gradual typing performant.
 @figure["fig:overhead-summary"]{
 @elem{
 Overhead of gradual typing over the whole benchmark suite.
-The purple (TODO) curve is Typed Racket
-and the orange (TODO) curve is @|scv-cr|.
+The purple (@|fig:purple-key|) curve is Typed Racket
+and the orange (@|fig:orange-key|) curve is @|scv-cr|.
 The log-scaled x-axis indicates slowdown factor
 compared against the
 fully-untyped configuration,

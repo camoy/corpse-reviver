@@ -3,7 +3,8 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; provide
 
-(provide sc
+(provide th
+         sc
          scv-cr
          format-benchmark
          format-overhead
@@ -35,6 +36,9 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; public
+
+;; Element
+(define th (superscript "th"))
 
 ;; Pre-Content ... → Element
 ;; Render the given content in small caps.

@@ -6,6 +6,7 @@
 (provide (prefix-out fig: (all-from-out "private/figure.rkt"))
          (prefix-out stat: (all-from-out "private/stat.rkt"))
          (all-from-out
+          scribble/manual
           scribble/acmart
           scribble/acmart/lang
           scriblib/figure
@@ -16,7 +17,9 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; require
 
-(require racket/runtime-path
+(require (only-in scribble/manual
+                  codeblock0)
+         racket/runtime-path
          scribble/acmart
          scribble/acmart/lang
          scribble/core
