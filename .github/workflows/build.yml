@@ -21,4 +21,4 @@ jobs:
       # package. But that will not be compiled. Therefore, we have to setup.
       - run: raco setup corpse-reviver || true
       # Stop the tests after 30 minutes.
-      - run: raco test -x --drdr --timeout 1800 corpse-reviver-lib/private corpse-reviver-lib/main.rkt
+      - run: raco test -x --drdr --timeout 1800 corpse-reviver/private corpse-reviver/main.rkt
