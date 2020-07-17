@@ -5,12 +5,17 @@
 
 (provide overhead-summary
          lattices
+         ut-require-ty
+         ty-require-ut
          overhead-grid
          exact-grid
          table-summary
 
          orange-key
-         purple-key)
+         purple-key
+         lavender-key
+         blue-key
+         red-key)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; require
@@ -39,6 +44,7 @@
          scribble/base
          threading
          "lattice.rkt"
+         "diagram.rkt"
          "read.rkt"
          "util.rkt")
 
@@ -311,12 +317,12 @@
 ;; Number → Pict
 ;; TODO
 (define (key color)
+  (define color*
+    (if (string? color) color (hex-triplet->color% color)))
   (ppict-do
    (blank 15)
    #:go (coord 1/2 1/2 'cc)
-   (filled-rounded-rectangle 13 13
-                             #:color (hex-triplet->color% color)
-                             #:draw-border? #f)))
+   (filled-rounded-rectangle 13 13 #:color color* #:draw-border? #f)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; figures
@@ -329,3 +335,6 @@
 
 (define orange-key (key ORANGE))
 (define purple-key (key PURPLE))
+(define lavender-key (key "lavender"))
+(define blue-key (key "blue"))
+(define red-key (key "red"))

@@ -14,7 +14,8 @@
 @table-of-contents[]
 @include-section{introduction.scrbl}
 @include-section{examples.scrbl}
-@;@include-section{implementation.scrbl}
+@;@include-section{model.scrbl}
+@include-section{implementation.scrbl}
 @;@include-section{evaluation.scrbl}
 @;@include-section{related.scrbl}
 @;@include-section{conclusion.scrbl}
