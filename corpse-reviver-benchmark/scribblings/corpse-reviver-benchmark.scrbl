@@ -3,7 +3,7 @@
 @require[@for-label[corpse-reviver-benchmark
                     racket/base]]
 
-@title{Corpse Reviver Benchmark}
+@title{Benchmark: Corpse Reviver}
 @author{Cameron Moy}
 
 This module provides a command-line benchmarking script
