@@ -49,10 +49,9 @@
 ;; Given a directory path, returns a hash mapping benchmark names to performance
 ;; info structures.
 (define (dir->pi-hash dir)
-  (define benchmark-hash (dir->benchmark-hash dir "runtime"))
-  (for/hash ([(benchmark path) (in-hash benchmark-hash)])
-    (values benchmark
-            (path->pi path benchmark))))
+  (define benchmark-hash (dir->benchmark-hashes dir "runtime"))
+  (for/hash ([(benchmark run-hashes) (in-hash benchmark-hash)])
+    (values benchmark (path->pi run-hashes benchmark))))
 
 ;; [Hash A Any] {(A → A)} → [Listof Any]
 ;; Given a hash, returns a list of values sorted by key.
@@ -64,11 +63,10 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; private
 
-;; Path String → Performance-Info
+;; Hash String → Performance-Info
 ;; Given a path to a runtime JSON output and benchmark name, returns a
 ;; performance info structure for that benchmark.
-(define (path->pi path benchmark)
-  (define run-hashes (json-path->hashes path))
+(define (path->pi run-hashes benchmark)
   (define-values (typed-run-hashes untyped-run-hashes run-hashes*)
     (unpack-run-hashes run-hashes))
   (define units (~> run-hashes* first (hash-ref 'config) string-length))
@@ -145,15 +143,17 @@
 (define (json-path->hashes path)
   (with-input-from-file path read-json))
 
-;; Path String → [Hash String Path]
+;; Path String → [Hash String Hash]
 ;; Given a directory and a kind of output file, returns a hash mapping
-;; benchmark names to the output file matching the kind.
-(define (dir->benchmark-hash dir kind)
-  (define paths (directory-list dir #:build? dir))
-  (for*/hash ([path (in-list paths)]
-              [benchmark (in-value (path->benchmark path kind))]
-              #:when benchmark)
-    (values benchmark path)))
+;; benchmark names to the hashes for that benchmark.
+(define (dir->benchmark-hashes dir kind)
+  (define hashes
+    (~>> (directory-list dir #:build? dir)
+         (filter (curryr path->benchmark kind))
+         (append-map json-path->hashes)
+         (group-by (curryr hash-ref 'benchmark))))
+  (for/hash ([hs (in-list hashes)])
+    (values (hash-ref (first hs) 'benchmark) hs)))
 
 ;; Path → [Or #f String]
 ;; Returns the benchmark name if it matches the given kind.
@@ -174,9 +174,7 @@
 
 (define BASELINE-PIS (hash->sorted-list (dir->pi-hash BASELINE-DIR)))
 (define OPT-PIS (hash->sorted-list (dir->pi-hash OPT-DIR)))
-(define ANALYSES
-  (map json-path->hashes
-       (hash->sorted-list (dir->benchmark-hash OPT-DIR "analysis"))))
+(define ANALYSES (hash->sorted-list (dir->benchmark-hashes OPT-DIR "analysis")))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; test
@@ -190,10 +188,10 @@
   (define eg-data
     (string->path "somewhere/2020-05-19T11:05:10_sieve_analysis.json"))
 
-  (with-chk (['name "dir->benchmark-hash"])
+  (with-chk (['name "dir->benchmark-hashes"])
     (chk
      #:eq set=?
-     (hash-keys (dir->benchmark-hash BASELINE-PATH "analysis"))
+     (hash-keys (dir->benchmark-hashes BASELINE-PATH "analysis"))
      '("fsm" "gregor" "kcfa" "lnm" "morsecode" "sieve" "snake" "suffixtree"
              "synth" "tetris" "zombie" "zordoz")))
 
