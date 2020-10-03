@@ -1,9 +1,10 @@
-#lang scribble/acmart @acmsmall
+#lang scribble/manual
 
-@(require scriblib/figure
-          "../private/figure.rkt"
-          "../private/stat.rkt"
-          "../private/util.rkt")
+@require[(for-label typed/racket/base)
+         scriblib/figure
+         "../private/figure.rkt"
+         "../private/stat.rkt"
+         "../private/util.rkt"]
 
 @title[#:style CORPSE-REVIVER-ARTIFACT-STYLE]{
   Artifact: Corpse Reviver
@@ -13,30 +14,209 @@
 @author{Sam Tobin-Hochstadt}
 @author{David Van Horn}
 
-@section{Installing}
-
-@subsection{VirtualBox (Recommended)}
-
-Install @hyperlink["https://docker.com/"]{Docker}.
-
-@verbatim{
-$ docker pull camoy/corpse-reviver
-$ docker run -it camoy/corpse-reviver
+This artifact accompanies the paper
+@hyperlink["https://arxiv.org/abs/2007.12630"]{
+``Corpse Reviver: Sound and Efficient Gradual Typing via Contract Verification.''
 }
+Phase I consists of
+sections @secref{install} and @secref{opt}.
+Phase II consists of
+sections @secref{benchmark} and @secref{results}.
 
-@subsection{Local}
+@section[#:tag "install"]{Install}
 
+You can run the artifact in a VirtualBox virtual machine
+that includes all the necessary dependencies.
+We recommend this method of installation.
+Alternatively,
+you can manually install the artifact
+on any Unix-like operating system.
+
+@subsection{VirtualBox}
+
+@itemlist[
+@item{
+Download @hyperlink["https://www.virtualbox.org/wiki/Downloads"]{VirtualBox.}
+}
+@item{
+Download the artifact's @hyperlink["http://camoy.name"]{virtual machine image}.
+}
+@item{
+Open VirtualBox,
+choose File → Import Appliance,
+select the downloaded @litchar{ova} file,
+and start the virtual machine.
+}]
+
+@subsection{Manual}
+
+@itemlist[
+@item{
 Install @hyperlink["https://download.racket-lang.org"]{Racket 7.8}.
-
+}
+@item{
+Run the following commands to download and install SCV-CR:
 @verbatim{
-$ raco pkg install --clone https://github.com/camoy/corpse-reviver
+$ git clone https://github.com/camoy/corpse-reviver
+$ raco pkg install corpse-reviver/*/
+}
+}]
+
+@section[#:tag "opt"]{Optimizing a program}
+
+You can write your own gradually typed programs
+and see how well SCV-CR can optimize them.
+
+Place the following code in a file called
+@litchar{data.rkt}.
+This typed module provides a function called
+@code{random-adders}
+that generates a list of random ``adders,''
+functions that add its argument to a random number.
+
+@figure["fig:typed-data"]{
+@elem{The @litchar{data.rkt} file.}
+@codeblock0{
+#lang typed/racket/base
+
+(provide random-adders)
+
+(: random-adders : (-> Natural (Listof (-> Integer Integer))))
+(define (random-adders n)
+  (for/list ([i n])
+    (λ ([x : Integer]) (+ (random 10) x))))
+}
 }
 
-@section{Custom Program}
+Place the following code in a file called
+@litchar{main.rkt}.
+This untyped module generates
+a list of 5,000 adders from @litchar{data.rkt}
+and computes a sum with them.
+It does this for 1,000 iterations
+and times how long this takes.
 
-@section{Benchmarking}
+@figure["fig:untyped-main"]{
+@elem{The @litchar{main.rkt} file.}
+@codeblock0{
+#lang racket/base
 
-@section{Claims}
+(require "data.rkt")
+
+(define iterations 1000)
+(define n 5000)
+
+(time
+ (for ([i iterations])
+   (for/sum ([f (random-adders n)])
+     (f (random 10)))))
+}
+}
+
+Run the program and use Racket's profiler
+to see the cost of contracts due to gradual typing.
+On our machine,
+the program takes about 10 seconds
+with about 67% of that time due to contract checking.
+
+@verbatim{
+$ racket main.rkt
+cpu time: 9398 real time: 9412 gc time: 874
+$ raco contract-profile main.rkt
+Running time is 66.66% contracts
+8014/12022 ms
+
+(-> natural? (listof (-> exact-integer? any)))     8013.5 ms
+server.rkt:3:9
+    random-adders                                  8013.5 ms
+
+}
+
+Run SCV-CR on the modules first
+and see the performance difference.
+In this simple example,
+the tool proves that the contracts
+cannot be violated
+and removes them all automatically.
+
+@verbatim{
+$ raco scv-cr data.rkt main.rkt
+$ racket main.rkt
+cpu time: 1256 real time: 1258 gc time: 28
+$ raco contract-profile main.rkt
+cpu time: 1406 real time: 1410 gc time: 8
+Running time is 0% contracts
+0/2340 ms
+}
+
+@section[#:tag "benchmark"]{Benchmark}
+
+Execute the following commands to
+run the benchmark suite:
+
+@verbatim{
+$ cd corpse-reviver/corpse-reviver-artifact
+$ raco scv-cr-benchmark -c 5 -b -i 5 -S 2 -R 2 -o data/baseline
+$ raco scv-cr-benchmark -r -o data/opt
+}
+
+We have found that on a decent laptop,
+the benchmarks with these parameters
+will terminate in about 8 hours.
+If you want to run this script overnight,
+combine the last two commands with
+@litchar{&&}.
+
+Different parameters choices yields
+different benchmarking times.
+Changing @litchar{-S} and @litchar{-R} to 1
+will half completion benchmark.
+We don't recommend going any lower than this setting.
+If you want to run the benchmarks for longer,
+increasing any one of
+@litchar{-S},
+@litchar{-R},
+or @litchar{-c},
+will result in a more accurate result.
+See
+@other-doc['(lib "corpse-reviver-benchmark/scribblings/corpse-reviver-benchmark.scrbl")
+           #:indirect "benchmarking"].
+for more information.
+
+After this is done,
+you can generate this page
+with your benchmark results.
+
+@verbatim{
+$ raco setup corpse-reviver-artifact
+$ raco docs T:corpse-reviver-artifact
+}
+
+When @litchar{raco docs} opens a browser,
+select the first result.
+The page you're currently reading should appear,
+but the figures and claims in @secref{results}
+will be generated from your data instead
+of ours.
+For comparison,
+our data is available in the
+@litchar{author_data}
+directory.
+
+@section[#:tag "results"]{Empirical results}
+
+Compare the figures and claims below
+generated from your benchmarking results
+and our benchmarking results.
+Depending on your choice of parameters,
+the results may differ more or less.
+However,
+they should generally support
+the thesis of the paper;
+across a wide range of benchmarks,
+contract verification can effectively
+reduce the performance overhead
+of sound gradual typing.
 
 @subsection{Figures}
 
@@ -44,7 +224,7 @@ $ raco pkg install --clone https://github.com/camoy/corpse-reviver
 @elem{
 Overhead of gradual typing over the whole benchmark suite.
 The purple (@|purple-key|) curve is Typed Racket
-and the orange (@|orange-key|) curve is @|scv-cr|.
+and the orange (@|orange-key|) curve is SCV-CR.
 The log-scaled x-axis indicates slowdown factor
 compared against the
 fully-untyped configuration,
@@ -68,10 +248,7 @@ where a white box is an untyped module
 and a black box is a typed module.
 The numbers below indicate the slowdown factor for
 Typed Racket 7.7 on the left
-and @scv-cr on the right.
-Red indicates a slowdown over @format-overhead[3]
-and green indicates a slowdown below @format-overhead[1.25].
-Note that all @scv-cr entries are green.
+and SCV-CR on the right.
 }
 @lattices
 }
@@ -79,7 +256,7 @@ Note that all @scv-cr entries are green.
 @figure["fig:overhead-grid"]{
 @elem{
 Overhead of gradual typing for each benchmark individually.
-The purple curve is Typed Racket and the orange curve is @|scv-cr|.
+The purple curve is Typed Racket and the orange curve is SCV-CR.
 Each point (x, y) indicates an x-factor slowdown
 over the fully-untyped configuration for y% of configurations.
 The dashed lines between 1 and 2 occur at increments of 0.2
@@ -91,7 +268,7 @@ and between 2 and 10 at increments of 2.
 @figure["fig:exact-grid"]{
 @elem{
 Exact time it takes each configuration to execute.
-The purple curve is Typed Racket and the orange curve is @|scv-cr|.
+The purple curve is Typed Racket and the orange curve is SCV-CR.
 The x-axis is binned by the number of typed modules in a configuration.
 The y-axis is time to execute in seconds.
 }
@@ -100,14 +277,14 @@ The y-axis is time to execute in seconds.
 
 @figure["table:summary"]{
 @elem{
-Maximum and mean overhead for Racket 7.7 and @scv-cr for each benchmark.
+Maximum and mean overhead for Racket 7.7 and SCV-CR for each benchmark.
 Red indicates a slowdown ≥@format-overhead[3]
 while green indicates a slowdown ≤@format-overhead[1.25].
 }
 @table-summary
 }
 
-@subsection{Empirical}
+@subsection{Claims}
 
 @itemlist[
 @item{
@@ -122,17 +299,17 @@ eliminate all overhead in most cases and suffer
 @item{
 For example, Typed Racket 7.7 runs @%-2x-baseline of benchmark configurations
 with less than @format-overhead[2] slowdown.
-With @|scv-cr|,
+With SCV-CR,
 @format-percent[0.95] of benchmark configurations have less than
 @95%-quantile-opt slowdown compared to the fully-untyped configuration.
 As this plot makes clear,
-@scv-cr reduces overhead to nearly zero in almost all cases,
+SCV-CR reduces overhead to nearly zero in almost all cases,
 and completely eliminates all overheads over @|max-opt|.
 }
 
 @item{
 The worst overhead incurred
-by gradual typing with @scv-cr
+by gradual typing with SCV-CR
 is a slowdown of @|max-opt|.
 Only @%-baseline-within-max-opt of benchmark configurations without
 contract verification are within this slowdown factor,

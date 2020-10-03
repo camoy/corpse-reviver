@@ -6,7 +6,6 @@
 (provide CORPSE-REVIVER-ARTIFACT-STYLE
          th
          sc
-         scv-cr
          format-benchmark
          format-overhead
          format-percent
@@ -50,8 +49,6 @@
 ;; Render the given content in small caps.
 (define (sc . args)
   (apply elem #:style sc-style args))
-
-(define scv-cr (sc "scv-cr"))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; formatters

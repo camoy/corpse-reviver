@@ -43,9 +43,12 @@
 ;; Constructs a function that calculates weighted statistics over all benchmark
 ;; overheads.
 (define ((make-overhead f) pis . rest)
-  (define-values (xs ws)
-    (pis-overheads pis))
-  (apply f xs ws rest))
+  (cond
+    [(null? pis) 0]
+    [else
+     (define-values (xs ws)
+       (pis-overheads pis))
+     (apply f xs ws rest)]))
 
 ;; [Listof Performance-Info] → Real
 ;; Returns the maximum overhead of all configurations.
@@ -113,6 +116,12 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; statistics
 
+(define-syntax-rule (and* ?x ...)
+  (let ([result (and ?x ...)])
+    (if result
+        result
+        0)))
+
 (define median-baseline
   (format-overhead (median-overhead BASELINE-PIS)))
 
@@ -137,26 +146,26 @@
 (define sieve-pi (benchmark 'sieve BASELINE-PIS))
 
 (define sieve-01
-  (and sieve-pi (configuration-overhead sieve-pi "01")))
+  (and* sieve-pi (configuration-overhead sieve-pi "01")))
 
 (define sieve-10
-  (and sieve-pi (configuration-overhead sieve-pi "10")))
+  (and* sieve-pi (configuration-overhead sieve-pi "10")))
 
 (define sieve-large
-  (and sieve-01 sieve-10 (format-overhead (max sieve-01 sieve-10))))
+  (and* sieve-01 sieve-10 (format-overhead (max sieve-01 sieve-10))))
 
 (define sieve-small
-  (and sieve-01 sieve-10 (format-overhead (min sieve-01 sieve-10))))
+  (and* sieve-01 sieve-10 (format-overhead (min sieve-01 sieve-10))))
 
 (define morsecode-pi (benchmark 'morsecode BASELINE-PIS))
 
 (define morsecode-max
-  (and morsecode-pi (format-overhead (max-overhead (list morsecode-pi)))))
+  (and* morsecode-pi (format-overhead (max-overhead (list morsecode-pi)))))
 
 (define zombie-pi (benchmark 'zombie BASELINE-PIS))
 
 (define zombie-mean
-  (and zombie-pi (format-overhead (max-overhead (list zombie-pi)))))
+  (and* zombie-pi (format-overhead (max-overhead (list zombie-pi)))))
 
 (define 7%-baseline
   (format-percent (%-overhead<= BASELINE-PIS 1.07)))

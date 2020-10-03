@@ -108,7 +108,8 @@
 ;; TODO
 (define (make-overhead-summary . pis*)
   (define cdf-pis
-    (for/list ([pis (in-list pis*)])
+    (for/list ([pis (in-list pis*)]
+               #:when (not (null? pis)))
       (define cis (pis->cdf-cis pis))
       (make-performance-info
        '||
@@ -119,8 +120,9 @@
        #:untyped-runtime* '(1)
        #:typed-runtime* '(1)
        #:make-in-configurations (const cis))))
-  (parameterize ([*OVERHEAD-SHOW-CONFIGURATIONS* #f])
-    (overhead-plot cdf-pis)))
+  (when (not (null? cdf-pis))
+    (parameterize ([*OVERHEAD-SHOW-CONFIGURATIONS* #f])
+      (overhead-plot cdf-pis))))
 
 ;;
 ;; TODO
@@ -245,9 +247,9 @@
 (define HEADER0
   `(""
     "Racket Overhead" cont
-    ,(elem scv-cr " Overhead") cont
-    ,(elem scv-cr " Analyze")
-    ,(elem scv-cr " Compile")))
+    ,(elem "SCV-CR Overhead") cont
+    ,(elem "SCV-CR Analyze")
+    ,(elem "SCV-CR Compile")))
 
 ;;
 ;;
