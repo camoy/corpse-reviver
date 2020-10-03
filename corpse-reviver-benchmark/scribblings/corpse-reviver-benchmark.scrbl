@@ -84,8 +84,8 @@ command-line flags:
   Resume an existing setup.
   In other words,
   run the experiment described by
-  existing @litchar{in} files in
-  @litchar{$XDG_DATA_HOME/gtp-measure}.
+  existing @exec{in} files in
+  @exec{$XDG_DATA_HOME/gtp-measure}.
   After running a baseline experiment
   you should use this option
   for the optimized experiment

@@ -19,9 +19,9 @@ This artifact accompanies the paper
 ``Corpse Reviver: Sound and Efficient Gradual Typing via Contract Verification.''
 }
 Phase I consists of
-sections @secref{install} and @secref{opt}.
+the @secref{install} and @secref{opt} sections.
 Phase II consists of
-sections @secref{benchmark} and @secref{results}.
+the @secref{benchmark} and @secref{results} sections.
 
 @section[#:tag "install"]{Install}
 
@@ -44,7 +44,7 @@ Download the artifact's @hyperlink["http://camoy.name"]{virtual machine image}.
 @item{
 Open VirtualBox,
 choose File → Import Appliance,
-select the downloaded @litchar{ova} file,
+select the downloaded @exec{ova} file,
 and start the virtual machine.
 }]
 
@@ -64,18 +64,13 @@ $ raco pkg install corpse-reviver/*/
 
 @section[#:tag "opt"]{Optimizing a program}
 
-You can write your own gradually typed programs
-and see how well SCV-CR can optimize them.
-
+You can write your own gradually typed program
+and see how well SCV-CR can optimize it.
 Place the following code in a file called
-@litchar{data.rkt}.
-This typed module provides a function called
-@code{random-adders}
-that generates a list of random ``adders,''
-functions that add its argument to a random number.
+@exec{data.rkt}:
 
 @figure["fig:typed-data"]{
-@elem{The @litchar{data.rkt} file.}
+@elem{The @exec{data.rkt} file.}
 @codeblock0{
 #lang typed/racket/base
 
@@ -88,16 +83,15 @@ functions that add its argument to a random number.
 }
 }
 
-Place the following code in a file called
-@litchar{main.rkt}.
-This untyped module generates
-a list of 5,000 adders from @litchar{data.rkt}
-and computes a sum with them.
-It does this for 1,000 iterations
-and times how long this takes.
+This typed module provides a function called
+@code{random-adders}
+that generates a list of random ``adders,''
+functions that add its argument to a random number.
+Now, place the following code in a file called
+@exec{main.rkt}:
 
 @figure["fig:untyped-main"]{
-@elem{The @litchar{main.rkt} file.}
+@elem{The @exec{main.rkt} file.}
 @codeblock0{
 #lang racket/base
 
@@ -112,6 +106,12 @@ and times how long this takes.
      (f (random 10)))))
 }
 }
+
+This untyped module generates
+a list of 5,000 adders from @exec{data.rkt}
+and computes a sum with them.
+It does this for 1,000 iterations
+and times how long this takes.
 
 Run the program and use Racket's profiler
 to see the cost of contracts due to gradual typing.
@@ -165,22 +165,22 @@ the benchmarks with these parameters
 will terminate in about 8 hours.
 If you want to run this script overnight,
 combine the last two commands with
-@litchar{&&}.
+@exec{&&}.
 
-Different parameters choices yields
+Different parameter choices yield
 different benchmarking times.
-Changing @litchar{-S} and @litchar{-R} to 1
-will half completion benchmark.
+Changing @exec{-S} and @exec{-R} to 1
+will halve completion benchmark.
 We don't recommend going any lower than this setting.
 If you want to run the benchmarks for longer,
 increasing any one of
-@litchar{-S},
-@litchar{-R},
-or @litchar{-c},
+@exec{-S},
+@exec{-R},
+or @exec{-c},
 will result in a more accurate result.
 See
 @other-doc['(lib "corpse-reviver-benchmark/scribblings/corpse-reviver-benchmark.scrbl")
-           #:indirect "benchmarking"].
+           #:indirect "benchmarking"]
 for more information.
 
 After this is done,
@@ -192,27 +192,25 @@ $ raco setup corpse-reviver-artifact
 $ raco docs T:corpse-reviver-artifact
 }
 
-When @litchar{raco docs} opens a browser,
+When @exec{raco docs} opens a browser,
 select the first result.
 The page you're currently reading should appear,
 but the figures and claims in @secref{results}
 will be generated from your data instead
-of ours.
-For comparison,
-our data is available in the
-@litchar{author_data}
-directory.
+of ours (available in the
+@exec{author_data}
+directory).
 
 @section[#:tag "results"]{Empirical results}
 
-Compare the figures and claims below
+Compare the figures and claims
 generated from your benchmarking results
-and our benchmarking results.
+to those generated from ours.
 Depending on your choice of parameters,
 the results may differ more or less.
 However,
 they should generally support
-the thesis of the paper;
+the thesis of the paper---that
 across a wide range of benchmarks,
 contract verification can effectively
 reduce the performance overhead
