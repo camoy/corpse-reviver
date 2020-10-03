@@ -134,23 +134,29 @@
 (define %-baseline-within-max-opt
   (format-percent (%-overhead<= BASELINE-PIS (max-overhead OPT-PIS))))
 
+(define sieve-pi (benchmark 'sieve BASELINE-PIS))
+
 (define sieve-01
-  (configuration-overhead (benchmark 'sieve BASELINE-PIS) "01"))
+  (and sieve-pi (configuration-overhead sieve-pi "01")))
 
 (define sieve-10
-  (configuration-overhead (benchmark 'sieve BASELINE-PIS) "10"))
+  (and sieve-pi (configuration-overhead sieve-pi "10")))
 
 (define sieve-large
-  (format-overhead (max sieve-01 sieve-10)))
+  (and sieve-01 sieve-10 (format-overhead (max sieve-01 sieve-10))))
 
 (define sieve-small
-  (format-overhead (min sieve-01 sieve-10)))
+  (and sieve-01 sieve-10 (format-overhead (min sieve-01 sieve-10))))
+
+(define morsecode-pi (benchmark 'morsecode BASELINE-PIS))
 
 (define morsecode-max
-  (format-overhead (max-overhead (list (benchmark 'morsecode BASELINE-PIS)))))
+  (and morsecode-pi (format-overhead (max-overhead (list morsecode-pi)))))
+
+(define zombie-pi (benchmark 'zombie BASELINE-PIS))
 
 (define zombie-mean
-  (format-overhead (max-overhead (list (benchmark 'zombie BASELINE-PIS)))))
+  (and zombie-pi (format-overhead (max-overhead (list zombie-pi)))))
 
 (define 7%-baseline
   (format-percent (%-overhead<= BASELINE-PIS 1.07)))

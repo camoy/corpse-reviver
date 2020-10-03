@@ -89,22 +89,22 @@
     (if (config-resume? cfg)
         (target->params/resume target)
         (target->params/init target)))
-  (define-values (analyses runtimes)
-    (values (make-queue) (make-queue)))
   (set-config-cfg-id! cfg 0)
   (for*/fold
-      ([n 1])
+      ([n 0])
       ([pre-subtask (in-list (in-pre-subtasks task))]
        #:when #t
        [subtask (in-list (pre-subtask->subtask* pre-subtask gtp-config))])
+    (define analyses (make-queue))
+    (define runtimes (make-queue))
     (set-config-sample! cfg n)
     (set-config-benchmark! cfg benchmark)
     (set-config-analyses! cfg analyses)
     (set-config-runtimes! cfg runtimes)
     (subtask-run! subtask)
-    (add1 n))
-  (output-json! benchmark 'analysis analyses)
-  (output-json! benchmark 'runtime runtimes))
+    (output-json! benchmark 'analysis n analyses)
+    (output-json! benchmark 'runtime n runtimes)
+    (add1 n)))
 
 ;; String → Config Task String
 ;; Returns the parameters needed to run a target for a newly initialized
@@ -284,10 +284,11 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; output
 
-;; String Symbol Queue → Any
+;; String Symbol Natural Queue → Any
 ;; Given a queue of data, output this to a timestamped CSV file.
-(define (output-json! benchmark key queue)
-  (define filename (format "~a_~a_~a.json" (iso-timestamp) benchmark key))
+(define (output-json! benchmark key n queue)
+  (define filename
+    (format "~a_~a~a_~a.json" (iso-timestamp) benchmark n key))
   (with-output-to-file (build-path (config-output-dir cfg) filename)
     (λ ()
       (~> queue queue->list list->jsexpr write-json))))

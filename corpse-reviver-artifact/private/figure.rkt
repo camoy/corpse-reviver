@@ -199,8 +199,8 @@
   (define lattice-picts
     (for/list ([baseline-pi (in-list baseline-pis)]
                [opt-pi (in-list opt-pis)]
-               #:when (member (performance-info->name baseline-pi)
-                              benchmarks))
+               #:when (member (performance-info->name baseline-pi) benchmarks)
+               #:when (and (exhaustive? baseline-pi) (exhaustive? opt-pi)))
       (make-performance-lattice (pi->vector baseline-pi) (pi->vector opt-pi))))
   (apply hc-append spacing lattice-picts))
 

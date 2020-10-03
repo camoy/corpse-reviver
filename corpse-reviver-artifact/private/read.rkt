@@ -5,7 +5,8 @@
 
 (provide BASELINE-PIS
          OPT-PIS
-         ANALYSES)
+         ANALYSES
+         exhaustive?)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; require
@@ -77,7 +78,6 @@
   (define typed-runtimes (run-hashes->runtimes typed-run-hashes))
   (define untyped-runtimes (run-hashes->runtimes untyped-run-hashes))
   (define cis (run-hashes->cis run-hashes*))
-  (define exhaustive? (= (expt 2 units) num-configurations))
   (define pi
     (make-performance-info
      (string->symbol benchmark)
@@ -88,9 +88,15 @@
      #:untyped-runtime* untyped-runtimes
      #:typed-runtime* typed-runtimes
      #:make-in-configurations (const cis)))
-  (if exhaustive?
+  (if (exhaustive? pi)
       pi
       (make-sample-info pi (run-hashes->sample-cis run-hashes*))))
+
+;; Performance-Info → Boolean
+;; Returns if the performance info is exhaustive.
+(define (exhaustive? pi)
+  (= (expt 2 (performance-info->num-units pi))
+     (performance-info->num-configurations pi)))
 
 ;; [Listof Hash] → [Listof Hash] [Listof Hash] [Listof Hash]
 ;; Partitions out run hashes into the "guaranteed" configurations for the typed
