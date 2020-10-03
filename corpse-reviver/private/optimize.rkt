@@ -74,8 +74,14 @@
             ;; Remove this once TR #837 is resolved.
             (with-patched-typed-racket
               (λ () (verify-modules targets stxs))))))))
-  (info 'blame -blms)
-  (define blms (filter (untyped-blame? mods) -blms))
+  ;; Annotate blame with ignore status
+  (define keep? (untyped-blame? mods))
+  (define blms/kept
+    (for/list ([blm (in-list -blms)])
+      (cons (keep? blm) blm)))
+  (info 'blame blms/kept)
+  ;; Actually ignore those blames
+  (define blms (filter keep? -blms))
   (debug "blames (filtered): ~a" blms)
   blms)
 
