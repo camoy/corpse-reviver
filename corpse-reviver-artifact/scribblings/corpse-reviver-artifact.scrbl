@@ -18,10 +18,11 @@ This artifact accompanies the paper
 @hyperlink["https://arxiv.org/abs/2007.12630"]{
 ``Corpse Reviver: Sound and Efficient Gradual Typing via Contract Verification.''
 }
-Phase I consists of
+Artifact evaluation phase I consists of
 the @secref{install} and @secref{opt} sections.
-Phase II consists of
+Artifact evaluation phase II consists of
 the @secref{benchmark} and @secref{results} sections.
+
 
 @section[#:tag "install"]{Install}
 
@@ -162,15 +163,15 @@ $ raco scv-cr-benchmark -r -o data/opt
 
 We have found that on a decent laptop,
 the benchmarks with these parameters
-will terminate in about 8 hours.
+terminate in about 14 hours.
 If you want to run this script overnight,
 combine the last two commands with
 @exec{&&}.
 
 Different parameter choices yield
 different benchmarking times.
-Changing @exec{-S} and @exec{-R} to 1
-will halve completion benchmark.
+Changing @exec{-R} from 2 to 1
+will halve benchmark completion time.
 We don't recommend going any lower than this setting.
 If you want to run the benchmarks for longer,
 increasing any one of
@@ -315,6 +316,13 @@ while the largest overhead exceeds @max-baseline overhead.
 }
 
 @item{
+Take the @sc{sieve} benchmark as an example.
+The baseline performance begins at 50%,
+meaning two of the four
+configurations are within a @format-overhead[1] slowdown
+of the fully-untyped configuration.
+From @figure-ref{fig:lattices}, these are the fully-untyped
+configuration itself and the fully-typed configuration.
 The one-time increase in the CDF shows the configuration
 that has @sieve-small overhead.
 We never see the CDF reach @format-percent[1] since

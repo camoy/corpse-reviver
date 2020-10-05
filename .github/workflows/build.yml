@@ -14,7 +14,7 @@ jobs:
           architecture: 'x64'
           distribution: 'full'
           variant: 'regular'
-          version: 'current'
+          version: '7.7'
       # Typed Racket Hacks prints to STDOUT causing exit code 1. Let's just force success.
       - run: raco pkg install --auto */ || true
       # If we have a cache hit, the above will link the current working directory as the
