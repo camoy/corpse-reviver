@@ -113,7 +113,7 @@ This untyped module generates
 a list of 5,000 adders from @exec{data.rkt}
 and computes a sum with them.
 It does this for 1,000 iterations
-and times how long this takes.
+and measures how long it takes.
 
 Run the program and use Racket's profiler
 to see the cost of contracts due to gradual typing.
@@ -122,6 +122,7 @@ the program takes about 10 seconds
 with about 67% of that time due to contract checking.
 
 @verbatim{
+$ raco make data.rkt main.rkt
 $ racket main.rkt
 cpu time: 9398 real time: 9412 gc time: 874
 $ raco contract-profile main.rkt
@@ -131,7 +132,7 @@ Running time is 66.66% contracts
 (-> natural? (listof (-> exact-integer? any)))     8013.5 ms
 server.rkt:3:9
     random-adders                                  8013.5 ms
-
+$ raco decompile main.rkt > unopt.rkt
 }
 
 Run SCV-CR on the modules first
@@ -149,8 +150,27 @@ $ raco contract-profile main.rkt
 cpu time: 1406 real time: 1410 gc time: 8
 Running time is 0% contracts
 0/2340 ms
+$ raco decompile main.rkt > opt.rkt
 }
 
+For further confirmation that the contracts were optimized,
+you can compare the decompiled outputs in
+@exec{unopt.rkt}
+and @exec{opt.rkt}.
+
+@verbatim{
+$ diff opt.rkt unopt.rkt | grep "random-adders '5000" -A 2
+<          (let ((local67 (random-adders '5000)))
+---
+>          (let ((local73 (lifted/12.1 '5000)))
+}
+
+On top is the optimized version that directly calls @exec{random-adders}.
+The bottom,
+by contrast,
+calls @exec{lifted/12.1} instead.
+If you chase down this definition,
+it is the contracted version of @exec{random-adders}.
 
 See
 @seclink["top"
@@ -163,13 +183,22 @@ for the list of options to @exec{raco scv-cr}.
 @section[#:tag "benchmark"]{Benchmark}
 
 Execute the following commands to
-run the benchmark suite:
+run the entire benchmark suite:
 
 @verbatim{
 $ cd corpse-reviver/corpse-reviver-artifact
 $ raco scv-cr-benchmark -c 5 -b -i 5 -S 2 -R 2 -o data/baseline
 $ raco scv-cr-benchmark -r -o data/opt
 }
+
+These commands will create a series of
+JSON-formatted measurement files---one
+for each benchmark sample.
+Baseline measurements,
+without applying SCV-CR,
+are placed in @exec{data/baseline}.
+Measurements after applying SCV-CR
+are placed in @exec{data/opt}.
 
 We have found that on a decent laptop,
 the benchmarks with these parameters
@@ -178,7 +207,10 @@ If you want to run this script overnight,
 combine the last two commands with
 @exec{&&}.
 
-Different parameter choices yield
+The suggested flags will sample from
+larger benchmarks instead of
+exhaustively measuring them all.
+Different parameter choices will yield
 different benchmarking times.
 Changing @exec{-R} from 2 to 1
 will halve benchmark completion time.
