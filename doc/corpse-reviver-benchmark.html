@@ -1,0 +1,57 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN" "http://www.w3.org/TR/html4/loose.dtd">
+<html><head><meta http-equiv="content-type" content="text/html; charset=utf-8"/><meta name="viewport" content="width=device-width, initial-scale=0.8"/><title>Benchmark: Corpse Reviver</title><link rel="stylesheet" type="text/css" href="scribble.css" title="default"/><link rel="stylesheet" type="text/css" href="racket.css" title="default"/><link rel="stylesheet" type="text/css" href="manual-style.css" title="default"/><link rel="stylesheet" type="text/css" href="manual-racket.css" title="default"/><script type="text/javascript" src="scribble-common.js"></script><script type="text/javascript" src="manual-racket.js"></script><!--[if IE 6]><style type="text/css">.SIEHidden { overflow: hidden; }</style><![endif]--></head><body id="scribble-racket-lang-org"><div class="tocset"><div class="tocview"><div class="tocviewlist tocviewlisttopspace"><div class="tocviewtitle"><table cellspacing="0" cellpadding="0"><tr><td style="width: 1em;"><a href="javascript:void(0);" title="Expand/Collapse" class="tocviewtoggle" onclick="TocviewToggle(this,&quot;tocview_0&quot;);">&#9658;</a></td><td></td><td><a href="" class="tocviewselflink" data-pltdoc="x">Benchmark:<span class="mywbr"> &nbsp;</span> Corpse Reviver</a></td></tr></table></div><div class="tocviewsublistonly" style="display: none;" id="tocview_0"><table cellspacing="0" cellpadding="0"><tr><td align="right">1&nbsp;</td><td><a href="#%28part._.Command_.Line%29" class="tocviewlink" data-pltdoc="x">Command Line</a></td></tr></table></div></div></div><div class="tocsub"><table class="tocsublist" cellspacing="0"><tr><td><span class="tocsublinknumber"></span><a href="#%28part._top%29" class="tocsubseclink" data-pltdoc="x">Benchmark:<span class="mywbr"> &nbsp;</span> Corpse Reviver</a></td></tr><tr><td><span class="tocsublinknumber">1<tt>&nbsp;</tt></span><a href="#%28part._.Command_.Line%29" class="tocsubseclink" data-pltdoc="x">Command Line</a></td></tr></table></div></div><div class="maincolumn"><div class="main"><div class="versionbox"><span class="versionNoNav">7.7.0.10</span></div><h2><a name="(part._top)"></a>Benchmark: Corpse Reviver</h2><div class="SAuthorListBox"><span class="SAuthorList"><p class="author">Cameron Moy</p><span class="SAuthorSep"><br/></span><p class="author">Ph&#250;c C. Nguy&#7877;n</p><span class="SAuthorSep"><br/></span><p class="author">Sam Tobin-Hochstadt</p><span class="SAuthorSep"><br/></span><p class="author">David Van Horn</p></span></div><p><div class="SIntrapara"></div><div class="SIntrapara"></div><div class="SIntrapara"></div><div class="SIntrapara"></div></p><p>This module provides a command-line benchmarking script
+built for the purpose of
+measuring the performance benefit of SCV-CR.
+Two types of JSON output are produced:
+analysis results
+and run-time results.
+Analysis results collect
+information during SCV-CR optimization
+such as blame data.
+Run-time results measure
+benchmark performance
+after optimization.</p><h3>1<tt>&nbsp;</tt><a name="(part._.Command_.Line)"></a>Command Line</h3><p><div class="SIntrapara">The <span class="stt">raco scv-cr-benchmark</span> command
+accepts a list of
+<a href="http://docs.racket-lang.org/gtp-measure/index.html#%28tech._gtp._typed%2Funtyped._target%29" class="techoutside" data-pltdoc="x"><span class="techinside">GTP typed/untyped targets</span></a>
+to benchmark.
+If none are provided
+it will use a 12-program subset of
+<a href="http://docs.racket-lang.org/gtp-benchmarks/index.html" data-pltdoc="x">GTP Benchmarks</a>.
+It accepts the following
+command-line flags:
+</div><div class="SIntrapara"><table cellspacing="0" cellpadding="0" class="boxed"><tr><td valign="top"><p>Short</p></td><td valign="top"><p><span class="hspace">&nbsp;&nbsp;&nbsp;</span></p></td><td valign="top"><p>Long</p></td><td valign="top"><p><span class="hspace">&nbsp;&nbsp;&nbsp;</span></p></td><td valign="top"><p>Description</p></td></tr><tr><td valign="top"><p><span class="stt">-b</span></p></td><td valign="top"><p><span class="hspace">&nbsp;&nbsp;&nbsp;</span></p></td><td valign="top"><p><span class="stt">--baseline</span></p></td><td valign="top"><p><span class="hspace">&nbsp;&nbsp;&nbsp;</span></p></td><td valign="top"><p>Run baseline measurements,
+in other words,
+don&rsquo;t optimize with SCV-CR.</p></td></tr><tr><td valign="top"><p><span class="stt">-c</span></p></td><td valign="top"><p><span class="hspace">&nbsp;&nbsp;&nbsp;</span></p></td><td valign="top"><p><span class="stt">--cutoff</span></p></td><td valign="top"><p><span class="hspace">&nbsp;&nbsp;&nbsp;</span></p></td><td valign="top"><p>Set the maximum number of components
+to measure exhaustively
+before sampling.</p></td></tr><tr><td valign="top"><p><span class="stt">-g</span></p></td><td valign="top"><p><span class="hspace">&nbsp;&nbsp;&nbsp;</span></p></td><td valign="top"><p><span class="stt">--gc-log</span></p></td><td valign="top"><p><span class="hspace">&nbsp;&nbsp;&nbsp;</span></p></td><td valign="top"><p>Log garbage collection statistics
+during analysis.
+This can cause the analysis
+to slow down significantly;
+that&rsquo;s why it&rsquo;s disabled by default.</p></td></tr><tr><td valign="top"><p><span class="stt">-i</span></p></td><td valign="top"><p><span class="hspace">&nbsp;&nbsp;&nbsp;</span></p></td><td valign="top"><p><span class="stt">--iterations</span></p></td><td valign="top"><p><span class="hspace">&nbsp;&nbsp;&nbsp;</span></p></td><td valign="top"><p>Set the number of iterations
+to run for each configuration.</p></td></tr><tr><td valign="top"><p><span class="stt">-n</span></p></td><td valign="top"><p><span class="hspace">&nbsp;&nbsp;&nbsp;</span></p></td><td valign="top"><p><span class="stt">--no-skip</span></p></td><td valign="top"><p><span class="hspace">&nbsp;&nbsp;&nbsp;</span></p></td><td valign="top"><p>Don&rsquo;t skip the analysis of modules
+prefixed with <span class="stt">_</span>.
+This the convention for indicating
+modules that should be treated as opaque.</p></td></tr><tr><td valign="top"><p><span class="stt">-o</span></p></td><td valign="top"><p><span class="hspace">&nbsp;&nbsp;&nbsp;</span></p></td><td valign="top"><p><span class="stt">--output</span></p></td><td valign="top"><p><span class="hspace">&nbsp;&nbsp;&nbsp;</span></p></td><td valign="top"><p>Set the directory
+where analysis results
+will be placed.
+By default,
+it is the current working directory.</p></td></tr><tr><td valign="top"><p><span class="stt">-r</span></p></td><td valign="top"><p><span class="hspace">&nbsp;&nbsp;&nbsp;</span></p></td><td valign="top"><p><span class="stt">--resume</span></p></td><td valign="top"><p><span class="hspace">&nbsp;&nbsp;&nbsp;</span></p></td><td valign="top"><p>Resume an existing setup.
+In other words,
+run the experiment described by
+existing <span class="stt">in</span> files in
+<span class="stt">$XDG_DATA_HOME/gtp-measure</span>.
+After running a baseline experiment
+you should use this option
+for the optimized experiment
+so it uses the same samples as the baseline.</p></td></tr><tr><td valign="top"><p><span class="stt">-w</span></p></td><td valign="top"><p><span class="hspace">&nbsp;&nbsp;&nbsp;</span></p></td><td valign="top"><p><span class="stt">--worker-count</span></p></td><td valign="top"><p><span class="hspace">&nbsp;&nbsp;&nbsp;</span></p></td><td valign="top"><p>Set the number of parallel workers
+to use for measuring.
+By default,
+this is <span class="RktVal">1</span>.
+Each worker is given one benchmark to process
+at a time.</p></td></tr><tr><td valign="top"><p><span class="stt">-R</span></p></td><td valign="top"><p><span class="hspace">&nbsp;&nbsp;&nbsp;</span></p></td><td valign="top"><p><span class="stt">--num-samples</span></p></td><td valign="top"><p><span class="hspace">&nbsp;&nbsp;&nbsp;</span></p></td><td valign="top"><p>Set the number of samples to take
+when measuring a benchmark approximately.</p></td></tr><tr><td valign="top"><p><span class="stt">-S</span></p></td><td valign="top"><p><span class="hspace">&nbsp;&nbsp;&nbsp;</span></p></td><td valign="top"><p><span class="stt">--sample-factor</span></p></td><td valign="top"><p><span class="hspace">&nbsp;&nbsp;&nbsp;</span></p></td><td valign="top"><p>Set the sample size
+as a factor of the number of components
+in the benchmark.</p></td></tr></table></div></p><p>See
+<a href="http://docs.racket-lang.org/gtp-measure/index.html#%28part._gtp-measure-config%29" data-pltdoc="x">GTP configuration</a>
+for more details
+on some of these options.</p></div></div><div id="contextindicator">&nbsp;</div></body></html>

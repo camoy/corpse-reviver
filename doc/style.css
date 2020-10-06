@@ -1,0 +1,25 @@
+.Figure {
+  width: auto !important;
+  border: 1px solid grey !important;
+  padding: 1em;
+}
+
+.Figure .Legend .ssansserif {
+    font-weight: normal;
+}
+
+.Figure p {
+    text-align: left;
+}
+
+.Figure .FigureInside img {
+    max-width: 100%;
+}
+
+td {
+    vertical-align: top;
+}
+
+td:first-child {
+    padding-right: 0.5rem;
+}
