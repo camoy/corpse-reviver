@@ -2,9 +2,14 @@
 
 @require[@for-label[corpse-reviver-benchmark
                     racket/base]]
+@(define TAG-PREFIX
+  "(lib corpse-reviver-benchmark/scribblings/corpse-reviver-benchmark.scrbl)")
 
-@title{Benchmark: Corpse Reviver}
+@title[#:tag "top" #:tag-prefix TAG-PREFIX]{Benchmark: Corpse Reviver}
 @author{Cameron Moy}
+@author{Phúc C. Nguyễn}
+@author{Sam Tobin-Hochstadt}
+@author{David Van Horn}
 
 This module provides a command-line benchmarking script
 built for the purpose of
@@ -31,56 +36,67 @@ it will use a 12-program subset of
 @other-doc['(lib "gtp-benchmarks/scribblings/gtp-benchmarks.scrbl")].
 It accepts the following
 command-line flags:
-
-@itemlist[
-@item{
-  @exec{-b} or @exec{--baseline} ---
+@tabular[#:sep @hspace[3]
+         #:row-properties '(top)
+         #:style 'boxed
+@list[
+@list["Short" "Long" "Description"]
+@list[
+  @exec{-b}
+  @exec{--baseline}
+  @para{
   Run baseline measurements,
   in other words,
   don't optimize with SCV-CR.
-}
-
-@item{
-  @exec{-c} or @exec{--cutoff} ---
+  }]
+@list[
+  @exec{-c}
+  @exec{--cutoff}
+  @para{
   Set the maximum number of components
   to measure exhaustively
   before sampling.
-}
-
-@item{
-  @exec{-g} or @exec{--gc-log} ---
+  }]
+@list[
+  @exec{-g}
+  @exec{--gc-log}
+  @para{
   Log garbage collection statistics
   during analysis.
   This can cause the analysis
   to slow down significantly;
   that's why it's disabled by default.
-}
-
-@item{
-  @exec{-i} or @exec{--iterations} ---
+  }]
+@list[
+  @exec{-i}
+  @exec{--iterations}
+  @para{
   Set the number of iterations
   to run for each configuration.
-}
-
-@item{
-  @exec{-n} or @exec{--no-skip} ---
+  }]
+@list[
+  @exec{-n}
+  @exec{--no-skip}
+  @para{
   Don't skip the analysis of modules
   prefixed with @exec{_}.
   This the convention for indicating
   modules that should be treated as opaque.
-}
-
-@item{
-  @exec{-o} or @exec{--output} ---
+  }]
+@list[
+  @exec{-o}
+  @exec{--output}
+  @para{
   Set the directory
   where analysis results
   will be placed.
   By default,
   it is the current working directory.
-}
-
-@item{
-  @exec{-r} or @exec{--resume} ---
+  }]
+@list[
+  @exec{-r}
+  @exec{--resume}
+  @para{
   Resume an existing setup.
   In other words,
   run the experiment described by
@@ -90,31 +106,33 @@ command-line flags:
   you should use this option
   for the optimized experiment
   so it uses the same samples as the baseline.
-}
-
-@item{
-  @exec{-w} or @exec{--worker-count} ---
+  }]
+@list[
+  @exec{-w}
+  @exec{--worker-count}
+  @para{
   Set the number of parallel workers
   to use for measuring.
   By default,
   this is @racket[1].
   Each worker is given one benchmark to process
   at a time.
-}
-
-@item{
-  @exec{-R} or @exec{--num-samples} ---
+  }]
+@list[
+  @exec{-R}
+  @exec{--num-samples}
+  @para{
   Set the number of samples to take
   when measuring a benchmark approximately.
-}
-
-@item{
-  @exec{-S} or @exec{--sample-factor} ---
+  }]
+@list[
+  @exec{-S}
+  @exec{--sample-factor}
+  @para{
   Set the sample size
   as a factor of the number of components
   in the benchmark.
-}
-]
+  }]]]
 
 See
 @secref["gtp-measure-config"

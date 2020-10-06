@@ -1,7 +1,3 @@
-.versionbox {
-  display: none;
-}
-
 .Figure {
   width: auto !important;
   border: 1px solid grey !important;
@@ -19,10 +15,6 @@
 .Figure .FigureInside img {
     max-width: 100%;
 }
-
-/*
-  Bibliography
-*/
 
 td {
     vertical-align: top;

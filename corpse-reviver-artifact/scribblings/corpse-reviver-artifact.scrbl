@@ -23,7 +23,6 @@ the @secref{install} and @secref{opt} sections.
 Artifact evaluation phase II consists of
 the @secref{benchmark} and @secref{results} sections.
 
-
 @section[#:tag "install"]{Install}
 
 You can run the artifact in a VirtualBox virtual machine
@@ -53,13 +52,15 @@ and start the virtual machine.
 
 @itemlist[
 @item{
-Install @hyperlink["https://download.racket-lang.org"]{Racket 7.8}.
+Install @hyperlink["https://download.racket-lang.org/all-versions.html"]{Racket 7.8}.
 }
 @item{
 Run the following commands to download and install SCV-CR:
 @verbatim{
 $ git clone https://github.com/camoy/corpse-reviver
-$ raco pkg install corpse-reviver/*/
+$ raco pkg install corpse-reviver/corpse-reviver-artifact \
+                   corpse-reviver/corpse-reviver-benchmark \
+                   corpse-reviver/corpse-reviver
 }
 }]
 
@@ -79,7 +80,7 @@ Place the following code in a file called
 
 (: random-adders : (-> Natural (Listof (-> Integer Integer))))
 (define (random-adders n)
-  (for/list ([i n])
+  (for/list ([i (in-range n)])
     (λ ([x : Integer]) (+ (random 10) x))))
 }
 }
@@ -102,8 +103,8 @@ Now, place the following code in a file called
 (define n 5000)
 
 (time
- (for ([i iterations])
-   (for/sum ([f (random-adders n)])
+ (for ([i (in-range iterations)])
+   (for/sum ([f (in-list (random-adders n))])
      (f (random 10)))))
 }
 }
@@ -150,6 +151,15 @@ Running time is 0% contracts
 0/2340 ms
 }
 
+
+See
+@seclink["top"
+        #:tag-prefixes
+        '("(lib corpse-reviver/scribblings/corpse-reviver.scrbl)")]{
+  the SCV-CR documentation
+}
+for the list of options to @exec{raco scv-cr}.
+
 @section[#:tag "benchmark"]{Benchmark}
 
 Execute the following commands to
@@ -180,8 +190,11 @@ increasing any one of
 or @exec{-c},
 will result in a more accurate result.
 See
-@other-doc['(lib "corpse-reviver-benchmark/scribblings/corpse-reviver-benchmark.scrbl")
-           #:indirect "benchmarking"]
+@seclink["top"
+        #:tag-prefixes
+        '("(lib corpse-reviver-benchmark/scribblings/corpse-reviver-benchmark.scrbl)")]{
+  the benchmarking documentation
+}
 for more information.
 
 After this is done,
@@ -246,7 +259,7 @@ is a configuration of the benchmark,
 where a white box is an untyped module
 and a black box is a typed module.
 The numbers below indicate the slowdown factor for
-Typed Racket 7.7 on the left
+Typed Racket @baseline-version on the left
 and SCV-CR on the right.
 }
 @lattices
@@ -276,14 +289,17 @@ The y-axis is time to execute in seconds.
 
 @figure["table:summary"]{
 @elem{
-Maximum and mean overhead for Racket 7.7 and SCV-CR for each benchmark.
+Maximum and mean overhead for
+Racket @baseline-version
+and SCV-CR
+for each benchmark.
 Red indicates a slowdown ≥@format-overhead[3]
 while green indicates a slowdown ≤@format-overhead[1.25].
 }
 @table-summary
 }
 
-@subsection{Claims}
+@subsection{Supporting claims}
 
 @itemlist[
 @item{
@@ -296,7 +312,8 @@ eliminate all overhead in most cases and suffer
 }
 
 @item{
-For example, Typed Racket 7.7 runs @%-2x-baseline of benchmark configurations
+For example,
+Typed Racket @baseline-version runs @%-2x-baseline of benchmark configurations
 with less than @format-overhead[2] slowdown.
 With SCV-CR,
 @format-percent[0.95] of benchmark configurations have less than

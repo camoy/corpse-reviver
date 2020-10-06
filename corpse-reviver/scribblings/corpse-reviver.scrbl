@@ -4,7 +4,10 @@
                     racket/base
                     racket/contract]]
 
-@title{Corpse Reviver}
+@(define TAG-PREFIX
+  "(lib corpse-reviver/scribblings/corpse-reviver.scrbl)")
+
+@title[#:tag "top" #:tag-prefix TAG-PREFIX]{Corpse Reviver}
 @author{Cameron Moy}
 @author{Phúc C. Nguyễn}
 @author{Sam Tobin-Hochstadt}

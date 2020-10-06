@@ -186,9 +186,14 @@
 
 ;; → Any
 ;; Outputs machine specification information (Unix only). Specifically data about
-;; CPU and memory.
+;; CPU and memory. As well as the Racket version number.
 (define (output-specs!)
-  (define filename (format "~a_specs.txt" (iso-timestamp)))
-  (with-output-to-file (build-path (config-output-dir cfg) filename)
+  (define timestamp (iso-timestamp))
+  (define spec-filename (format "~a_specs.txt" timestamp))
+  (define version-filename (format "~a_version.txt" timestamp))
+  (with-output-to-file (build-path (config-output-dir cfg) spec-filename)
     (λ ()
-      (system "cat /proc/cpuinfo /proc/meminfo"))))
+      (system "cat /proc/cpuinfo /proc/meminfo")))
+  (with-output-to-file (build-path (config-output-dir cfg) version-filename)
+    (λ ()
+      (displayln (version)))))
