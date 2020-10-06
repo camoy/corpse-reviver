@@ -26,4 +26,5 @@
     "typed-racket-more"))
 
 (define build-deps
-   '("scribble-lib"))
+   '("gtp-benchmarks"
+     "scribble-lib"))

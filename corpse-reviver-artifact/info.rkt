@@ -7,5 +7,22 @@
 (define scribblings
   '(("scribblings/corpse-reviver-artifact.scrbl" (no-search))))
 
-(define deps '("base"))
-(define build-deps '())
+(define deps '("git://github.com/camoy/gtp-plot.git#corpse-reviver"
+               "gtp-util"
+               "gui-lib"
+               "math-lib"
+               "mischief"
+               "pict-abbrevs"
+               "pict-lib"
+               "ppict"
+               "scribble-lib"
+               "threading-lib"
+               "base"))
+(define build-deps '("chk-lib"
+                     "corpse-reviver"
+                     "corpse-reviver-benchmark"
+                     "racket-doc"
+                     "rackunit-lib"
+                     "typed-racket-doc"
+                     "typed-racket-lib"
+                     ))
