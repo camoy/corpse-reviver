@@ -17,7 +17,8 @@
          morsecode-max
          zombie-mean
          7%-baseline
-         7%-opt)
+         7%-opt
+         baseline-version)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; require
@@ -172,6 +173,8 @@
 
 (define 7%-opt
   (format-percent (%-overhead<= OPT-PIS 1.07)))
+
+(define baseline-version (or BASELINE-VERSION "???"))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; test

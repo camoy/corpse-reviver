@@ -6,6 +6,8 @@
 (provide BASELINE-PIS
          OPT-PIS
          ANALYSES
+         BASELINE-VERSION
+         OPT-VERSION
          exhaustive?)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -34,6 +36,10 @@
 ;; Regexp
 ;; Regular expression for recognizing benchmark output JSON files.
 (define DATA-FILENAME-RX #rx".*_(.*)_(.*)\\.json")
+
+;; Regexp
+;; Regular expression for recognizing version files.
+(define VERSION-FILENAME-RX #rx".*_version\\.txt")
 
 ;; Path
 ;; TODO
@@ -175,12 +181,25 @@
      (and (equal? kind kind*) benchmark)]
     [else #f]))
 
+;; Path → String
+;; Returns the Racket version benchmarked for a given directory of results.
+(define (dir->version dir)
+  (for/first ([name (in-directory dir)]
+              #:when (regexp-match? VERSION-FILENAME-RX name))
+    (with-input-from-file name read-line)))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; performance infos
 
 (define BASELINE-PIS (hash->sorted-list (dir->pi-hash BASELINE-DIR)))
 (define OPT-PIS (hash->sorted-list (dir->pi-hash OPT-DIR)))
 (define ANALYSES (hash->sorted-list (dir->benchmark-hashes OPT-DIR "analysis")))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; other stats
+
+(define BASELINE-VERSION (dir->version BASELINE-DIR))
+(define OPT-VERSION (dir->version OPT-DIR))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; test
