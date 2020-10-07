@@ -46,6 +46,13 @@ Open VirtualBox,
 choose File → Import Appliance,
 select the downloaded @exec{ova} file,
 and start the virtual machine.
+}
+@item{
+Open a terminal window
+and change to the artifact directory.
+@verbatim{
+$ cd ~/corpse-reviver/corpse-reviver-artifact
+}
 }]
 
 @subsection{Manual}
@@ -62,14 +69,22 @@ $ raco pkg install corpse-reviver/corpse-reviver-artifact \
                    corpse-reviver/corpse-reviver-benchmark \
                    corpse-reviver/corpse-reviver
 }
+}
+@item{
+Change to the artifact directory.
+@verbatim{
+$ cd corpse-reviver/corpse-reviver-artifact
+}
 }]
 
 @section[#:tag "opt"]{Optimizing a program}
 
 You can write your own gradually typed program
 and see how well SCV-CR can optimize it.
-Place the following code in a file called
-@exec{data.rkt}:
+Within the artifact directory there is an
+@exec{examples/} subdirectory with some files.
+Change to this directory.
+A file called @exec{data.rkt} has the following code:
 
 @figure["fig:typed-data"]{
 @elem{The @exec{data.rkt} file.}
@@ -89,8 +104,7 @@ This typed module provides a function called
 @code{random-adders}
 that generates a list of random ``adders,''
 functions that add its argument to a random number.
-Now, place the following code in a file called
-@exec{main.rkt}:
+A file called @exec{main.rkt} has the following code:
 
 @figure["fig:untyped-main"]{
 @elem{The @exec{main.rkt} file.}
@@ -130,7 +144,7 @@ Running time is 66.66% contracts
 8014/12022 ms
 
 (-> natural? (listof (-> exact-integer? any)))     8013.5 ms
-server.rkt:3:9
+data.rkt:3:9
     random-adders                                  8013.5 ms
 $ raco decompile main.rkt > unopt.rkt
 }
@@ -172,13 +186,68 @@ calls @exec{lifted/12.1} instead.
 If you chase down this definition,
 it is the contracted version of @exec{random-adders}.
 
+If SCV is unable to prove that a contract won't be violated,
+then that contract is not removed.
+A file called @exec{main-imprecise.rkt} has the following code:
+
+@figure["fig:untyped-main-imprecise"]{
+@elem{The @exec{main-imprecise.rkt} file.}
+@codeblock0{
+#lang racket/base
+
+(require "data.rkt")
+
+(define iterations 1000)
+(define n 5000)
+
+(time
+ (for ([i (in-range iterations)])
+   (for/sum ([f (in-list (random-adders n))])
+     (f (if (string<=? "a" "b")
+            (random 10)
+            "")))))
+}
+}
+
+The only difference between
+@exec{main.rkt} and @exec{main-imprecise.rkt}
+is that the imprecise version contains a conditional
+that will violate the type of @exec{random-adders}
+if the string @litchar{a}
+is not lexicographically smaller
+than the string @litchar{b}.
+Since it is lexicographically smaller,
+this branch is never executed
+and the contract check is unnecessary.
+However,
+SCV cannot prove this is so,
+and thus the contract is not removed.
+
+This is reflected in the performance of the
+``optimized'' program;
+the profiler also confirms
+that the contract was not optimized away.
+@verbatim{
+$ raco scv-cr data.rkt main-imprecise.rkt
+$ racket main-imprecise.rkt
+cpu time: 8041 real time: 8081 gc time: 550
+$ raco contract-profile main-imprecise.rkt
+cpu time: 9037 real time: 9172 gc time: 522
+Running time is 72.02% contracts
+7034/9767 ms
+
+(-> natural? (listof (-> exact-integer? any)))      7034 ms
+data.rkt:3:9
+    random-adders                                   7034 ms
+}
+
 See
 @seclink["top"
         #:tag-prefixes
         '("(lib corpse-reviver/scribblings/corpse-reviver.scrbl)")]{
   the SCV-CR documentation
 }
-for the list of options to @exec{raco scv-cr}.
+for the full list of options to @exec{raco scv-cr}.
 
 @section[#:tag "benchmark"]{Benchmark}
 
