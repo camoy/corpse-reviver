@@ -39,13 +39,14 @@ on any Unix-like operating system.
 Download @hyperlink["https://www.virtualbox.org/wiki/Downloads"]{VirtualBox.}
 }
 @item{
-Download the artifact's @hyperlink["http://camoy.name"]{virtual machine image}.
+Download the artifact's @hyperlink["https://zenodo.org/record/4072028/files/corpse-reviver-artifact.ova?download=1"]{virtual machine image}.
 }
 @item{
 Open VirtualBox,
 choose File → Import Appliance,
 select the downloaded @exec{ova} file,
 and start the virtual machine.
+The username and password are both @litchar{scvcr}.
 }
 @item{
 Open a terminal window
