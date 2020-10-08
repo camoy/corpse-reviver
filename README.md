@@ -50,9 +50,9 @@ with more details.
 * `docs` is the rendered artifact documentation
   needed for Github Pages.
 
-build-badge: https://github.com/camoy/corpse-reviver/workflows/build/badge.svg
-build: https://github.com/camoy/corpse-reviver/actions?query=workflow%3Abuild
-docs-badge: https://img.shields.io/badge/Docs-Scribble-blue.svg
-docs: https://camoy.github.io/corpse-reviver
-benchmark: https://camoy.github.io/corpse-reviver/corpse-reviver-benchmark.html
-scv-cr: https://camoy.github.io/corpse-reviver/corpse-reviver.html
+[build-badge]: https://github.com/camoy/corpse-reviver/workflows/build/badge.svg
+[build]: https://github.com/camoy/corpse-reviver/actions?query=workflow%3Abuild
+[docs-badge]: https://img.shields.io/badge/Docs-Scribble-blue.svg
+[docs]: https://camoy.github.io/corpse-reviver
+[benchmark]: https://camoy.github.io/corpse-reviver/corpse-reviver-benchmark.html
+[scv-cr]: https://camoy.github.io/corpse-reviver/corpse-reviver.html

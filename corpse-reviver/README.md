@@ -34,4 +34,4 @@ for more information.
   of the Typed Racket implementation that can intercept contracts and
   other information.
 
-scv-cr: https://camoy.github.io/corpse-reviver/corpse-reviver.html
+[scv-cr]: https://camoy.github.io/corpse-reviver/corpse-reviver.html

@@ -10,4 +10,4 @@ for more information.
 * `private/task.rkt` the code that actually runs and measures
   benchmarks.
 
-benchmark: https://camoy.github.io/corpse-reviver/corpse-reviver-benchmark.html
+[benchmark]: https://camoy.github.io/corpse-reviver/corpse-reviver-benchmark.html

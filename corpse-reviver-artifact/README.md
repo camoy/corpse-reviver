@@ -16,4 +16,4 @@ for more information.
   are reported in the paper.
 * `private/util.rkt` utilities for Scribble.
 
-docs: https://camoy.github.io/corpse-reviver
+[docs]: https://camoy.github.io/corpse-reviver
