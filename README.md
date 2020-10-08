@@ -32,6 +32,8 @@ for more information.
 
 This repository is organized into
 several separate packages.
+Each package has its own `README.md`
+with more details.
 
 * `corpse-reviver-artifact`
   contains the [artifact documentation][docs].
