@@ -25,12 +25,11 @@ the @secref{benchmark} and @secref{results} sections.
 
 @section[#:tag "install"]{Install}
 
-You can run the artifact in a VirtualBox virtual machine
-that includes all the necessary dependencies.
-We recommend this method of installation.
-Alternatively,
-you can manually install the artifact
-on any Unix-like operating system.
+You can either
+run the artifact in a VirtualBox virtual machine
+that includes all the necessary dependencies
+or manually install the artifact.
+We recommend the virtual machine.
 
 @subsection{VirtualBox}
 
@@ -150,12 +149,18 @@ data.rkt:3:9
 $ raco decompile main.rkt > unopt.rkt
 }
 
-Run SCV-CR on the modules first
+Run SCV-CR on the modules
 and see the performance difference.
+The @exec{raco scv-cr} command
+creates optimized bytecode
+by removing contracts that
+are proven safe statically.
+It can be used as replacement
+for @exec{raco make}.
 In this simple example,
-the tool proves that the contracts
+SCV-CR proves that the contract
 cannot be violated
-and removes them all automatically.
+and removes it automatically.
 
 @verbatim{
 $ raco scv-cr data.rkt main.rkt
@@ -168,7 +173,7 @@ Running time is 0% contracts
 $ raco decompile main.rkt > opt.rkt
 }
 
-For further confirmation that the contracts were optimized,
+For further confirmation that the contract was removed,
 you can compare the decompiled outputs in
 @exec{unopt.rkt}
 and @exec{opt.rkt}.
