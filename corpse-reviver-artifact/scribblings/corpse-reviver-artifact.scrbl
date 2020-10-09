@@ -38,7 +38,7 @@ We recommend the virtual machine.
 Download @hyperlink["https://www.virtualbox.org/wiki/Downloads"]{VirtualBox.}
 }
 @item{
-Download the artifact's @hyperlink["https://zenodo.org/record/4072028/files/corpse-reviver-artifact.ova?download=1"]{virtual machine image}.
+Download the artifact's @hyperlink["https://zenodo.org/record/4074932/files/corpse-reviver-artifact.ova?download=1"]{virtual machine image}.
 }
 @item{
 Open VirtualBox,
