@@ -179,7 +179,7 @@ you can compare the decompiled outputs in
 and @exec{opt.out}.
 
 @verbatim{
-$ diff opt.rkt unopt.rkt | grep "random-adders '5000" -A 2
+$ diff opt.out unopt.out | grep "random-adders '5000" -A 2
 <          (let ((local67 (random-adders '5000)))
 ---
 >          (let ((local73 (lifted/12.1 '5000)))
