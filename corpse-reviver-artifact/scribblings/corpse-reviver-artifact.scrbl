@@ -175,8 +175,8 @@ $ raco decompile main.rkt > opt.rkt
 
 For further confirmation that the contract was removed,
 you can compare the decompiled outputs in
-@exec{unopt.rkt}
-and @exec{opt.rkt}.
+@exec{unopt.out}
+and @exec{opt.out}.
 
 @verbatim{
 $ diff opt.rkt unopt.rkt | grep "random-adders '5000" -A 2

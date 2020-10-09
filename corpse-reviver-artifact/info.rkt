@@ -5,7 +5,7 @@
 (define collection "corpse-reviver-artifact")
 (define version "0.0")
 (define scribblings
-  '(("scribblings/corpse-reviver-artifact.scrbl" (no-search))))
+  '(("scribblings/corpse-reviver-artifact.scrbl" (always-run no-search))))
 
 (define deps '("git://github.com/camoy/gtp-plot.git#corpse-reviver"
                "gtp-util"
