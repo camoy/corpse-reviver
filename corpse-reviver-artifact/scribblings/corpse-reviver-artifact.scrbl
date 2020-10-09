@@ -146,7 +146,7 @@ Running time is 66.66% contracts
 (-> natural? (listof (-> exact-integer? any)))     8013.5 ms
 data.rkt:3:9
     random-adders                                  8013.5 ms
-$ raco decompile main.rkt > unopt.rkt
+$ raco decompile main.rkt > unopt.out
 }
 
 Run SCV-CR on the modules
@@ -170,7 +170,7 @@ $ raco contract-profile main.rkt
 cpu time: 1406 real time: 1410 gc time: 8
 Running time is 0% contracts
 0/2340 ms
-$ raco decompile main.rkt > opt.rkt
+$ raco decompile main.rkt > opt.out
 }
 
 For further confirmation that the contract was removed,
