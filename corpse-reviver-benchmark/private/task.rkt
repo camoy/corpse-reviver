@@ -9,7 +9,6 @@
 ;; require
 
 (require (only-in rackunit require/expose)
-         corpse-reviver
          corpse-reviver/private/compile
          corpse-reviver/private/logging
          corpse-reviver/private/util
@@ -240,13 +239,19 @@
   (for-each delete-bytecode targets)
   (define (execute-thunk)
     (with-handlers ([exn:fail? (make-error-handler analysis-times)])
-      (if (config-baseline? cfg)
-          ;; HACK: Remove this (and all of private/benchmark-typed-racket) once TR
-          ;; #837 is resolved.
-          (with-patched-typed-racket
-            (λ () (compile-files targets))
-            PROXY-HASH)
-          (compile-files/scv-cr targets))))
+      (cond
+        [(config-baseline? cfg)
+         ;; HACK: Remove this (and all of private/benchmark-typed-racket) once TR
+         ;; #837 is resolved.
+         (with-patched-typed-racket
+           (λ () (compile-files targets))
+           PROXY-HASH)]
+        [else
+         ;; Prevent SCV from eating tons of memory for long-running benchmarks.
+         (define compile-files/scv-cr
+           (parameterize ([current-namespace (make-base-namespace)])
+             (dynamic-require 'corpse-reviver 'compile-files/scv-cr)))
+         (compile-files/scv-cr targets)])))
   (define interceptor (make-log-interceptor scv-cr-logger))
   (define (run)
     (define-values (_ logs)
