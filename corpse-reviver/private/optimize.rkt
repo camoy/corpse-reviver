@@ -74,12 +74,18 @@
             ;; Remove this once TR #837 is resolved.
             (with-patched-typed-racket
               (λ () (verify-modules targets stxs))))))))
+  ;; Always keep a blame if typed-blame parameter is set. Otherwise,
+  ;; only keep untyped blame.
+  (define (keep? blame)
+    (or (current-typed-blame?)
+        (untyped-blame? mods blame)))
+
   ;; Annotate blame with ignore status
-  (define keep? (untyped-blame? mods))
   (define blms/kept
     (for/list ([blm (in-list -blms)])
       (cons (keep? blm) blm)))
   (info 'blame blms/kept)
+
   ;; Actually ignore those blames
   (define blms (filter keep? -blms))
   (debug "blames (filtered): ~a" blms)
@@ -192,11 +198,10 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; blame
 
-;; [Listof Mod] → (Blame → Boolean)
-(define (untyped-blame? mods)
+;; [Listof Mod] Blame → Boolean
+(define (untyped-blame? mods blm)
   (let ([typed (filter-map typed-module-target mods)])
-    (λ (blm)
-      (not (member (blame-violator blm) typed)))))
+    (not (member (blame-violator blm) typed))))
 
 ;; Mod → Path-String
 (define typed-module-target

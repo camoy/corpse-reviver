@@ -6,7 +6,10 @@
 (require racket/contract)
 (provide
  (contract-out
-  [compile-files/scv-cr (-> (listof path-string?) any)]))
+  [compile-files/scv-cr
+   (->* ((listof path-string?))
+        (#:typed-blame? boolean?)
+        any)]))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; require
@@ -49,6 +52,10 @@
     "Don't skip analysis of modules prefixed with _"
     (current-no-skip? #t)]
 
+   [("-t" "--typed-blame")
+    "Keep blame information for typed modules"
+    (current-typed-blame? #t)]
+
    [("-w" "--write-contracts")
     "Write contracted modules to a file"
     (current-write-contracts? #t)]
@@ -60,19 +67,21 @@
 
 ;; [Listof Path-String] → Any
 ;; Compiles files at the given paths with SCV-CR.
-(define (compile-files/scv-cr -targets)
+(define (compile-files/scv-cr #:typed-blame? [tb? (current-typed-blame?)]
+                              -targets)
   (measure 'total
-    (define targets (map canonicalize-path -targets))
-    (with-handlers ([exn:fail?
-                     (λ (e)
-                       ;; Cleanup bad bytecode on an exception
-                       (for-each delete-bytecode targets)
-                       (raise e))])
-      (for-each delete-bytecode targets)
-      (compile-files targets)
-      (define mods (sort-by-dep (map make-mod targets)))
-      (define opt-mods (optimize mods))
-      (compile-modules opt-mods))))
+    (parameterize ([current-typed-blame? tb?])
+      (define targets (map canonicalize-path -targets))
+      (with-handlers ([exn:fail?
+                       (λ (e)
+                         ;; Cleanup bad bytecode on an exception
+                         (for-each delete-bytecode targets)
+                         (raise e))])
+        (for-each delete-bytecode targets)
+        (compile-files targets)
+        (define mods (sort-by-dep (map make-mod targets)))
+        (define opt-mods (optimize mods))
+        (compile-modules opt-mods)))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; test

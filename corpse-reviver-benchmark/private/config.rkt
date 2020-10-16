@@ -20,6 +20,7 @@
    iterations
    cutoff
    no-skip?
+   typed-blame?
    num-samples
    sample-factor
    worker-count

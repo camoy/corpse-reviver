@@ -33,6 +33,7 @@
      [contracts (listof syntax?)]))
 
   [current-write-contracts? (parameter/c boolean?)]
+  [current-typed-blame? (parameter/c boolean?)]
   [definitions/c contract?]
   [exports/c contract?]
   [structs/c contract?])
@@ -88,6 +89,10 @@
 ;; [Parameter Boolean]
 ;; Whether to write the contracted version of the files.
 (define current-write-contracts? (make-parameter #f))
+
+;; [Parameter Boolean]
+;; Whether to keep blame reported for typed modules.
+(define current-typed-blame? (make-parameter #f))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; etc

@@ -84,6 +84,14 @@ command-line flags:
   modules that should be treated as opaque.
   }]
 @list[
+  @exec{-t}
+  @exec{--typed-blame}
+  @para{
+  By default,
+  blame reported by SCV on a typed module is ignored.
+  This flag will not ignore those blames.
+  }]
+@list[
   @exec{-o}
   @exec{--output}
   @para{

@@ -41,6 +41,14 @@ The @exec{raco scv-cr} command accepts the following command-line flags:
   that a module should be opaque.
   }]
 @list[
+  @exec{-t}
+  @exec{--typed-blame}
+  @para{
+  By default,
+  blame reported by SCV on a typed module is ignored.
+  This flag will not ignore those blames.
+  }]
+@list[
   @exec{-w}
   @exec{--write-contracts}
   @para{

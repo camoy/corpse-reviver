@@ -251,7 +251,8 @@
          (define compile-files/scv-cr
            (parameterize ([current-namespace (make-base-namespace)])
              (dynamic-require 'corpse-reviver 'compile-files/scv-cr)))
-         (compile-files/scv-cr targets)])))
+         (define tb? (config-typed-blame? cfg))
+         (compile-files/scv-cr #:typed-blame? tb? targets)])))
   (define interceptor (make-log-interceptor scv-cr-logger))
   (define (run)
     (define-values (_ logs)

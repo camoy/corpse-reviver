@@ -59,6 +59,7 @@
    10  ; iterations
    10  ; cutoff
    #f  ; no-skip?
+   #f  ; typed-blame?
    10  ; num-samples
    10  ; sample-factor
    1   ; worker-count
@@ -112,6 +113,10 @@
    [("-n" "--no-skip")
     "Don't skip analysis of modules prefixed with _"
     (set-config-no-skip?! cfg #t)]
+
+   [("-t" "--typed-blame")
+    "Keep blame information for typed modules"
+    (set-config-typed-blame?! cfg #t)]
 
    [("-o" "--output")
     output-dir
