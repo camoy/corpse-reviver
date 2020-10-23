@@ -10,8 +10,6 @@
          %-2x-baseline
          95%-quantile-opt
          %-baseline-within-max-opt
-         sieve-01
-         sieve-10
          sieve-large
          sieve-small
          morsecode-max
@@ -175,6 +173,33 @@
   (format-percent (%-overhead<= OPT-PIS 1.07)))
 
 (define baseline-version (or BASELINE-VERSION "???"))
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; output tex
+
+(module+ main
+  (define STATS
+    `(("medianBaseline" ,median-baseline)
+      ("meanOpt" ,mean-opt)
+      ("maxBaseline" ,max-baseline)
+      ("maxOpt" ,max-opt)
+      ("twoTimesBaseline" ,%-2x-baseline)
+      ("nineFiveQuantileOpt" ,95%-quantile-opt)
+      ("baselineWithinMaxOpt" ,%-baseline-within-max-opt)
+      ("sieveLarge" ,sieve-large)
+      ("sieveSmall" ,sieve-small)
+      ("morsecodeMax" ,morsecode-max)
+      ("zombieMean" ,zombie-mean)
+      ("sevenPctBaseline" ,7%-baseline)
+      ("sevenPctOpt" ,7%-opt)
+      ("baselineVersion" ,baseline-version)))
+
+  (displayln "% Output from `corpse-reviver-artifact/private/stat.rkt`")
+  (for ([stat (in-list STATS)])
+    (match-define (list name val) stat)
+    (define val* (regexp-replace #rx"%" (format "~a" val) "\\\\%"))
+    (define val** (regexp-replace #rx"×" (format "~a" val*) "\\\\times"))
+    (displayln (format "\\newcommand\\~a{$~a$\\xspace}" name val**))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; test
