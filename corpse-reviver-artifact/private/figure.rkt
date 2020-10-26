@@ -1,4 +1,4 @@
-#lang racket/base
+#lang at-exp racket/base
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; provide
@@ -20,7 +20,9 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; require
 
-(require gtp-plot/configuration-info
+(require racket/class
+         racket/draw
+         gtp-plot/configuration-info
          gtp-plot/performance-info
          gtp-plot/plot
          gtp-plot/sample-info
@@ -262,7 +264,40 @@
 
 ;;
 ;;
-(define FORMATTERS
+(define TEX-HEADER
+  @~a{
+  \begin{tabular}{ c | c c | c c | c | c}
+  & \multicolumn{2}{c|}{Racket Overhead}
+  & \multicolumn{2}{c|}{\tool Overhead}
+  & \multicolumn{1}{c|}{\tool Analyze}
+  & \multicolumn{1}{c}{\tool Compile} \\
+  Benchmark
+  & \hspace{0.65em}Max\hspace{0.65em} & Mean
+  & \hspace{0.65em}Max\hspace{0.65em} & Mean
+  & \hspace{0.65em}Mean $\pm~\sigma$ (s)
+  & \hspace{0.65em}Mean $\pm~\sigma$ (s)  \\
+  \hline
+  })
+
+;;
+;;
+(define TEX-FOOTER
+  @~a{\end{tabular}})
+
+;;
+;;
+(define TEX-FORMATTERS
+  (list format-benchmark-tex
+        format-overhead-tex
+        format-overhead-tex
+        format-overhead-tex
+        format-overhead-tex
+        format-interval
+        format-interval))
+
+;;
+;;
+(define SCRIBBLE-FORMATTERS
   (list format-benchmark
         format-overhead
         format-overhead
@@ -271,27 +306,41 @@
         format-interval
         format-interval))
 
+(define (make-table-data baseline-pis opt-pis analyses formatters)
+  (for/list ([baseline-pi (in-list baseline-pis)]
+             [opt-pi (in-list opt-pis)]
+             [analysis (in-list analyses)])
+    (define as (analyze-times analysis))
+    (define cs (compile-times analysis))
+    (applies formatters
+             (list (performance-info->name baseline-pi)
+                   (max-overhead baseline-pi)
+                   (mean-overhead baseline-pi)
+                   (max-overhead opt-pi)
+                   (mean-overhead opt-pi)
+                   (cons (mean as) (stddev as))
+                   (cons (mean cs) (stddev cs))))))
+
 ;;
 ;; TODO
 (define (make-table-summary baseline-pis opt-pis analyses)
   (define data
-    (for/list ([baseline-pi (in-list baseline-pis)]
-               [opt-pi (in-list opt-pis)]
-               [analysis (in-list analyses)])
-      (define as (analyze-times analysis))
-      (define cs (compile-times analysis))
-      (applies FORMATTERS
-               (list (performance-info->name baseline-pi)
-                     (max-overhead baseline-pi)
-                     (mean-overhead baseline-pi)
-                     (max-overhead opt-pi)
-                     (mean-overhead opt-pi)
-                     (cons (mean as) (stddev as))
-                     (cons (mean cs) (stddev cs))))))
+    (make-table-data baseline-pis opt-pis analyses SCRIBBLE-FORMATTERS))
   (tabular
    #:style 'boxed
    #:row-properties '(center)
    (cons HEADER0 (cons HEADER1 data))))
+
+;;
+;; TODO
+(define (make-table-tex baseline-pis opt-pis analyses)
+  (define data (make-table-data baseline-pis opt-pis analyses TEX-FORMATTERS))
+  (define bodies
+    (for/list ([row (in-list data)])
+      (string-append (string-join row " & ") @~a{\\})))
+  (string-append TEX-HEADER
+                 (apply string-append bodies)
+                 TEX-FOOTER))
 
 ;;
 ;; TODO
@@ -326,6 +375,23 @@
    #:go (coord 1/2 1/2 'cc)
    (filled-rounded-rectangle 13 13 #:color color* #:draw-border? #f)))
 
+
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; render
+
+(define (save-ps path pict)
+  (define dc
+    (new post-script-dc%
+         [width (pict-width pict)]
+         [height (pict-height pict)]
+         [interactive #f]
+         [output path]))
+  (send dc start-doc "")
+  (send dc start-page)
+  (draw-pict pict dc 0 0)
+  (send dc end-page)
+  (send dc end-doc))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; figures
 
@@ -334,9 +400,15 @@
 (define overhead-grid (make-overhead-grid BASELINE-PIS OPT-PIS))
 (define exact-grid (make-exact-grid BASELINE-PIS OPT-PIS))
 (define table-summary (make-table-summary BASELINE-PIS OPT-PIS ANALYSES))
+(define table-tex (make-table-tex BASELINE-PIS OPT-PIS ANALYSES))
 
 (define orange-key (key ORANGE))
 (define purple-key (key PURPLE))
 (define lavender-key (key "lavender"))
 (define blue-key (key "blue"))
 (define red-key (key "red"))
+
+#;(with-output-to-file
+    "summary.tex"
+    (λ () (displayln table-tex))
+    #:exists 'replace)

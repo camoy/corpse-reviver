@@ -1,5 +1,8 @@
 #lang racket/base
 
+(provide ut-require-ty
+         ty-require-ut)
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
 (require (only-in metapict save-pict)
@@ -266,10 +269,10 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(save-pict "ut-require-ty.pdf"
+#;(save-pict "ut-require-ty.pdf"
            ut-require-ty
            'pdf)
 
-(save-pict "ty-require-ut.pdf"
+#;(save-pict "ty-require-ut.pdf"
            ty-require-ut
            'pdf)
