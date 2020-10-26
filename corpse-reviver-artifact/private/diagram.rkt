@@ -2,211 +2,274 @@
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(provide ut-require-ty
-         ty-require-ut)
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-(require (for-syntax racket/base)
-         ppict/pict
-         ppict/tag
+(require (only-in metapict save-pict)
+         racket/draw
+         racket/class
          racket/math
+         ppict/2
          pict
-         pict-abbrevs
-         racket/runtime-path)
+         (except-in pict-abbrevs save-pict))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(define STAGE-WIDTH 800)
-(define STAGE-HEIGHT 825)
-(define TYPED-COLOR "bisque")
-(define UNTYPED-COLOR "lavender")
-(define MODULE-WIDTH 120)
-(define MODULE-HEIGHT 130)
-(define CONTRACT-WIDTH (/ MODULE-WIDTH 8))
-(define CONTRACT-COLOR "blue")
-(define ARROW-SIZE 10)
-(define LABEL-FONT "Fira Code")
-(define LABEL-SIZE 18)
-(define LABEL-BACKGROUND-COLOR "white")
-(define LINE-WIDTH-CONVERT 5)
-(define LABEL-FUDGE -55)
-(define HOLE-LOWER 8)
-(define HOLE-UPPER 10)
-(define HOLE-NUMBER-LOWER 8)
-(define HOLE-NUMBER-UPPER 12)
+(define WIDTH 700)
+(define HEIGHT 925)
+
+(define MONO "Fira Code")
+(define SERIF "Linux Libertine")
+(define SIZE 28)
+
+(define ARROW-COLOR "lightgray")
+(define ARROW-TEXT-COLOR "dimgray")
+
+(define MOD-WIDTH 135)
+(define MOD-RATIO 4/3)
+(define PROXY-WIDTH 40)
+(define PROXY-HEIGHT (* MOD-WIDTH MOD-RATIO))
+(define MOD-BORDER-WIDTH 2)
+(define MOD-LINES 10)
+(define CONTRACT-WIDTH 15)
+
+(define MOD-ARROW-FONT-SIZE 24)
+(define MOD-ARROW-SIZE 25)
+(define MOD-ARROW-WIDTH 8)
+(define MOD-ARROW-LABEL-Y-ADJUST -10)
+
+(define MOD-US-COLOR (hex-triplet->color% #xff4d6a))
+(define MOD-US-TEXT (hex-triplet->color% #xcc2844))
+
+(define MOD-UT-COLOR (hex-triplet->color% #xf7fbfc))
+(define MOD-UT-BORDER (hex-triplet->color% #xd6f4fc #;#xb9d7ea))
+(define MOD-UT-TEXT (hex-triplet->color% #x769fcd))
+(define MOD-UT-LINE (hex-triplet->color% #xd6f4fc))
+
+(define MOD-TY-COLOR (hex-triplet->color% #xffd6b2))
+(define MOD-TY-BORDER (hex-triplet->color% #xffc18c #;#xff884c))
+(define MOD-TY-TEXT (hex-triplet->color% #xff884c))
+(define MOD-TY-LINE (hex-triplet->color% #xffc18c))
+
+;; ff4d4d
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(define (annotate txt)
-  (colorize
-   (text txt
-         (cons 'italic 'roman)
-         (ceiling (* 9/10 LABEL-SIZE)))
-   "dimgray"))
+(define (text* str
+               #:size [size SIZE]
+               #:family [family MONO]
+               #:color [color #f])
+  (define t0
+    (text str family size))
+  (define t1
+    (if color (colorize t0 color) t0))
+  t1)
 
-(define (labeled-module width
-                        height
-                        kind
-                        name)
-  (define color (if (eq? kind 'typed) TYPED-COLOR UNTYPED-COLOR))
-  (ppict-do
-   (file-icon width height color #t)
-   #:go (coord 1/2 1/2 'cc)
-   (text name LABEL-FONT (ceiling (* width 17/100)))))
+(define (mod-lines #:width [w MOD-WIDTH]
+                   #:height [h (* w MOD-RATIO)]
+                   #:lines [lines MOD-LINES]
+                   #:color [color #f])
+  (define lines-pict
+    (for/fold ([p (blank w h)])
+              ([k (in-range 1 lines)])
+      (ppict-do p
+                #:go (coord 1/2 (/ k lines) 'cc)
+                (rule w
+                      MOD-BORDER-WIDTH
+                      #:color color))))
+  (scale lines-pict 4/5 1))
 
-(define (poke-holes base n color)
-  (clip
-   (for/fold ([acc base])
-             ([_ (in-range n)])
-     (ppict-do
-      acc
-      #:go (coord 1/2 (random) 'cc)
-      (filled-rectangle
-       CONTRACT-WIDTH
-       (random HOLE-LOWER HOLE-UPPER)
-       #:draw-border? #f
-       #:color color)))))
+(define (mod str
+             #:width [w MOD-WIDTH]
+             #:height [h (* w MOD-RATIO)]
+             #:color [color #f]
+             #:border [border-color #f]
+             #:text [text-color #f]
+             #:line [line-color #f])
+  (ppict-do (filled-rectangle w
+                              h
+                              #:color color
+                              #:draw-border? border-color
+                              #:border-color border-color
+                              #:border-width MOD-BORDER-WIDTH)
+            #:go (coord 1/2 1/2 'cc)
+            (mod-lines #:color line-color #:width w #:height h)
+            #:go (coord 1/2 1/2 'cc)
+            (if str
+                (add-rectangle-background
+                 (text* str #:color text-color)
+                 #:radius 0
+                 #:color color
+                 #:x-margin 10)
+                (blank))))
 
-(define ((filled-rectangle-holes hole-color) w h #:color color #:draw-border? _)
-  (poke-holes (filled-rectangle w h #:color hole-color #:draw-border? #f)
-              (random HOLE-NUMBER-LOWER HOLE-NUMBER-UPPER)
-              color))
+(define (mod-ut str tag
+                #:width [w MOD-WIDTH]
+                #:height [h (* w MOD-RATIO)]
+                #:contract? [contract? #f])
+  (define contract-pict
+    (filled-rectangle CONTRACT-WIDTH
+                      h
+                      #:color MOD-UT-TEXT
+                      #:draw-border? #f))
+  (define base
+    (mod str
+         #:width w
+         #:height h
+         #:color MOD-UT-COLOR
+         #:border MOD-UT-BORDER
+         #:text MOD-UT-TEXT
+         #:line MOD-UT-LINE))
+  (tag-pict
+   (if contract?
+       (hc-append contract-pict base)
+       base)
+   tag))
 
-(define (contracted p #:hole-color [hole-color #f])
-  (define contracts
-    (filled-rectangle CONTRACT-WIDTH (pict-height p) #:color CONTRACT-COLOR #:draw-border? #f))
-  (hc-append contracts p))
+(define (mod-ty str tag)
+  (tag-pict
+   (mod str
+        #:color MOD-TY-COLOR
+        #:border MOD-TY-BORDER
+        #:text MOD-TY-TEXT
+        #:line MOD-TY-LINE)
+   tag))
 
-(define (label txt orient [color #f])
-  (define f (if color (λ (p) (colorize p color)) values))
-  (f (text txt LABEL-FONT LABEL-SIZE (if (eq? orient 'lr) 0 (/ pi 2)))))
+(define (pict-material p s c)
+  (dc (λ (dc dx dy)
+        (define old-brush (send dc get-brush))
+        (send dc set-brush (new brush% [style s] [color c]))
+        (draw-pict p dc 0 0)
+        (send dc set-brush old-brush))
+      (pict-width p)
+      (pict-height p)))
 
-(define ae
-  (hc-append
-   (text "analyze" LABEL-FONT LABEL-SIZE (/ pi 2))
-   (text "erase" LABEL-FONT LABEL-SIZE (/ pi 2))))
-
-(define (arrow p first-tag second-tag text
-               #:adjust [adjust LABEL-FUDGE]
-               #:style [style #f]
-               #:orient [orient 'lr]
-               #:different-label [dl #f]
-               #:unsafe [unsafe #f])
+(define (mod-arrow p str from to
+                   #:text text-color
+                   #:color color)
   (pin-arrow-line
-   ARROW-SIZE
-   p
-   (find-tag p first-tag)
-   (λ z
-     (define f (if (eq? orient 'lr) rc-find cb-find))
-     (define-values (x y) (apply f z))
-     (values x (if unsafe (+ 30 y) y)))
-   (find-tag p second-tag)
-   (λ z
-     (define f
-       (cond
-         [unsafe cc-find]
-         [(eq? orient 'lr) lc-find]
-         [else ct-find]))
-     (define-values (x y) (apply f z))
-     (values x (if unsafe (+ 30 y) y)))
-   #:color (if unsafe "red" #f)
-   #:under? #f
-   #:style style
-   #:line-width
-   (if (eq? orient 'lr) 1 LINE-WIDTH-CONVERT)
-   #:label (or dl (label text orient (and unsafe "red")))
-   #:x-adjust-label (if (eq? orient 'lr) 0 adjust)))
+   MOD-ARROW-SIZE p
+   #:label (text* str
+                  #:size MOD-ARROW-FONT-SIZE
+                  #:color text-color)
+   #:y-adjust-label MOD-ARROW-LABEL-Y-ADJUST
+   #:line-width MOD-ARROW-WIDTH
+   #:under? #t
+   #:color color
+   (find-tag p from) rc-find
+   (find-tag p to) lc-find))
 
-(define base
-  (blank STAGE-WIDTH STAGE-HEIGHT))
+(define-syntax-rule (mod-ty-arrow str from to)
+  (mod-arrow ppict-do-state str from to
+             #:text ARROW-TEXT-COLOR
+             #:color ARROW-COLOR))
+
+(define-syntax-rule (mod-ut-arrow str from to)
+  (mod-arrow ppict-do-state str from to
+             #:text ARROW-TEXT-COLOR
+             #:color ARROW-COLOR))
+
+(define-syntax-rule (mod-us-arrow str from to)
+  (mod-arrow ppict-do-state str from to
+             #:text MOD-US-TEXT
+             #:color MOD-US-COLOR))
+
+(define-syntax-rule (wavy-arrow str from to x-adjust?)
+  (let ([strs (if (list? str) str (list str))]
+        [p ppict-do-state])
+    (pin-arrow-line
+     MOD-ARROW-SIZE p
+     #:label
+     (apply
+      vc-append
+      (for/list ([s (in-list strs)])
+        (text* s
+               #:size MOD-ARROW-FONT-SIZE
+               #:color ARROW-TEXT-COLOR)))
+     #:under? #t
+     #:line-width MOD-ARROW-WIDTH
+     #:x-adjust-label
+     (if x-adjust? (- -3 (/ MOD-ARROW-FONT-SIZE 2)) 0)
+     #:y-adjust-label MOD-ARROW-LABEL-Y-ADJUST
+     #:start-angle -2.1
+     #:end-angle -2
+     #:color ARROW-COLOR
+     (find-tag p from) cb-find
+     (find-tag p to) ct-find)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+
+(define (background c r str)
+  (ppict-do (blank (/ WIDTH c) (/ HEIGHT r))
+            #:go (coord 0 0 'lt)
+            (text* str #:family SERIF)))
+
+(define (mod-tile content c r [name ""])
+  (ppict-do (background c r name)
+            #:go (coord 1/2 1/2 'cc)
+            content))
 
 (define ut-require-ty
-  (let ()
-    (define main
-      (labeled-module MODULE-WIDTH MODULE-HEIGHT 'untyped "main"))
-    (define streams
-      (labeled-module MODULE-WIDTH MODULE-HEIGHT 'typed "streams"))
-    (define pre-main
-      (labeled-module MODULE-WIDTH MODULE-HEIGHT 'untyped "main"))
-    (define pre-streams
-      (contracted
-       (labeled-module MODULE-WIDTH MODULE-HEIGHT 'untyped "streams")))
-    (define final-streams
-      (labeled-module MODULE-WIDTH MODULE-HEIGHT 'typed "streams"))
+  (ppict-do (blank WIDTH HEIGHT)
+            #:go (tile 2 3)
 
-    (ppict-do
-     base
-     #:go (coord 1/20 1/10 'lt) (annotate "source")
-     #:go (coord 1/4 1/5 'cc) (tag-pict main 'src-main)
-     #:go (coord 3/4 1/5 'cc) (tag-pict streams 'src-streams)
+            (mod-tile (mod-ut "main" 'c00) 2 3 "source")
+            (mod-tile (mod-ty "streams" 'c10) 2 3)
 
-     #:go (coord 1/4 1/2 'cc) (tag-pict pre-main 'pre-main)
-     #:go (coord 3/4 1/2 'cc) (tag-pict pre-streams 'pre-streams)
+            (mod-tile (mod-ut "main" 'c01) 2 3)
+            (mod-tile (mod-ut "streams" 'c11 #:contract? #t) 2 3)
 
-     #:go (coord 1/20 0.7 'lt) (annotate "output")
-     #:go (coord 1/4 4/5 'cc) (tag-pict pre-main 'final-main)
-     #:go (coord 3/4 4/5 'cc) (tag-pict final-streams 'final-streams)
+            (mod-tile (mod-ut "main" 'c02) 2 3 "target")
+            (mod-tile (mod-ty "streams" 'c12) 2 3)
 
-     #:set (arrow ppict-do-state 'src-main 'src-streams "require")
-     #:set (arrow ppict-do-state 'pre-main 'pre-streams "require")
-     #:set (arrow ppict-do-state 'final-main 'final-streams "require")
-     #:set (arrow ppict-do-state 'final-main 'final-streams "require" #:unsafe #t)
+            #:set (mod-ut-arrow "require" 'c00 'c10)
+            #:set (mod-ut-arrow "require" 'c01 'c11)
+            #:set (mod-us-arrow "require" 'c02 'c12)
 
-     #:set (arrow ppict-do-state 'src-main 'pre-main "unchanged" #:style 'long-dash #:orient 'ud #:adjust -65)
-     #:set (arrow ppict-do-state 'pre-main 'final-main "analyze" #:orient 'ud #:adjust -73)
-     #:set (arrow ppict-do-state 'pre-main 'final-main "bypass" #:orient 'ud #:adjust -50)
+            #:set (wavy-arrow "same" 'c00 'c01 #f)
+            #:set (wavy-arrow '("analyze" "bypass") 'c01 'c02 #t)
+            #:set (wavy-arrow "explicate" 'c10 'c11 #f)
+            #:set (wavy-arrow "analyze" 'c11 'c12 #f)
+            ))
 
-     #:set (arrow ppict-do-state 'src-streams 'pre-streams "explicate" #:orient 'ud #:adjust -65)
-     #:set (arrow ppict-do-state 'pre-streams 'final-streams "analyze" #:orient 'ud #:adjust -52)
-     )))
+(define ty-require-ut
+  (ppict-do (blank WIDTH HEIGHT)
+            #:go (tile 3 3)
+
+            (mod-tile (mod-ty "main" 'c00) 3 3 "source")
+            (blank)
+            (mod-tile (mod-ut "streams" 'c20) 3 3)
+
+            (mod-tile (mod-ut "main" 'c01) 3 3)
+            (mod-tile (mod-ut #f 'c11
+                              #:contract? #t
+                              #:width PROXY-WIDTH
+                              #:height PROXY-HEIGHT) 3 3)
+            (mod-tile (mod-ut "streams" 'c21) 3 3)
+
+            (mod-tile (mod-ty "main" 'c02) 3 3 "target")
+            (mod-tile (mod-ut #f 'c12
+                              #:contract? #t
+                              #:width PROXY-WIDTH
+                              #:height PROXY-HEIGHT) 3 3)
+            (mod-tile (mod-ut "streams" 'c22) 3 3)
+
+            #:set (mod-ty-arrow "require/typed" 'c00 'c20)
+            #:set (mod-ut-arrow "require" 'c01 'c11)
+            #:set (mod-ut-arrow "require" 'c11 'c21)
+            #:set (mod-us-arrow "require" 'c02 'c12)
+            #:set (mod-ut-arrow "require" 'c12 'c22)
+
+            #:set (wavy-arrow "explicate" 'c00 'c01 #f)
+            #:set (wavy-arrow '("analyze" "bypass") 'c01 'c02 #t)
+            #:set (wavy-arrow "same" 'c20 'c21 #f)
+            #:set (wavy-arrow "same" 'c11 'c12 #f)
+            #:set (wavy-arrow "analyze" 'c21 'c22 #f)
+            ))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
-(define ty-require-ut
-  (let ()
-    (define main
-      (labeled-module MODULE-WIDTH MODULE-HEIGHT 'typed "main"))
-    (define streams
-      (labeled-module MODULE-WIDTH MODULE-HEIGHT 'untyped "streams"))
-    (define after-main
-      (labeled-module MODULE-WIDTH MODULE-HEIGHT 'untyped "main"))
-    (define after-streams
-      (labeled-module MODULE-WIDTH MODULE-HEIGHT 'untyped "streams"))
-    (define proxy
-      (contracted (labeled-module (* CONTRACT-WIDTH 3) MODULE-HEIGHT 'untyped "")))
-    (define final-proxy
-      (contracted (labeled-module (* CONTRACT-WIDTH 3) MODULE-HEIGHT 'untyped "")
-                  #:hole-color UNTYPED-COLOR))
+(save-pict "ut-require-ty.pdf"
+           ut-require-ty
+           'pdf)
 
-    (ppict-do
-     base
-     #:go (coord 1/20 1/10 'lt) (annotate "source")
-     #:go (coord 1/4 1/5 'cc) (tag-pict main 'src-main)
-     #:go (coord 3/4 1/5 'cc) (tag-pict streams 'src-streams)
-
-     #:go (coord 1/4 1/2 'cc) (tag-pict after-main 'pre-main)
-     #:go (coord 3/4 1/2 'cc) (tag-pict after-streams 'pre-streams)
-     #:go (coord 1/2 1/2 'cc) (tag-pict proxy 'pre-proxy)
-
-     #:go (coord 1/20 0.7 'lt) (annotate "output")
-     #:go (coord 1/4 4/5 'cc) (tag-pict main 'final-main)
-     #:go (coord 3/4 4/5 'cc) (tag-pict after-streams 'final-streams)
-     #:go (coord 1/2 4/5 'cc) (tag-pict final-proxy 'final-proxy)
-
-     #:set (arrow ppict-do-state 'src-main 'src-streams "require/typed")
-     #:set (arrow ppict-do-state 'pre-main 'pre-proxy "require")
-     #:set (arrow ppict-do-state 'pre-proxy 'pre-streams "require")
-     #:set (arrow ppict-do-state 'final-main 'final-proxy "require")
-     #:set (arrow ppict-do-state 'final-main 'final-proxy "require" #:unsafe #t)
-     #:set (arrow ppict-do-state 'final-proxy 'final-streams "require")
-
-     #:set (arrow ppict-do-state 'src-main 'pre-main "explicate" #:orient 'ud #:adjust -65)
-     #:set (arrow ppict-do-state 'src-streams 'pre-streams "unchanged" #:style 'long-dash #:orient 'ud #:adjust -65)
-     #:set (arrow ppict-do-state 'pre-main 'final-main "analyze" #:orient 'ud #:adjust -75)
-     #:set (arrow ppict-do-state 'pre-main 'final-main "bypass" #:orient 'ud #:adjust -48)
-     #:set (arrow ppict-do-state 'pre-proxy 'final-proxy "unchanged" #:style 'long-dash #:orient 'ud #:adjust -65)
-     #:set (arrow ppict-do-state 'pre-streams 'final-streams "analyze" #:orient 'ud #:adjust -53)
-     )))
+(save-pict "ty-require-ut.pdf"
+           ty-require-ut
+           'pdf)
