@@ -16,6 +16,7 @@
          zombie-mean
          7%-baseline
          7%-opt
+         false-positives
          baseline-version)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -112,6 +113,23 @@
               #:when (equal? (performance-info->name pi) b))
     pi))
 
+;; [Listof [Listof Hash]] → Number
+;; Returns the normalized percent of false positives.
+(define (get-false-positives analyses)
+  (define benchmarks
+    (for/list ([k (in-naturals)]
+               [hs (in-list analyses)])
+      (define false-pos 0)
+      (define total 0)
+      (displayln (hash-ref (first hs) 'benchmark))
+      (for* ([h (in-list hs)]
+             [b (in-list (hash-ref h 'blame))])
+        (set! total (add1 total))
+        (unless (car b)
+          (set! false-pos (add1 false-pos))))
+      (if (zero? total) 0 (/ false-pos total))))
+  benchmarks)
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; statistics
 
@@ -172,6 +190,8 @@
 (define 7%-opt
   (format-percent (%-overhead<= OPT-PIS 1.07)))
 
+(define false-positives (get-false-positives ANALYSES))
+
 (define baseline-version (or BASELINE-VERSION "???"))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -192,6 +212,7 @@
       ("zombieMean" ,zombie-mean)
       ("sevenPctBaseline" ,7%-baseline)
       ("sevenPctOpt" ,7%-opt)
+      ("falsePositives" ,false-positives)
       ("baselineVersion" ,baseline-version)))
 
   (displayln "% Output from `corpse-reviver-artifact/private/stat.rkt`")

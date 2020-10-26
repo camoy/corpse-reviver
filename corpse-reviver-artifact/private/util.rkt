@@ -6,7 +6,9 @@
 (provide CORPSE-REVIVER-ARTIFACT-STYLE
          th
          sc
+         format-benchmark-tex
          format-benchmark
+         format-overhead-tex
          format-overhead
          format-percent
          format-interval)
@@ -53,8 +55,22 @@
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; formatters
 
+(define (format-benchmark-tex x)
+  (format "\\textsc{~a}" (symbol->string x)))
+
 (define (format-benchmark x)
   (sc (symbol->string x)))
+
+;;
+;; TODO
+(define (format-overhead-tex n)
+  (define approx (~r n #:precision 1))
+  (define color
+    (cond
+      [(<= n 1.25) "\\cellcolor{rktpalegreen}"]
+      [(>= n 3) "\\cellcolor{rktpink}"]
+      [else ""]))
+  (format "~a ~a" color approx))
 
 ;;
 ;; TODO
