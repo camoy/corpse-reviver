@@ -92,7 +92,7 @@
     (values (+ (pict-width pict) (* 2 margin))
             (+ (pict-height pict) (* 2 margin))))
   (cc-superimpose
-   (filled-rounded-rectangle w h #:color color #:draw-border? #f)
+   (filled-rounded-rectangle w h 3 #:color color #:draw-border? #f)
    pict))
 
 (define (mean->string x)
@@ -102,10 +102,22 @@
        (~r x #:precision 1))
    "×"))
 
-(define (subtext scv baseline #:just-one [jo #f])
+(define (abs->string mean std-dev)
+  (format "~a ± ~a"
+          (~r mean #:precision 0)
+          (~r std-dev #:precision 0)))
+
+(define (subtext scv baseline
+                 scv-abs-mean scv-abs-std-dev
+                 baseline-abs-mean baseline-abs-std-dev
+                 #:just-one [jo #f])
   (define-values (scv-str baseline-str)
     (values (mean->string scv)
             (mean->string baseline)))
+  (define scv-abs-str
+    (abs->string scv-abs-mean scv-abs-std-dev))
+  (define baseline-abs-str
+    (abs->string baseline-abs-mean baseline-abs-std-dev))
   (define style "Liberation Serif")
   (define (color x)
     (cond
@@ -114,10 +126,14 @@
       [else "White"]))
   (define-values (scv-pict baseline-pict)
     (values (with-bg
-              (text scv-str null (*LATTICE-FONT-SIZE*))
+              (vc-append
+               (text scv-str null (*LATTICE-FONT-SIZE*))
+               (text scv-abs-str null (floor (* 3/4 (*LATTICE-FONT-SIZE*)))))
               (color scv))
             (with-bg
-              (text baseline-str null (*LATTICE-FONT-SIZE*))
+              (vc-append
+               (text baseline-str null (*LATTICE-FONT-SIZE*))
+               (text baseline-abs-str null (floor (* 3/4 (*LATTICE-FONT-SIZE*)))))
               (color baseline))))
   (cond
     [(eq? jo 'scv) scv-pict]
@@ -145,7 +161,12 @@
   (vc-append (blank 1 (*LATTICE-BOX-TOP-MARGIN*))
              box-pict
              (blank 1 (*LATTICE-BOX-BOT-MARGIN*))
-             (subtext normalized-mean normalized-baseline-mean
+             (subtext normalized-mean
+                      normalized-baseline-mean
+                      (car data)
+                      (cdr data)
+                      (car baseline-data)
+                      (cdr baseline-data)
                       #:just-one jo)))
 
 ;; adds lines between elements in levels

@@ -4,7 +4,7 @@
 ;; provide
 
 (provide median-baseline
-         mean-opt
+         median-opt
          max-baseline
          max-opt
          %-2x-baseline
@@ -121,14 +121,13 @@
                [hs (in-list analyses)])
       (define false-pos 0)
       (define total 0)
-      (displayln (hash-ref (first hs) 'benchmark))
       (for* ([h (in-list hs)]
              [b (in-list (hash-ref h 'blame))])
         (set! total (add1 total))
         (unless (car b)
           (set! false-pos (add1 false-pos))))
       (if (zero? total) 0 (/ false-pos total))))
-  benchmarks)
+  (format-percent (mean benchmarks)))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; statistics
@@ -142,8 +141,8 @@
 (define median-baseline
   (format-overhead (median-overhead BASELINE-PIS)))
 
-(define mean-opt
-  (format-overhead (mean-overhead OPT-PIS)))
+(define median-opt
+  (format-overhead (median-overhead OPT-PIS)))
 
 (define max-baseline
   (format-overhead (max-overhead BASELINE-PIS)))
@@ -200,7 +199,7 @@
 (module+ main
   (define STATS
     `(("medianBaseline" ,median-baseline)
-      ("meanOpt" ,mean-opt)
+      ("medianOpt" ,median-opt)
       ("maxBaseline" ,max-baseline)
       ("maxOpt" ,max-opt)
       ("twoTimesBaseline" ,%-2x-baseline)
@@ -215,12 +214,15 @@
       ("falsePositives" ,false-positives)
       ("baselineVersion" ,baseline-version)))
 
-  (displayln "% Output from `corpse-reviver-artifact/private/stat.rkt`")
-  (for ([stat (in-list STATS)])
-    (match-define (list name val) stat)
-    (define val* (regexp-replace #rx"%" (format "~a" val) "\\\\%"))
-    (define val** (regexp-replace #rx"×" (format "~a" val*) "\\\\times"))
-    (displayln (format "\\newcommand\\~a{$~a$\\xspace}" name val**))))
+  (with-output-to-file "stat.tex"
+    (λ ()
+      (displayln "% Output from `corpse-reviver-artifact/private/stat.rkt`")
+      (for ([stat (in-list STATS)])
+        (match-define (list name val) stat)
+        (define val* (regexp-replace #rx"%" (format "~a" val) "\\\\%"))
+        (define val** (regexp-replace #rx"×" (format "~a" val*) "\\\\times"))
+        (displayln (format "\\newcommand\\~a{$~a$\\xspace}" name val**))))
+    #:exists 'replace))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; test

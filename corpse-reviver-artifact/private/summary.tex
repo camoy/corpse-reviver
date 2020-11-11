@@ -1,0 +1,11 @@
+\begin{tabular}{ c | c c | c c | c | c}
+& \multicolumn{2}{c|}{Racket Overhead}
+& \multicolumn{2}{c|}{\tool Overhead}
+& \multicolumn{1}{c|}{\tool Analyze}
+& \multicolumn{1}{c}{\tool Compile} \\
+Benchmark
+& \hspace{0.65em}Max\hspace{0.65em} & Mean
+& \hspace{0.65em}Max\hspace{0.65em} & Mean
+& \hspace{0.65em}Mean $\pm~\sigma$ (s)
+& \hspace{0.65em}Mean $\pm~\sigma$ (s)  \\
+\hline\textsc{fsm} & \cellcolor{rktpink} 3 &  1.8 & \cellcolor{rktpalegreen} 1.1 & \cellcolor{rktpalegreen} 0.8 & 9 ± 1 & 12 ± 3\\\textsc{gregor} &  2.2 &  1.9 &  1.3 & \cellcolor{rktpalegreen} 1.2 & 49 ± 4 & 64 ± 6\\\textsc{kcfa} & \cellcolor{rktpink} 4.2 &  2.6 & \cellcolor{rktpalegreen} 1 & \cellcolor{rktpalegreen} 1 & 15 ± 1 & 25 ± 3\\\textsc{lnm} & \cellcolor{rktpalegreen} 1.1 & \cellcolor{rktpalegreen} 0.8 & \cellcolor{rktpalegreen} 1.1 & \cellcolor{rktpalegreen} 0.8 & 23 ± 1 & 35 ± 5\\\textsc{morsecode} &  1.6 & \cellcolor{rktpalegreen} 1.2 & \cellcolor{rktpalegreen} 1 & \cellcolor{rktpalegreen} 0.8 & 7 ± 2 & 7 ± 3\\\textsc{sieve} & \cellcolor{rktpink} 50.7 & \cellcolor{rktpink} 19.7 & \cellcolor{rktpalegreen} 1 & \cellcolor{rktpalegreen} 1 & 2 ± 1 & 3 ± 2\\\textsc{snake} & \cellcolor{rktpink} 18.3 & \cellcolor{rktpink} 10.4 & \cellcolor{rktpalegreen} 1.2 & \cellcolor{rktpalegreen} 1 & 17 ± 6 & 17 ± 3\\\textsc{suffixtree} & \cellcolor{rktpink} 33.8 & \cellcolor{rktpink} 16.2 & \cellcolor{rktpalegreen} 1.1 & \cellcolor{rktpalegreen} 0.9 & 10 ± 1 & 16 ± 3\\\textsc{synth} & \cellcolor{rktpink} 80.6 & \cellcolor{rktpink} 39.1 & \cellcolor{rktpalegreen} 1.2 & \cellcolor{rktpalegreen} 1 & 19 ± 1 & 26 ± 4\\\textsc{tetris} & \cellcolor{rktpink} 18.9 & \cellcolor{rktpink} 8.3 &  1.5 & \cellcolor{rktpalegreen} 1.1 & 24 ± 15 & 20 ± 3\\\textsc{zombie} & \cellcolor{rktpink} 54.2 & \cellcolor{rktpink} 24.9 & \cellcolor{rktpalegreen} 1 & \cellcolor{rktpalegreen} 1 & 11 ± 3 & 11 ± 3\\\textsc{zordoz} & \cellcolor{rktpink} 3.5 &  2.2 & \cellcolor{rktpalegreen} 1 & \cellcolor{rktpalegreen} 0.9 & 36 ± 2 & 47 ± 6\\\end{tabular}

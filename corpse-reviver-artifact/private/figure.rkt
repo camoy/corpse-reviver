@@ -13,8 +13,9 @@
 
          orange-key
          purple-key
-         lavender-key
-         blue-key
+         light-orange-key
+         light-blue-key
+         dark-blue-key
          red-key)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
@@ -27,11 +28,12 @@
          gtp-plot/plot
          gtp-plot/sample-info
          (only-in gtp-util natural->bitstring)
+         (only-in metapict save-pict)
          json
          math/statistics
          ppict/pict
          pict
-         pict-abbrevs
+         (except-in pict-abbrevs save-pict)
          racket/stream
          racket/string
          racket/hash
@@ -123,7 +125,9 @@
        #:typed-runtime* '(1)
        #:make-in-configurations (const cis))))
   (when (not (null? cdf-pis))
-    (parameterize ([*OVERHEAD-SHOW-CONFIGURATIONS* #f])
+    (parameterize ([*OVERHEAD-SHOW-CONFIGURATIONS* #f]
+                   #;[*OVERHEAD-PLOT-HEIGHT* (* 3/4 (*OVERHEAD-PLOT-HEIGHT*))]
+                   #;[*FONT-SIZE* (* 3/4 (*FONT-SIZE*))])
       (overhead-plot cdf-pis))))
 
 ;;
@@ -368,8 +372,7 @@
 ;; Number → Pict
 ;; TODO
 (define (key color)
-  (define color*
-    (if (string? color) color (hex-triplet->color% color)))
+  (define color* (if (integer? color) (hex-triplet->color% color) color))
   (ppict-do
    (blank 15)
    #:go (coord 1/2 1/2 'cc)
@@ -404,11 +407,31 @@
 
 (define orange-key (key ORANGE))
 (define purple-key (key PURPLE))
-(define lavender-key (key "lavender"))
-(define blue-key (key "blue"))
-(define red-key (key "red"))
+(define light-orange-key (key MOD-TY-COLOR))
+(define light-blue-key (key MOD-UT-LINE))
+(define dark-blue-key (key MOD-UT-TEXT))
+(define red-key (key MOD-US-COLOR))
 
-#;(with-output-to-file
+(module+ main
+  (define exports
+    `(("overhead-summary.pdf" . ,overhead-summary)
+      ("lattices.pdf" . ,lattices)
+      ("ut-require-ty.pdf" . ,ut-require-ty)
+      ("ty-require-ut.pdf" . ,ty-require-ut)
+      ("overhead-grid.pdf" . ,overhead-grid)
+      ("exact-grid.pdf" . ,exact-grid)
+      ("orange-key.pdf" . ,orange-key)
+      ("purple-key.pdf" .  ,purple-key)
+      ("light-orange-key.pdf" . ,light-orange-key)
+      ("light-blue-key.pdf" . ,light-blue-key)
+      ("dark-blue-key.pdf" . ,dark-blue-key)
+      ("red-key.pdf" . ,red-key)))
+
+  (for ([export (in-list exports)])
+    (match-define (cons name pict) export)
+    (save-pict name pict 'pdf))
+
+  (with-output-to-file
     "summary.tex"
     (λ () (displayln table-tex))
-    #:exists 'replace)
+    #:exists 'replace))

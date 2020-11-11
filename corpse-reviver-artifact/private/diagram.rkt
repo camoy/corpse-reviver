@@ -1,7 +1,12 @@
 #lang racket/base
 
 (provide ut-require-ty
-         ty-require-ut)
+         ty-require-ut
+
+         MOD-US-COLOR
+         MOD-TY-COLOR
+         MOD-UT-LINE
+         MOD-UT-TEXT)
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 
@@ -9,7 +14,8 @@
          racket/draw
          racket/class
          racket/math
-         ppict/2
+         ppict/pict
+         ppict/tag
          pict
          (except-in pict-abbrevs save-pict))
 
@@ -266,13 +272,3 @@
             #:set (wavy-arrow "same" 'c11 'c12 #f)
             #:set (wavy-arrow "analyze" 'c21 'c22 #f)
             ))
-
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-
-#;(save-pict "ut-require-ty.pdf"
-           ut-require-ty
-           'pdf)
-
-#;(save-pict "ty-require-ut.pdf"
-           ty-require-ut
-           'pdf)
