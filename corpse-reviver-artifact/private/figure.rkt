@@ -126,8 +126,8 @@
        #:make-in-configurations (const cis))))
   (when (not (null? cdf-pis))
     (parameterize ([*OVERHEAD-SHOW-CONFIGURATIONS* #f]
-                   #;[*OVERHEAD-PLOT-HEIGHT* (* 3/4 (*OVERHEAD-PLOT-HEIGHT*))]
-                   #;[*FONT-SIZE* (* 3/4 (*FONT-SIZE*))])
+                   [*OVERHEAD-PLOT-HEIGHT* (* 3/4 (*OVERHEAD-PLOT-HEIGHT*))]
+                   [*FONT-SIZE* (ceiling (* 3/5 (*FONT-SIZE*)))])
       (overhead-plot cdf-pis))))
 
 ;;
