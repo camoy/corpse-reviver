@@ -7,10 +7,11 @@
 (define scribblings
   '(("scribblings/corpse-reviver-artifact.scrbl" (always-run no-search))))
 
-(define deps '("git://github.com/camoy/gtp-plot.git#corpse-reviver"
+(define deps '("gtp-plot"
                "gtp-util"
                "gui-lib"
                "math-lib"
+               "metapict"
                "mischief"
                "pict-abbrevs"
                "pict-lib"

@@ -127,7 +127,9 @@
         (unless (car b)
           (set! false-pos (add1 false-pos))))
       (if (zero? total) 0 (/ false-pos total))))
-  (format-percent (mean benchmarks)))
+  (if (zero? (length benchmarks))
+      0
+      (format-percent (mean benchmarks))))
 
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; statistics

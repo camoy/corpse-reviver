@@ -16,7 +16,8 @@
 (define deps
   '("base"
     "corpse-reviver"
-    "gtp-measure"
+    "https://github.com/bennn/require-typed-check.git#3103e84"
+    "https://github.com/utahplt/gtp-measure.git#c29d282"
     "gtp-util"
     "make-log-interceptor"
     "mischief"
@@ -26,5 +27,4 @@
     "typed-racket-more"))
 
 (define build-deps
-   '("gtp-benchmarks"
-     "scribble-lib"))
+   '("scribble-lib"))

@@ -33,7 +33,7 @@ accepts a list of
 to benchmark.
 If none are provided
 it will use a 12-program subset of
-@other-doc['(lib "gtp-benchmarks/scribblings/gtp-benchmarks.scrbl")].
+the GTP benchmarks.
 It accepts the following
 command-line flags:
 @tabular[#:sep @hspace[3]

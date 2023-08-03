@@ -25,7 +25,9 @@
          racket/draw
          gtp-plot/configuration-info
          gtp-plot/performance-info
-         gtp-plot/plot
+         (except-in gtp-plot/plot
+                    *LATTICE-LINE-WIDTH*
+                    *LATTICE-LINE-ALPHA*)
          gtp-plot/sample-info
          (only-in gtp-util natural->bitstring)
          (only-in metapict save-pict)
@@ -73,7 +75,7 @@
 (*OVERHEAD-SAMPLES* 100)
 (*OVERHEAD-MAX* 10)
 (*OVERHEAD-FONT-FACE* "CMU Concrete")
-(*TITLE-FACE* "Linux Libertine")
+;(*TITLE-FACE* "Linux Libertine")
 (*POINT-COLOR* 1)
 (*POINT-SIZE* 6)
 (*POINT-ALPHA* 1)
@@ -84,8 +86,8 @@
 (*GRID-Y-SKIP* 50)
 (*FONT-SIZE* 32)
 (*GRID-NUM-COLUMNS* 2)
-(*OVERHEAD-COLOR-LEGEND?* #f)
-(*COLOR-LEGEND?* #f)
+;(*OVERHEAD-COLOR-LEGEND?* #f)
+;(*COLOR-LEGEND?* #f)
 
 (*LATTICE-BOX-HEIGHT* 26)
 (*LATTICE-LEVEL-MARGIN* 14)
@@ -125,7 +127,7 @@
        #:typed-runtime* '(1)
        #:make-in-configurations (const cis))))
   (when (not (null? cdf-pis))
-    (parameterize ([*OVERHEAD-SHOW-CONFIGURATIONS* #f]
+    (parameterize (#;[*OVERHEAD-SHOW-CONFIGURATIONS* #f]
                    [*OVERHEAD-PLOT-HEIGHT* (* 3/4 (*OVERHEAD-PLOT-HEIGHT*))]
                    [*FONT-SIZE* (ceiling (* 3/5 (*FONT-SIZE*)))])
       (overhead-plot cdf-pis))))
